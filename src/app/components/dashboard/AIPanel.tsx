@@ -1,103 +1,29 @@
-import { Brain, TrendingUp, Wrench, AlertTriangle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Bot, Sparkles } from 'lucide-react';
 
-export function AIPanel() {
-  const failureProbability = 12.3;
-  const nextMaintenance = new Date(2026, 4, 20);
+// Definimos o que o componente pode receber
+interface AIPanelProps {
+  analysis: string;
+}
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
+export function AIPanel({ analysis }: AIPanelProps) {
   return (
-    <div className="bg-[#141920] border border-[#2a3240] rounded-lg p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Brain className="w-5 h-5 text-[#8b5cf6]" />
-        <h2 className="text-xl text-[#8b5cf6] tracking-wider">ANÁLISE DE MACHINE LEARNING</h2>
+    <div className="bg-[#1E1E1E] border border-[#333333] rounded-xl p-6 h-full flex flex-col">
+      <div className="flex items-center gap-2 mb-4 text-[#1f538d]">
+        <Bot className="w-5 h-5" />
+        <h2 className="font-bold text-lg uppercase tracking-wider">Análise Preditiva (Edge AI)</h2>
       </div>
 
-      <div className="space-y-6">
-        <div className="bg-[#1e2530] border border-[#2a3240] rounded-lg p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <div className="text-xs text-[#808080] mb-1">PROBABILIDADE DE FALHA</div>
-              <div className="text-3xl text-[#00ff88]">{failureProbability}%</div>
-            </div>
-            <TrendingUp className="w-5 h-5 text-[#00ff88]" />
-          </div>
-
-          <div className="w-full bg-[#0a0e14] rounded-full h-2 overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-[#00ff88] to-[#00d9ff]"
-              initial={{ width: 0 }}
-              animate={{ width: `${failureProbability}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              style={{
-                boxShadow: '0 0 10px #00ff88'
-              }}
-            />
-          </div>
-
-          <div className="mt-3 text-xs text-[#808080]">
-            Baseado em análise de vibração e temperatura dos últimos 30 dias
-          </div>
+      <div className="flex-1 bg-[#141414] border border-[#333333] rounded-lg p-4 font-mono text-sm text-[#00FF00] overflow-y-auto">
+        <div className="flex items-start gap-2">
+          <Sparkles className="w-4 h-4 mt-1 text-[#00FF00] shrink-0" />
+          <p className="leading-relaxed">
+            {analysis || "Aguardando telemetria para diagnóstico técnico..."}
+          </p>
         </div>
-
-        <div className="bg-[#1e2530] border border-[#2a3240] rounded-lg p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <div className="text-xs text-[#808080] mb-1">PRÓXIMA MANUTENÇÃO</div>
-              <div className="text-lg text-[#00d9ff]">{formatDate(nextMaintenance)}</div>
-            </div>
-            <Wrench className="w-5 h-5 text-[#00d9ff]" />
-          </div>
-
-          <div className="text-xs text-[#808080]">
-            7 dias restantes • Manutenção preventiva programada
-          </div>
-        </div>
-
-        <div className="bg-[#1e2530] border border-[#ffaa00]/20 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-[#ffaa00] flex-shrink-0 mt-1" />
-            <div>
-              <div className="text-sm text-[#ffaa00] mb-2">Recomendações do Sistema</div>
-              <ul className="space-y-1 text-xs text-[#808080]">
-                <li>• Verificar válvula XV_100_03 - Padrão de abertura irregular</li>
-                <li>• Monitorar temperatura pós-esterilização</li>
-                <li>• Calibração do sensor pH recomendada</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-[#2a3240] pt-4">
-          <div className="text-xs text-[#808080] mb-2">INDICADORES DE DESEMPENHO</div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#1e2530] rounded p-3">
-              <div className="text-xs text-[#808080]">Eficiência</div>
-              <div className="text-xl text-[#00ff88]">94.2%</div>
-            </div>
-            <div className="bg-[#1e2530] rounded p-3">
-              <div className="text-xs text-[#808080]">Uptime</div>
-              <div className="text-xl text-[#00d9ff]">99.7%</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#0a0e14] border border-[#2a3240] rounded p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full bg-[#00ff88] animate-pulse" />
-            <span className="text-xs text-[#808080]">Modelo IA ativo</span>
-          </div>
-          <div className="text-xs text-[#808080]">
-            Última atualização: {new Date().toLocaleTimeString('pt-BR')}
-          </div>
-        </div>
+      </div>
+      
+      <div className="mt-4 text-[10px] text-gray-500 text-right uppercase tracking-widest">
+        Llama 3.2 via LM Studio
       </div>
     </div>
   );
