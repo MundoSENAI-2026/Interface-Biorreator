@@ -7,72 +7,65 @@ import { AIPanel } from '../components/dashboard/AIPanel';
 import { BatchChart } from '../components/dashboard/BatchChart';
 import { Thermometer, Droplets, Gauge, FlaskConical } from 'lucide-react';
 import { toast } from 'sonner';
+import mqtt from 'mqtt'; // Certifique-se de ter instalado com: npm install mqtt
 
 export function BioreactorRoot() {
-  const [temperature, setTemperature] = useState(127.3);
-  const [level, setLevel] = useState(68.5);
-  const [pressure, setPressure] = useState(0.85);
-  const [ph, setPh] = useState(6.8);
+  // Estados vinculados às Tags da Lista de Instrumentos
+  const [temperature, setTemperature] = useState(0); // TIT_100_01
+  const [level, setLevel] = useState(68.5);         // LIT_100_01 (Simulado localmente por enquanto)
+  const [pressure, setPressure] = useState(0);      // PIT_100_01
+  const [ph, setPh] = useState(6.8);               // AIT_100_01 (Simulado localmente por enquanto)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTemperature(prev => {
-        const variation = (Math.random() - 0.5) * 2;
-        const newTemp = prev + variation;
+    // PASSO C: Conexão com o Broker MQTT via WebSocket
+    // Usamos a porta 8084 para conexões seguras (WSS) em navegadores
+    const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
-        if (newTemp >= 130) {
-          toast.error('ALERTA: Temperatura crítica ultrapassada!', {
-            duration: 3000,
-          });
-        } else if (newTemp >= 128) {
-          toast.warning('ATENÇÃO: Temperatura se aproximando do limite crítico', {
-            duration: 2000,
-          });
-        }
+    client.on('connect', () => {
+      console.log('Conectado ao Broker MQTT - Monitoramento BR-01');
+      // Inscreve-se no tópico definido no seu script Python
+      client.subscribe('senai/biorreator/dados');
+    });
 
-        return Math.max(120, Math.min(135, newTemp));
-      });
+    client.on('message', (topic, message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Atualiza os estados com os dados reais vindos do maquina.py
+        const newTemp = data.temperatura_c;
+        const newPressure = data.pressao;
 
-      setLevel(prev => {
-        const variation = (Math.random() - 0.5) * 1.5;
-        const newLevel = prev + variation;
+        setTemperature(newTemp);
+        setPressure(newPressure);
 
-        if (newLevel >= 75) {
-          toast.warning('ATENÇÃO: Nível do tanque alto', {
-            duration: 2000,
-          });
-        }
-
-        return Math.max(60, Math.min(80, newLevel));
-      });
-
-      setPressure(prev => {
-        const variation = (Math.random() - 0.5) * 0.05;
-        const newPressure = prev + variation;
-
-        if (newPressure >= 0.95) {
-          toast.error('ALERTA: Pressão elevada detectada!', {
+        // Lógica de Alertas baseada nos dados REAIS recebidos
+        if (newTemp >= 38.5) {
+          toast.error(`ALERTA TÉCNICO: TIT_100_01 em ${newTemp}°C!`, {
             duration: 3000,
           });
         }
 
-        return Math.max(0.7, Math.min(1.1, newPressure));
-      });
+        if (newPressure >= 2.0) {
+          toast.error(`CRÍTICO: Pressão PIT_100_01 em ${newPressure} kgf/cm²!`, {
+            duration: 3000,
+          });
+        }
 
-      setPh(prev => {
-        const variation = (Math.random() - 0.5) * 0.2;
-        return Math.max(6.0, Math.min(7.5, prev + variation));
-      });
-    }, 3000);
+      } catch (error) {
+        console.error('Erro ao processar dados MQTT:', error);
+      }
+    });
 
-    return () => clearInterval(interval);
+    // Limpeza da conexão ao desmontar o componente
+    return () => {
+      if (client) client.end();
+    };
   }, []);
 
   const handleEmergencyStop = () => {
     toast.error('PARADA DE EMERGÊNCIA ACIONADA!', {
       duration: 5000,
     });
-    console.log('Emergency stop activated');
   };
 
   const handleValveToggle = (id: string, state: boolean) => {
@@ -108,8 +101,8 @@ export function BioreactorRoot() {
                 unit="°C"
                 min={0}
                 max={250}
-                warningThreshold={128}
-                criticalThreshold={130}
+                warningThreshold={37.5}
+                criticalThreshold={38.5}
                 icon={<Thermometer className="w-4 h-4 text-[#ff3b30]" />}
                 tag="TIT_100_01"
               />
@@ -131,8 +124,8 @@ export function BioreactorRoot() {
                 unit=" kgf/cm²"
                 min={0}
                 max={2}
-                warningThreshold={0.95}
-                criticalThreshold={1.0}
+                warningThreshold={1.8}
+                criticalThreshold={2.0}
                 icon={<Gauge className="w-4 h-4 text-[#ffaa00]" />}
                 tag="PIT_100_01"
               />
