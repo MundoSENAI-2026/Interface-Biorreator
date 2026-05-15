@@ -1,7 +1,11 @@
 import { Brain, TrendingUp, Wrench, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export function AIPanel() {
+interface AIPanelProps {
+  aiMessage?: string;
+}
+
+export function AIPanel({ aiMessage }: AIPanelProps) {
   const failureProbability = 12.3;
   const nextMaintenance = new Date(2026, 4, 20);
 
@@ -21,6 +25,7 @@ export function AIPanel() {
       </div>
 
       <div className="space-y-6">
+        {/* ... (existing cards) ... */}
         <div className="bg-[#1e2530] border border-[#2a3240] rounded-lg p-4">
           <div className="flex items-start justify-between mb-3">
             <div>
@@ -66,14 +71,20 @@ export function AIPanel() {
             <AlertTriangle className="w-5 h-5 text-[#ffaa00] flex-shrink-0 mt-1" />
             <div>
               <div className="text-sm text-[#ffaa00] mb-2">Recomendações do Sistema</div>
-              <ul className="space-y-1 text-xs text-[#808080]">
-                <li>• Verificar válvula XV_100_03 - Padrão de abertura irregular</li>
-                <li>• Monitorar temperatura pós-esterilização</li>
-                <li>• Calibração do sensor pH recomendada</li>
-              </ul>
+              <div className="text-xs text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
+                {aiMessage || (
+                  <ul className="space-y-1 text-[#808080]">
+                    <li>• Verificar válvula XV_100_03 - Padrão de abertura irregular</li>
+                    <li>• Monitorar temperatura pós-esterilização</li>
+                    <li>• Calibração do sensor pH recomendada</li>
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>
+        {/* ... (rest of the component) ... */}
+
 
         <div className="border-t border-[#2a3240] pt-4">
           <div className="text-xs text-[#808080] mb-2">INDICADORES DE DESEMPENHO</div>
