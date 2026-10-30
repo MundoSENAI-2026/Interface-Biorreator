@@ -42,7 +42,9 @@
   --status-critical-text: #8a0b20;
   --status-info: #1f63b5;
   --status-info-bg: #e7f0fb;
-  --status-running: #2e7d32; /* verde: só no indicador de equipamento em operação */
+  --status-running: #2e7d32; /* verde: indicador de equipamento em operação */
+  --status-good: #1e6b24; /* verde: prazo em dia (manutenção) */
+  --status-good-bg: #e6f4e7;
   --status-offline: #8d97a3;
   --status-offline-bg: #f0f1f3;
 
@@ -141,6 +143,8 @@
   --color-st-info: var(--status-info);
   --color-st-info-bg: var(--status-info-bg);
   --color-st-running: var(--status-running);
+  --color-st-good: var(--status-good);
+  --color-st-good-bg: var(--status-good-bg);
   --color-st-offline: var(--status-offline);
   --color-st-offline-bg: var(--status-offline-bg);
 }

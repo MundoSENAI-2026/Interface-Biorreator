@@ -21,7 +21,8 @@ export type BadgeStatus =
   | 'transition'
   | 'offline'
   | 'bad'
-  | 'neutral';
+  | 'neutral'
+  | 'good';
 
 interface Variant {
   label: string;
@@ -42,6 +43,7 @@ const VARIANTS: Record<BadgeStatus, Variant> = {
   offline: { label: 'Offline', icon: WifiOff, className: 'bg-st-offline-bg text-ink-muted border-st-offline' },
   bad: { label: 'Dado não confiável', icon: CircleHelp, className: 'bg-st-offline-bg text-ink-muted border-st-offline border-dashed' },
   neutral: { label: '', icon: null, className: 'bg-st-normal-bg text-ink-default border-line' },
+  good: { label: 'Em dia', icon: CircleCheck, className: 'bg-st-good-bg text-st-good border-st-good/40' },
 };
 
 interface StatusBadgeProps {

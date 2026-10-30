@@ -286,7 +286,7 @@ export const INTERLOCKS = {
 
 export const MAINTENANCE = {
   /** Próxima manutenção preventiva (AAAA-MM-DD). */
-  nextDate: '2026-05-20',
+  nextDate: '2026-11-20',
   description: 'Manutenção preventiva do agitador e vedação mecânica',
   /** A partir de quantos dias restantes destacar como "próxima". */
   warnDaysBefore: 7,

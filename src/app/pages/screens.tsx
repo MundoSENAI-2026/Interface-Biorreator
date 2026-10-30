@@ -5,7 +5,7 @@ import { AboutProject } from '../components/dashboard/AboutProject';
 import { AlarmBanner } from '../components/dashboard/AlarmBanner';
 import { BatchSummary, PhaseTrendGrid, RecentEvents } from '../components/dashboard/OverviewPanels';
 import { CommandPanel } from '../components/dashboard/CommandPanel';
-import { MlPanel } from '../components/dashboard/MlPanel';
+import { MaintenanceView } from '../components/dashboard/MaintenanceView';
 import { Synoptic } from '../components/dashboard/Synoptic';
 import { TrendsView } from '../components/dashboard/TrendsView';
 import { HistoryTable } from '../components/hmi/AlarmList';
@@ -142,9 +142,7 @@ export function AlarmsScreen({ plant }: { plant: PlantState }) {
 export function MaintenanceScreen({ plant }: { plant: PlantState }) {
   return (
     <div className={SCREEN}>
-      <Panel title="Manutenção preditiva (Machine Learning)" className="min-h-0" bodyClassName="min-h-0 overflow-auto">
-        <MlPanel now={plant.now} />
-      </Panel>
+      <MaintenanceView now={plant.now} />
     </div>
   );
 }
