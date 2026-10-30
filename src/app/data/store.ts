@@ -2,10 +2,12 @@ import {
   COMM_TIMEOUT_MS,
   EQUIPMENT,
   PHASES,
+  PLANT,
   TAGS,
   TAG_ORDER,
   HISTORY_WINDOW_S,
   VALVES,
+  VALVE_BY_ID,
   getLimits,
   type TagId,
 } from '../config/plant';
@@ -14,20 +16,22 @@ import { goldenValue } from './goldenBatch';
 import { blockReason, manualBlockReason } from './interlocks';
 import type {
   Alarm,
-  AlarmEvent,
   AlarmKind,
   AlarmPriority,
   Command,
   CommandResult,
   CommStatus,
   DataSource,
+  EventAction,
+  EventCategory,
   OverallStatus,
   PhaseTracePoint,
+  PlantEvent,
   PlcSnapshot,
   TrendPoint,
 } from './types';
 
-const MAX_EVENTS = 500;
+const MAX_EVENTS = 2000;
 const TRACE_POINTS_PER_PHASE = 400;
 
 export interface PlantState {
@@ -42,7 +46,7 @@ export interface PlantState {
   /** Lista de alarmes ativos / reconhecidos / normalizados não reconhecidos. */
   alarms: Alarm[];
   /** Histórico (mais recente primeiro). */
-  events: AlarmEvent[];
+  events: PlantEvent[];
   /** Limites baixos armados na etapa atual (ver armLowAfterSetpoint). */
   lowArmed: Record<TagId, boolean>;
 }
@@ -59,6 +63,14 @@ const COMMAND_LABEL: Record<Command['type'], (c: any) => string> = {
   motor: (c) => `${c.on ? 'Ligar' : 'Desligar'} ${EQUIPMENT.motor.name.toLowerCase()}`,
   pump: (c) => `${c.on ? 'Ligar' : 'Desligar'} ${EQUIPMENT.pump.name.toLowerCase()}`,
   manway: (c) => `${c.open ? 'Abrir' : 'Fechar'} ${EQUIPMENT.manway.name.toLowerCase()}`,
+};
+
+const BATCH_STATUS_TEXT: Record<PlcSnapshot['batch']['status'], string> = {
+  idle: 'Processo aguardando início',
+  running: 'Sequência automática em execução',
+  stopped: 'Sequência parada · modo manual',
+  emergency: 'Parada de emergência ativa',
+  completed: 'Lote concluído',
 };
 
 const emptyByTag = <T,>(make: () => T) =>
@@ -134,13 +146,14 @@ export class PlantStore {
     const label = COMMAND_LABEL[cmd.type](cmd);
     const reason = this.blockReason(cmd);
     if (reason) {
-      this.log('Bloqueado', 'info', 'Operador', `${label} — ${reason}`);
+      this.logOperator('Bloqueado', 'Operador', `${label} — bloqueado: ${reason}`);
       this.emit();
       return { ok: false, reason };
     }
+    // Registra o comando antes do envio, para que apareça antes das mudanças que ele causa
+    this.logOperator('Comando', 'Operador', label);
     const result = await this.source.send(cmd);
-    this.log(result.ok ? 'Comando' : 'Bloqueado', 'info', 'Operador',
-      result.ok ? label : `${label} — ${result.reason}`);
+    if (!result.ok) this.logOperator('Bloqueado', 'Operador', `${label} — recusado pelo CLP: ${result.reason}`);
     this.emit();
     return result;
   }
@@ -153,7 +166,7 @@ export class PlantStore {
         alarms.push(a);
         continue;
       }
-      this.log('Reconhecido', a.priority, a.source, a.message);
+      this.logOperator('Reconhecimento', a.source, `Reconheceu alarme: ${a.message}`);
       // Normalizado + reconhecido sai da lista de ativos
       if (a.state === 'active') alarms.push({ ...a, state: 'acknowledged', acknowledgedAt: now });
     }
@@ -209,6 +222,10 @@ export class PlantStore {
       lowArmed,
     };
 
+    if (prev.comm === 'offline') this.log('process', 'Comunicação', 'CLP', 'Comunicação com o CLP restabelecida');
+    if (prev.snapshot) this.logChanges(prev.snapshot, s);
+    else this.log('process', 'Comunicação', 'CLP', `Conexão com o CLP estabelecida · lote ${s.batch.lot}, etapa ${PHASES[s.batch.phaseIndex].name}`);
+
     this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', false);
     this.evaluateProcessAlarms(s);
     this.emit();
@@ -219,6 +236,9 @@ export class PlantStore {
     const ref = this.state.lastReadAt ?? this.startedAt;
     const lost = now - ref > COMM_TIMEOUT_MS;
     const comm: CommStatus = lost ? 'offline' : this.state.lastReadAt ? 'online' : 'connecting';
+    if (lost && this.state.comm !== 'offline') {
+      this.log('process', 'Comunicação', 'CLP', `Comunicação com o CLP perdida (sem leitura há mais de ${COMM_TIMEOUT_MS / 1000} s)`);
+    }
     this.state = { ...this.state, now, comm };
     if (lost) this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', true);
     this.emit();
@@ -271,21 +291,63 @@ export class PlantStore {
       const alarm: Alarm = { id, source, kind, priority, message, state: 'active', activatedAt: now };
       const others = this.state.alarms.filter((a) => a.id !== id);
       this.state = { ...this.state, alarms: [alarm, ...others] };
-      this.log('Ativado', priority, source, message);
+      this.log('alarm', 'Ativado', source, message, { priority });
       for (const l of this.alarmListeners) l(alarm);
       return;
     }
 
     if (!existing || existing.state === 'normalized') return;
-    this.log('Normalizado', existing.priority, source, existing.message);
+    this.log('alarm', 'Normalizado', source, existing.message, { priority: existing.priority });
     const alarms = existing.state === 'acknowledged'
       ? this.state.alarms.filter((a) => a.id !== id)
       : this.state.alarms.map((a) => (a.id === id ? { ...a, state: 'normalized' as const, normalizedAt: now } : a));
     this.state = { ...this.state, alarms };
   }
 
-  private log(type: AlarmEvent['type'], priority: AlarmEvent['priority'], source: string, message: string) {
-    const event: AlarmEvent = { seq: ++this.seq, time: Date.now(), type, priority, source, message };
+  // ─── Histórico de eventos ──────────────────────────────────────────────────
+
+  /** Registra mudanças de etapa, estado do processo, válvulas e equipamentos. */
+  private logChanges(prev: PlcSnapshot, s: PlcSnapshot) {
+    if (s.batch.lot !== prev.batch.lot) {
+      this.log('process', 'Estado do processo', 'Sequência', `Novo lote ${s.batch.lot} iniciado`);
+    }
+    if (s.batch.phaseIndex !== prev.batch.phaseIndex) {
+      const p = PHASES[s.batch.phaseIndex];
+      this.log('process', 'Mudança de etapa', 'Sequência', `Etapa ${s.batch.phaseIndex + 1}/${PHASES.length} · ${p.name} iniciada`);
+    }
+    if (s.batch.status !== prev.batch.status) {
+      this.log('process', 'Estado do processo', 'Sequência', BATCH_STATUS_TEXT[s.batch.status]);
+    }
+    for (const v of VALVES) {
+      const before = prev.valves[v.id];
+      const after = s.valves[v.id];
+      if (after === before || after === 'transition') continue;
+      const text = after === 'open' ? 'aberta' : after === 'closed' ? 'fechada' : 'em falha';
+      this.log('process', 'Válvula', v.id, `${VALVE_BY_ID[v.id].short} (${v.function.toLowerCase()}) ${text}`);
+    }
+    if (s.motorOn !== prev.motorOn) {
+      this.log('process', 'Equipamento', EQUIPMENT.motor.id, `${EQUIPMENT.motor.name} ${s.motorOn ? 'ligado' : 'desligado'}`);
+    }
+    if (s.pumpOn !== prev.pumpOn) {
+      this.log('process', 'Equipamento', EQUIPMENT.pump.id, `${EQUIPMENT.pump.name} ${s.pumpOn ? 'ligada' : 'desligada'}`);
+    }
+    if (s.manwayOpen !== prev.manwayOpen) {
+      this.log('process', 'Equipamento', EQUIPMENT.manway.id, `${EQUIPMENT.manway.name} ${s.manwayOpen ? 'aberta' : 'fechada'}`);
+    }
+  }
+
+  private logOperator(action: EventAction, source: string, message: string) {
+    this.log('operator', action, source, message, { user: PLANT.operator });
+  }
+
+  private log(
+    category: EventCategory,
+    action: EventAction,
+    source: string,
+    message: string,
+    extra: { priority?: AlarmPriority; user?: string } = {},
+  ) {
+    const event: PlantEvent = { seq: ++this.seq, time: Date.now(), category, action, source, message, ...extra };
     this.state = { ...this.state, events: [event, ...this.state.events].slice(0, MAX_EVENTS) };
   }
 

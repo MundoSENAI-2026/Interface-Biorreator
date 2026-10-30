@@ -71,15 +71,33 @@ export interface Alarm {
   normalizedAt?: number;
 }
 
-export type EventType = 'Ativado' | 'Reconhecido' | 'Normalizado' | 'Comando' | 'Bloqueado';
+/** Alarme / Evento de processo / Ação do operador. */
+export type EventCategory = 'alarm' | 'process' | 'operator';
 
-export interface AlarmEvent {
+export type EventAction =
+  | 'Ativado'
+  | 'Normalizado'
+  | 'Reconhecimento'
+  | 'Comando'
+  | 'Bloqueado'
+  | 'Mudança de etapa'
+  | 'Estado do processo'
+  | 'Válvula'
+  | 'Equipamento'
+  | 'Comunicação';
+
+/** Registro do histórico (trilha de auditoria): alarmes, processo e operador. */
+export interface PlantEvent {
   seq: number;
   time: number;
-  type: EventType;
-  priority: AlarmPriority | 'info';
+  category: EventCategory;
+  action: EventAction;
+  /** Só para alarmes. */
+  priority?: AlarmPriority;
   source: string;
   message: string;
+  /** Quem executou (ações do operador). */
+  user?: string;
 }
 
 export interface TrendPoint {
