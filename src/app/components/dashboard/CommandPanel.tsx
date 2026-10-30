@@ -14,6 +14,16 @@ function SectionTitle({ children, className }: { children: React.ReactNode; clas
 }
 
 function EquipmentRow({ name, tag, badge, children, dense }: { name: string; tag: string; badge: React.ReactNode; children: React.ReactNode; dense?: boolean }) {
+  if (dense) {
+    return (
+      <div className="grid grid-cols-[minmax(0,1fr)_2.75rem_auto_6.25rem] items-center gap-x-2 rounded border border-line px-2 py-1">
+        <span className="truncate text-sm font-medium text-ink" title={name}>{name}</span>
+        <span className="font-mono text-xs text-ink-muted">{tag}</span>
+        <div className="min-w-0">{badge}</div>
+        {children}
+      </div>
+    );
+  }
   return (
     <div className={cn('grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded border border-line px-3', dense ? 'py-1' : 'py-1.5')}>
       <div className={cn('flex min-w-0 items-center gap-x-3 gap-y-1', !dense && 'flex-wrap')}>
@@ -39,7 +49,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
   const btn = dense ? 'sm' : 'md';
 
   return (
-    <div className={cn('flex flex-col', dense ? 'gap-2.5' : 'gap-3')}>
+    <div className={cn('flex flex-col', dense ? 'h-full min-h-0 justify-between gap-2' : 'gap-3')}>
       <section>
         {!dense && <SectionTitle>Processo</SectionTitle>}
         <div className="grid grid-cols-2 gap-3">
@@ -49,6 +59,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             label={status === 'stopped' ? 'START · retomar' : 'START · novo lote'}
             icon={Play}
             variant="primary"
+            className="w-full"
             confirm={{
               title: status === 'stopped' ? 'Retomar a sequência automática?' : 'Iniciar um novo lote?',
               description:
@@ -63,6 +74,8 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             command={{ type: 'stop' }}
             label="STOP"
             icon={Square}
+            variant="secondary"
+            className="w-full"
             confirm={{
               title: 'Parar a sequência automática?',
               description:
@@ -93,7 +106,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={`${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
           >
             <CommandButton
-              className="contents"
+              className={dense ? 'w-full' : 'contents'}
               reasonClassName="col-span-full"
               size={btn}
               command={{ type: 'motor', on: !s?.motorOn }}
@@ -108,7 +121,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             badge={<StatusBadge status={s?.pumpOn ? 'running' : 'stopped'} label={s?.pumpOn ? 'Ligada' : 'Desligada'} />}
           >
             <CommandButton
-              className="contents"
+              className={dense ? 'w-full' : 'contents'}
               reasonClassName="col-span-full"
               size={btn}
               command={{ type: 'pump', on: !s?.pumpOn }}
@@ -136,7 +149,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             }
           >
             <CommandButton
-              className="contents"
+              className={dense ? 'w-full' : 'contents'}
               reasonClassName="col-span-full"
               size={btn}
               command={{ type: 'manway', open: !s?.manwayOpen }}
@@ -163,14 +176,14 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
               comandar na F2 <ArrowRight className="size-4" aria-hidden />
             </button>
           </div>
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-1 2xl:grid-cols-4">
+          <ul className="grid grid-cols-5 gap-x-2 gap-y-1">
             {VALVES.map((v) => {
               const st = s?.valves[v.id] ?? 'closed';
               return (
-                <li key={v.id} className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-sm" title={`${v.short} — ${v.function}: ${v.description}`}>
+                <li key={v.id} className="grid min-w-0 grid-cols-[1.25rem_1fr] items-center gap-x-1 rounded bg-sunken px-1.5 py-1" title={`${v.short} — ${v.function}: ${v.description}`}>
                   <ValveGlyph state={st} className="h-3.5 w-5 shrink-0" />
-                  <span className="font-mono font-medium text-ink">{v.short}</span>
-                  <span className={cn('truncate', st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
+                  <span className="truncate font-mono text-xs font-medium text-ink">{v.short}</span>
+                  <span className={cn('col-start-2 truncate text-xs', st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
                     {VALVE_STATE_LABEL[st]}
                   </span>
                 </li>

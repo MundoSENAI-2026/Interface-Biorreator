@@ -68,15 +68,15 @@ export function OverviewScreen({ plant }: { plant: PlantState }) {
       <Stepper plant={plant} />
       <AlarmBanner alarms={plant.alarms} lastNormalizedAt={plant.events.find((e) => e.category === 'alarm' && e.action === 'Normalizado')?.time} />
       <SensorRow plant={plant} />
-      <div className="grid min-h-0 grid-cols-12 gap-3">
-        <div className="col-span-12 grid min-h-0 grid-rows-[minmax(13rem,1fr)_auto] gap-3 xl:col-span-8">
+      <div className="grid min-h-0 grid-cols-12 grid-rows-[minmax(18rem,1fr)] gap-3">
+        <div className="col-span-12 grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-3 xl:col-span-8">
           <PhaseTrendGrid plant={plant} />
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="grid min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
             <BatchSummary plant={plant} />
             <RecentEvents plant={plant} />
           </div>
         </div>
-        <Panel title="Comandos principais" className="col-span-12 min-h-0 xl:col-span-4" bodyClassName="px-4 py-3">
+        <Panel title="Comandos principais" className="col-span-12 min-h-0 xl:col-span-4" bodyClassName="min-h-0 overflow-hidden p-4">
           <CommandPanel plant={plant} valves="summary" />
         </Panel>
       </div>

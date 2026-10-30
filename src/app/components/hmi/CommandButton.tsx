@@ -43,12 +43,13 @@ const VARIANT = {
  * segurança (o bloqueio comum é exibido uma única vez pelo painel).
  */
 export function CommandButton({ command, label, icon: Icon, variant = 'secondary', confirm, className, reasonClassName, size = 'md' }: CommandButtonProps) {
-  usePlant(); // reavalia o intertravamento a cada leitura
+  const plant = usePlant(); // reavalia o intertravamento a cada leitura
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const block = plantStore.blockReason(command);
   const disabled = !!block || busy;
+  const stretchButton = className?.split(/\s+/).includes('w-full') ?? false;
 
   const execute = async () => {
     setBusy(true);
@@ -69,9 +70,10 @@ export function CommandButton({ command, label, icon: Icon, variant = 'secondary
         type="button"
         onClick={() => (confirm ? setOpen(true) : execute())}
         disabled={disabled}
-        title={block?.message}
+        title={block?.kind === 'shared' && plant.snapshot?.batch.status === 'running' ? 'Bloqueado: processo em automático' : block?.message}
         className={cn(
           'inline-flex items-center justify-center gap-2 rounded border transition-colors duration-150',
+          stretchButton && 'w-full',
           size === 'sm' ? 'h-9 px-3 text-sm' : 'h-10 px-4 text-[15px]',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
           disabled ? 'cursor-not-allowed border-line bg-sunken text-ink-disabled' : VARIANT[variant],
