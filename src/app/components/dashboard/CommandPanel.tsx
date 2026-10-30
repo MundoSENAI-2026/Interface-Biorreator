@@ -13,14 +13,18 @@ function SectionTitle({ children, className }: { children: React.ReactNode; clas
   return <h3 className={cn('mb-1.5 text-sm font-semibold uppercase tracking-wide text-ink-muted', className)}>{children}</h3>;
 }
 
-function EquipmentRow({ name, tag, badge, children, dense }: { name: string; tag: string; badge: React.ReactNode; children: React.ReactNode; dense?: boolean }) {
+function EquipmentRow({ name, tag, badge, reason, children, dense }: { name: string; tag: string; badge: React.ReactNode; reason?: string; children: React.ReactNode; dense?: boolean }) {
   if (dense) {
     return (
-      <div className="grid grid-cols-[minmax(0,1fr)_2.75rem_auto_6.25rem] items-center gap-x-2 rounded border border-line px-2 py-1">
+      <div className="grid h-14 grid-cols-[minmax(0,1fr)_2.75rem_auto_6.5rem] grid-rows-[1fr_1rem] items-center gap-x-2 rounded border border-line px-2">
         <span className="truncate text-sm font-medium text-ink" title={name}>{name}</span>
         <span className="font-mono text-xs text-ink-muted">{tag}</span>
         <div className="min-w-0">{badge}</div>
         {children}
+        <span className={cn('col-span-4 row-start-2 flex min-w-0 items-center gap-1 truncate text-[11px] leading-4 text-st-warning-text', !reason && 'invisible')} title={reason ? `Bloqueado: ${reason}` : undefined}>
+          <Lock className="size-3 shrink-0" aria-hidden />
+          <span className="truncate">{reason ? `Bloqueado: ${reason}` : ' '}</span>
+        </span>
       </div>
     );
   }
@@ -47,12 +51,16 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
   const phaseName = s ? PHASES[s.batch.phaseIndex].name : '';
   const dense = valves === 'summary';
   const btn = dense ? 'sm' : 'md';
+  const equipmentBlock = (command: Parameters<typeof plantStore.blockReason>[0]) => {
+    const block = plantStore.blockReason(command);
+    return dense && block?.kind === 'interlock' ? block.message : undefined;
+  };
 
   return (
     <div className={cn('flex flex-col', dense ? 'h-full min-h-0 justify-between gap-2' : 'gap-3')}>
       <section>
         {!dense && <SectionTitle>Processo</SectionTitle>}
-        <div className="grid grid-cols-2 gap-3">
+        <div className={cn('grid grid-cols-2', dense ? 'gap-2' : 'gap-3')}>
           <CommandButton
             size={btn}
             command={{ type: 'start' }}
@@ -88,9 +96,9 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
 
       {/* Único aviso de bloqueio comum (o cadeado aparece só aqui) */}
       {shared && (
-        <div className="flex items-start gap-2 rounded border border-line bg-sunken px-3 py-1.5 text-sm text-ink-default" role="status">
+        <div className={cn('flex items-start gap-2 rounded border border-line bg-sunken text-ink-default', dense ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm')} role="status">
           {status === 'running' ? <Info className="mt-0.5 size-4 shrink-0 text-st-info" aria-hidden /> : <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />}
-          <span>
+          <span className="min-w-0 truncate" title={shared}>
             <strong className="font-semibold">{dense ? 'Manual bloqueado:' : 'Comandos manuais bloqueados.'}</strong> {shared}.
           </span>
         </div>
@@ -101,13 +109,16 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
         <div className={cn('flex flex-col', dense ? 'gap-1.5' : 'gap-2')}>
           <EquipmentRow
             dense={dense}
-            name={EQUIPMENT.motor.name}
+            name={dense ? 'Motor' : EQUIPMENT.motor.name}
             tag={EQUIPMENT.motor.short}
-            badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={`${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
+            reason={equipmentBlock({ type: 'motor', on: !s?.motorOn })}
+            badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={dense ? (s?.motorOn ? 'Ligado' : 'Desligado') : `${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
           >
             <CommandButton
               className={dense ? 'w-full' : 'contents'}
               reasonClassName="col-span-full"
+              showInterlockReason={!dense}
+              tooltipPrefix={dense}
               size={btn}
               command={{ type: 'motor', on: !s?.motorOn }}
               label={s?.motorOn ? 'Desligar' : 'Ligar'}
@@ -116,13 +127,16 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
           </EquipmentRow>
           <EquipmentRow
             dense={dense}
-            name={EQUIPMENT.pump.name}
+            name={dense ? 'Bomba' : EQUIPMENT.pump.name}
             tag={EQUIPMENT.pump.short}
+            reason={equipmentBlock({ type: 'pump', on: !s?.pumpOn })}
             badge={<StatusBadge status={s?.pumpOn ? 'running' : 'stopped'} label={s?.pumpOn ? 'Ligada' : 'Desligada'} />}
           >
             <CommandButton
               className={dense ? 'w-full' : 'contents'}
               reasonClassName="col-span-full"
+              showInterlockReason={!dense}
+              tooltipPrefix={dense}
               size={btn}
               command={{ type: 'pump', on: !s?.pumpOn }}
               label={s?.pumpOn ? 'Desligar' : 'Ligar'}
@@ -142,6 +156,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             dense={dense}
             name={EQUIPMENT.manway.name}
             tag={EQUIPMENT.manway.short}
+            reason={equipmentBlock({ type: 'manway', open: !s?.manwayOpen })}
             badge={
               s?.manwayOpen
                 ? <StatusBadge status="warning" icon={DoorOpen} label="Aberta" />
@@ -151,6 +166,8 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             <CommandButton
               className={dense ? 'w-full' : 'contents'}
               reasonClassName="col-span-full"
+              showInterlockReason={!dense}
+              tooltipPrefix={dense}
               size={btn}
               command={{ type: 'manway', open: !s?.manwayOpen }}
               label={s?.manwayOpen ? 'Fechar' : 'Abrir'}
@@ -180,7 +197,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             {VALVES.map((v) => {
               const st = s?.valves[v.id] ?? 'closed';
               return (
-                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-1" title={`${v.short} — ${v.function}: ${v.description}`}>
+                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-0.5" title={`${v.short} — ${v.function}: ${v.description}`}>
                   <ValveGlyph state={st} className="h-3 w-4 shrink-0" />
                   <span className="truncate font-mono text-[11px] font-medium text-ink">{v.short}</span>
                   <span className={cn('col-start-2 truncate text-[10px]', st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>

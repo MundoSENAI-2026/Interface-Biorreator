@@ -29,6 +29,10 @@ interface CommandButtonProps {
   className?: string;
   /** Classe extra do texto de intertravamento (ex.: ocupar a linha inteira de um grid). */
   reasonClassName?: string;
+  /** Hide the inline interlock message when the parent renders it in a fixed row. */
+  showInterlockReason?: boolean;
+  /** Prefix the disabled tooltip when this compact panel already shows a reason line. */
+  tooltipPrefix?: boolean;
   size?: 'md' | 'sm';
 }
 
@@ -42,7 +46,7 @@ const VARIANT = {
  * Bloqueado = apenas desabilitado; o texto aparece só para intertravamento de
  * segurança (o bloqueio comum é exibido uma única vez pelo painel).
  */
-export function CommandButton({ command, label, icon: Icon, variant = 'secondary', confirm, className, reasonClassName, size = 'md' }: CommandButtonProps) {
+export function CommandButton({ command, label, icon: Icon, variant = 'secondary', confirm, className, reasonClassName, showInterlockReason = true, tooltipPrefix = false, size = 'md' }: CommandButtonProps) {
   const plant = usePlant(); // reavalia o intertravamento a cada leitura
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -50,6 +54,11 @@ export function CommandButton({ command, label, icon: Icon, variant = 'secondary
   const block = plantStore.blockReason(command);
   const disabled = !!block || busy;
   const stretchButton = className?.split(/\s+/).includes('w-full') ?? false;
+  const tooltip = block?.kind === 'shared' && plant.snapshot?.batch.status === 'running'
+    ? 'Bloqueado: processo em automático'
+    : block && tooltipPrefix
+      ? `Bloqueado: ${block.message}`
+      : block?.message;
 
   const execute = async () => {
     setBusy(true);
@@ -62,7 +71,7 @@ export function CommandButton({ command, label, icon: Icon, variant = 'secondary
     }
   };
 
-  const visibleReason = error ?? (block?.kind === 'interlock' ? block.message : null);
+  const visibleReason = error ?? (showInterlockReason && block?.kind === 'interlock' ? block.message : null);
 
   return (
     <div className={cn('flex flex-col gap-1', className)}>
@@ -70,7 +79,7 @@ export function CommandButton({ command, label, icon: Icon, variant = 'secondary
         type="button"
         onClick={() => (confirm ? setOpen(true) : execute())}
         disabled={disabled}
-        title={block?.kind === 'shared' && plant.snapshot?.batch.status === 'running' ? 'Bloqueado: processo em automático' : block?.message}
+        title={tooltip}
         className={cn(
           'inline-flex items-center justify-center gap-2 rounded border transition-colors duration-150',
           stretchButton && 'w-full',
