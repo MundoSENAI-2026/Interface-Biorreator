@@ -4,6 +4,7 @@ import { plantStore, usePlant } from '../data/source';
 import { useUi, type ScreenId } from '../data/ui';
 import type { PlantState } from '../data/store';
 import { Header } from '../components/layout/Header';
+import { Footer } from '../components/layout/Footer';
 import { NavBar } from '../components/layout/NavBar';
 import { AboutScreen, AlarmsScreen, MaintenanceScreen, OverviewScreen, SynopticScreen, TrendsScreen } from './screens';
 
@@ -44,6 +45,7 @@ export function BioreactorRoot() {
       <main className="min-h-0 flex-1 overflow-auto">
         <Screen plant={plant} />
       </main>
+      <Footer />
     </div>
   );
 }

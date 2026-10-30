@@ -1,10 +1,12 @@
 import { MonitorPlay, User, Wifi, WifiOff } from 'lucide-react';
 import { PHASES, PLANT } from '../../config/plant';
+import { PROJECT } from '../../config/project';
 import { overallStatus, type PlantState } from '../../data/store';
 import { simulation } from '../../data/source';
 import type { BatchStatus } from '../../data/types';
 import { formatDate, formatDuration, formatTime, pluralize } from '../../lib/format';
 import { EmergencyButton } from '../dashboard/EmergencyButton';
+import { BrandLogo } from './BrandLogo';
 import { StatusBadge, type BadgeStatus } from '../hmi/StatusBadge';
 import { cn } from '../ui/utils';
 
@@ -15,15 +17,6 @@ const BATCH_STATUS: Record<BatchStatus, { label: string; badge: BadgeStatus }> =
   emergency: { label: 'Emergência', badge: 'critical' },
   completed: { label: 'Lote concluído', badge: 'stopped' },
 };
-
-/** Logotipo provisório (texto). Substitua pelo SVG oficial do manual de marca. */
-function SenaiLogo() {
-  return (
-    <div className="flex h-9 items-center bg-brand-red px-3" aria-label="SENAI">
-      <span className="text-xl font-bold italic tracking-tight text-white">SENAI</span>
-    </div>
-  );
-}
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
@@ -59,10 +52,10 @@ export function Header({ plant }: { plant: PlantState }) {
     <header className="sticky top-0 z-40 border-b border-line-strong bg-surface">
       {/* Faixa institucional */}
       <div className="flex items-center gap-4 border-b border-line px-6 py-1.5">
-        <SenaiLogo />
+        <BrandLogo />
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold text-brand">{PLANT.systemName}</h1>
-          <p className="truncate text-sm text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · Mundo SENAI</p>
+          <p className="truncate text-sm text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · {PROJECT.event}</p>
         </div>
         <div className="ml-auto flex items-center gap-6">
           {simulation && (

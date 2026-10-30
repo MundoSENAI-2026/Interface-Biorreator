@@ -1,6 +1,7 @@
 import { PHASES, TAGS, TAG_ORDER, TREND_WINDOW_S, getLimits } from '../config/plant';
 import { plantStore } from '../data/source';
 import { tagStatus, type PlantState } from '../data/store';
+import { AboutProject } from '../components/dashboard/AboutProject';
 import { AlarmBanner } from '../components/dashboard/AlarmBanner';
 import { CommandPanel } from '../components/dashboard/CommandPanel';
 import { MlPanel } from '../components/dashboard/MlPanel';
@@ -140,9 +141,7 @@ export function MaintenanceScreen({ plant }: { plant: PlantState }) {
 export function AboutScreen() {
   return (
     <div className={SCREEN}>
-      <Panel title="Sobre o projeto" className="min-h-0">
-        <p className="text-ink-muted">Conteúdo na etapa de identidade.</p>
-      </Panel>
+      <AboutProject />
     </div>
   );
 }

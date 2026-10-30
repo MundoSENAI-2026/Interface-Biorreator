@@ -1,0 +1,8 @@
+Coloque aqui o arquivo OFICIAL do logotipo SENAI (manual de marca):
+
+  senai-logo.svg
+
+O caminho é definido em src/app/config/project.ts (PROJECT.logoSrc).
+Se usar PNG, ajuste a extensão nesse arquivo.
+Enquanto o arquivo não existir, o cabeçalho mostra um espaço reservado
+indicando onde colocá-lo (o logo não é recriado com texto).
