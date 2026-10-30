@@ -36,6 +36,8 @@ interface TrendChartProps {
   marker?: number;
   limits: TagLimits;
   className?: string;
+  /** Mini gráfico: eixos menores e menos marcações. */
+  compact?: boolean;
 }
 
 const css = (name: string) => `var(${name})`;
@@ -59,11 +61,12 @@ export function niceScale(values: number[], targetTicks = 5): { domain: [number,
  * Tendência da variável: lote atual, lote de ouro com faixa de tolerância
  * (quando houver), linhas de alerta/crítico e tooltip com real × referência.
  */
-export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, formatXLong, marker, limits, className }: TrendChartProps) {
+export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, formatXLong, marker, limits, className, compact }: TrendChartProps) {
+  const axis = compact ? { ...AXIS, fontSize: 13 } : AXIS;
   const fmt = (v: number) => formatNumber(v, decimals);
   const values = rows.flatMap((r) => [r.actual, r.reference, r.band?.[0], r.band?.[1]].filter((v): v is number => v !== undefined));
   for (const l of [limits.warnLo, limits.warnHi, limits.critLo, limits.critHi]) if (l !== undefined) values.push(l);
-  const scale = niceScale(values.length ? values : [0, 1]);
+  const scale = niceScale(values.length ? values : [0, 1], compact ? 3 : 5);
   const tickDecimals = scale.ticks.length > 1 && scale.ticks[1] - scale.ticks[0] < 1 ? decimals : 0;
   const hasReference = rows.some((r) => r.reference !== undefined);
 
@@ -106,28 +109,29 @@ export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, for
   return (
     <div className={cn('h-full min-h-0 w-full', className)}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={rows} margin={{ top: 20, right: 20, bottom: 4, left: 4 }}>
+        <ComposedChart data={rows} margin={compact ? { top: 6, right: 8, bottom: 0, left: 0 } : { top: 20, right: 20, bottom: 4, left: 4 }}>
           <CartesianGrid stroke={css('--line-subtle')} strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="x"
             type="number"
             domain={xDomain}
             ticks={xTicks}
-            tick={AXIS}
+            tick={axis}
             tickLine={false}
             axisLine={{ stroke: css('--line-strong') }}
+            height={compact ? 22 : 30}
             tickFormatter={formatX}
             allowDataOverflow
           />
           <YAxis
             domain={scale.domain}
             ticks={scale.ticks}
-            tick={AXIS}
+            tick={axis}
             tickLine={false}
             axisLine={false}
-            width={64}
+            width={compact ? 44 : 64}
             tickFormatter={(v) => formatNumber(v, tickDecimals)}
-            label={{ value: unit, position: 'insideTopLeft', offset: 0, dy: -14, style: { ...AXIS, fontWeight: 600 } }}
+            label={compact ? undefined : { value: unit, position: 'insideTopLeft', offset: 0, dy: -14, style: { ...AXIS, fontWeight: 600 } }}
           />
           {hasReference && (
             <Area dataKey="band" stroke="none" fill={css('--line-subtle')} fillOpacity={0.8} isAnimationActive={false} activeDot={false} />

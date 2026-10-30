@@ -24,8 +24,8 @@ const STEPS: Step[] = [
     screen: 'overview',
     text: 'Processo normal: fermentação a 37 °C, todas as variáveis dentro dos limites da etapa.',
     run: () => {
-      simulation?.resetToPhase(FERMENTATION, 60);
       simulation?.setAcceleration(10);
+      simulation?.resetToPhase(FERMENTATION, 60);
     },
   },
   { at: 20, text: 'A temperatura sobe e ultrapassa o limite de alerta (39 °C): alarme de prioridade alta.', run: () => simulation?.force('TIT_100_01', 'warning') },

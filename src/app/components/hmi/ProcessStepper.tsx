@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import type { PhaseConfig } from '../../config/plant';
 import type { BatchStatus } from '../../data/types';
-import { formatDuration } from '../../lib/format';
+import { formatDuration, formatDurationShort, formatProgressShort } from '../../lib/format';
 import { cn } from '../ui/utils';
 
 interface ProcessStepperProps {
@@ -28,7 +28,7 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
           <li
             key={phase.id}
             aria-current={current ? 'step' : undefined}
-            className={cn('relative flex min-h-[4rem] flex-col gap-1 px-2.5 py-1.5 transition-colors duration-200', current ? 'bg-st-info-bg' : 'bg-surface')}
+            className={cn('relative flex min-w-0 flex-col gap-0.5 px-2.5 pb-2 pt-1.5 transition-colors duration-200', current ? 'bg-st-info-bg' : 'bg-surface')}
           >
             <div className="flex flex-col items-start gap-1 2xl:flex-row 2xl:items-center 2xl:gap-2">
               <span
@@ -46,19 +46,21 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
                 {phase.name}
               </span>
             </div>
-            <span className="text-[13px] text-ink-muted num">
-              {done && <>Concluída · {formatDuration(durationsS[i] ?? nominalS)}</>}
+            <span
+              className={cn('truncate whitespace-nowrap text-[13px] num', current ? 'font-medium text-st-info' : 'text-ink-muted')}
+              title={current ? `${formatDuration(elapsedS)} de ${formatDuration(nominalS)}` : undefined}
+            >
+              {done && <><span className="hidden 2xl:inline">Concluída · </span>{formatDurationShort(durationsS[i] ?? nominalS)}</>}
               {current && (
                 <>
-                  {status === 'running' ? 'Em curso' : status === 'emergency' ? 'Interrompida' : 'Pausada'} ·{' '}
-                  {formatDuration(elapsedS)}/{formatDuration(nominalS)}
+                  <span className="hidden 2xl:inline">{status === 'running' ? 'Em curso' : status === 'emergency' ? 'Interrompida' : 'Pausada'} · </span>{formatProgressShort(elapsedS, nominalS)}
                 </>
               )}
-              {!done && !current && <>Prevista · {formatDuration(nominalS)}</>}
+              {!done && !current && <><span className="hidden 2xl:inline">Prevista · </span>{formatDurationShort(nominalS)}</>}
             </span>
             {current && (
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-st-info/15">
-                <div className="h-full bg-st-info transition-[width] duration-200" style={{ width: `${progress * 100}%` }} />
+              <div className="absolute inset-x-2.5 bottom-1 h-1 overflow-hidden rounded-full bg-st-info/20" aria-hidden>
+                <div className="h-full rounded-full bg-st-info transition-[width] duration-200" style={{ width: `${progress * 100}%` }} />
               </div>
             )}
           </li>

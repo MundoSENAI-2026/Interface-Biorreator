@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { PHASES, TAGS, TAG_ORDER, TREND_PERIODS, getLimits, type TagId } from '../../config/plant';
-import { goldenCurve, goldenValue } from '../../data/goldenBatch';
+import { phaseTrendRows } from '../../data/batchStats';
 import type { PlantState } from '../../data/store';
 import { formatDuration, formatNumber, formatTime } from '../../lib/format';
-import { TrendChart, niceScale, type TrendRow } from '../hmi/TrendChart';
+import { TrendChart, niceScale } from '../hmi/TrendChart';
 import { cn } from '../ui/utils';
 
 type Period = (typeof TREND_PERIODS)[number]['id'];
@@ -76,13 +76,8 @@ export function TrendsView({ plant }: { plant: PlantState }) {
 
   const chart = useMemo(() => {
     if (period === 'phase') {
-      const band = (ref: number): [number, number] => [ref - limits.tolerance, ref + limits.tolerance];
-      const golden: TrendRow[] = goldenCurve(tag, phaseIndex).map(({ tMin, v }) => ({ x: tMin, reference: v, band: band(v) }));
-      const actual: TrendRow[] = plant.phaseTrace.map((p) => {
-        const ref = goldenValue(tag, phaseIndex, p.tMin);
-        return { x: p.tMin, reference: ref, band: band(ref), actual: p[tag] };
-      });
-      const devs = actual.map((r) => r.actual! - r.reference!);
+      const rows = phaseTrendRows(plant, tag, phaseIndex);
+      const devs = rows.filter((r) => r.actual !== undefined).map((r) => r.actual! - r.reference!);
       const stats: [string, string][] = [
         ['Desvio atual', devs.length ? signed(devs[devs.length - 1]) : '—'],
         ['Desvio médio', devs.length ? `${fmt(devs.reduce((a, d) => a + Math.abs(d), 0) / devs.length)} ${cfg.unit}` : '—'],
@@ -91,7 +86,7 @@ export function TrendsView({ plant }: { plant: PlantState }) {
       ];
       const d = phase.durationMin;
       return {
-        rows: [...golden, ...actual].sort((a, b) => a.x - b.x),
+        rows,
         xDomain: [0, d] as [number, number],
         xTicks: niceScale([0, d], 5).ticks.filter((t) => t <= d),
         formatX: (x: number) => `${formatNumber(x, 0)} min`,

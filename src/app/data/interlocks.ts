@@ -23,7 +23,7 @@ const interlock = (message: string): Block => ({ message, kind: 'interlock' });
 export function manualBlockReason(s: PlcSnapshot | null, commOnline: boolean): string | null {
   if (!commOnline || !s) return 'Sem comunicação com o CLP';
   if (s.batch.status === 'emergency') return 'Parada de emergência ativa: rearme antes de operar';
-  if (s.batch.status === 'running') return 'Processo em automático: pressione STOP para comandar manualmente';
+  if (s.batch.status === 'running') return 'Processo em automático: pressione STOP para operar';
   return null;
 }
 

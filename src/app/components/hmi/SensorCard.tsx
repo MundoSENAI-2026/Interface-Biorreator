@@ -16,6 +16,8 @@ interface SensorCardProps {
   status: TagStatus;
   history: TrendPoint[];
   windowS: number;
+  /** Segundos de processo por segundo real (aceleração da simulação; 1 no CLP real). */
+  processRate?: number;
 }
 
 const ACCENT: Record<TagStatus, string> = {
@@ -32,9 +34,9 @@ const VALUE_STYLE: Record<TagStatus, string> = {
   bad: 'text-ink-muted',
 };
 
-export function SensorCard({ config, value, limits, status, history, windowS }: SensorCardProps) {
+export function SensorCard({ config, value, limits, status, history, windowS, processRate = 1 }: SensorCardProps) {
   const bad = status === 'bad';
-  const slope = slopePerMinute(history);
+  const slope = slopePerMinute(history, processRate);
   const trend = Math.abs(slope) < config.trendThresholdPerMin ? 0 : Math.sign(slope);
   const TrendIcon = trend > 0 ? ArrowUpRight : trend < 0 ? ArrowDownRight : ArrowRight;
   const fmt = (x: number | undefined) => (x === undefined ? '—' : formatNumber(x, config.decimals));
@@ -63,7 +65,7 @@ export function SensorCard({ config, value, limits, status, history, windowS }: 
           <span className="text-4xl font-semibold leading-none tracking-tight 2xl:text-5xl">{value === null ? '—' : formatNumber(value, config.decimals)}</span>
           <span className="text-xl font-medium">{config.unit}</span>
         </div>
-        <div className="mb-1 flex items-center gap-1 whitespace-nowrap text-sm text-ink-muted num" title="Tendência no último minuto">
+        <div className="mb-1 flex items-center gap-1 whitespace-nowrap text-sm text-ink-muted num" title="Taxa de variação por minuto de processo (média móvel)">
           {bad ? (
             'Tendência indisponível'
           ) : (

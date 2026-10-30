@@ -29,6 +29,7 @@ interface CommandButtonProps {
   className?: string;
   /** Classe extra do texto de intertravamento (ex.: ocupar a linha inteira de um grid). */
   reasonClassName?: string;
+  size?: 'md' | 'sm';
 }
 
 const VARIANT = {
@@ -41,7 +42,7 @@ const VARIANT = {
  * Bloqueado = apenas desabilitado; o texto aparece só para intertravamento de
  * segurança (o bloqueio comum é exibido uma única vez pelo painel).
  */
-export function CommandButton({ command, label, icon: Icon, variant = 'secondary', confirm, className, reasonClassName }: CommandButtonProps) {
+export function CommandButton({ command, label, icon: Icon, variant = 'secondary', confirm, className, reasonClassName, size = 'md' }: CommandButtonProps) {
   usePlant(); // reavalia o intertravamento a cada leitura
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -70,7 +71,8 @@ export function CommandButton({ command, label, icon: Icon, variant = 'secondary
         disabled={disabled}
         title={block?.message}
         className={cn(
-          'inline-flex h-10 items-center justify-center gap-2 rounded border px-4 text-[15px] transition-colors duration-150',
+          'inline-flex items-center justify-center gap-2 rounded border transition-colors duration-150',
+          size === 'sm' ? 'h-9 px-3 text-sm' : 'h-10 px-4 text-[15px]',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
           disabled ? 'cursor-not-allowed border-line bg-sunken text-ink-disabled' : VARIANT[variant],
         )}

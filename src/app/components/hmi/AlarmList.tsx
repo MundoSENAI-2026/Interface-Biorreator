@@ -16,11 +16,23 @@ const STATE_ORDER: Record<AlarmState, number> = { active: 0, normalized: 1, ackn
 
 const PRIORITY_LABEL: Record<AlarmPriority, string> = { critical: 'Crítico', warning: 'Alerta' };
 
-export const CATEGORY: Record<EventCategory, { label: string; icon: LucideIcon }> = {
-  alarm: { label: 'Alarme', icon: Bell },
-  process: { label: 'Evento de processo', icon: Activity },
-  operator: { label: 'Ação do operador', icon: UserRound },
+export const CATEGORY: Record<EventCategory, { label: string; short: string; icon: LucideIcon }> = {
+  alarm: { label: 'Alarme', short: 'Alarme', icon: Bell },
+  process: { label: 'Evento de processo', short: 'Processo', icon: Activity },
+  operator: { label: 'Ação do operador', short: 'Operador', icon: UserRound },
 };
+
+/**
+ * Tipo do evento com ícone e cor próprios: alarme na cor da prioridade,
+ * evento de processo em neutro, ação do operador em azul (informação).
+ */
+export function EventTypeBadge({ event, compact }: { event: PlantEvent; compact?: boolean }) {
+  const c = CATEGORY[event.category];
+  if (event.priority) {
+    return <StatusBadge status={event.priority} icon={c.icon} label={compact ? c.short : `Alarme · ${PRIORITY_LABEL[event.priority]}`} className="shrink-0" />;
+  }
+  return <StatusBadge status={event.category === 'operator' ? 'info' : 'neutral'} icon={c.icon} label={compact ? c.short : c.label} className="shrink-0" />;
+}
 
 /** Ordenação ISA-18.2: prioridade, depois não reconhecidos, depois mais recentes. */
 export function sortAlarms(alarms: Alarm[]) {
@@ -195,16 +207,11 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
               </tr>
             ) : (
               filtered.map((e) => {
-                const Icon = CATEGORY[e.category].icon;
                 return (
                   <tr key={e.seq} className="border-t border-line">
                     <td className={cn(td, 'whitespace-nowrap text-ink-default num')}>{formatTime(e.time)}</td>
                     <td className={cn(td, 'whitespace-nowrap')}>
-                      {e.priority ? (
-                        <StatusBadge status={e.priority} icon={Icon} label={`Alarme · ${PRIORITY_LABEL[e.priority]}`} />
-                      ) : (
-                        <StatusBadge status={e.category === 'operator' ? 'info' : 'neutral'} icon={Icon} label={CATEGORY[e.category].label} />
-                      )}
+                      <EventTypeBadge event={e} />
                     </td>
                     <td className={cn(td, 'font-mono text-[13px] text-ink-default')}>{e.source}</td>
                     <td className={cn(td, 'whitespace-nowrap text-ink-default')}>{e.action}</td>

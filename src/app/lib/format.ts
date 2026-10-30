@@ -85,3 +85,17 @@ export function parseLocalDate(iso: string): Date {
 export function pluralize(n: number, singular: string, plural: string): string {
   return `${n} ${Math.abs(n) === 1 ? singular : plural}`;
 }
+
+/** Duração curta para espaços estreitos: "45 min", "1h09". */
+export function formatDurationShort(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m} min`;
+}
+
+/** Par decorrido/total curto e sem quebra: "23/50 min", "1h09/8h00". */
+export function formatProgressShort(elapsedS: number, totalS: number): string {
+  if (totalS < 3600) return `${Math.floor(Math.max(0, elapsedS) / 60)}/${Math.round(totalS / 60)} min`;
+  return `${formatDurationShort(elapsedS)}/${formatDurationShort(totalS)}`;
+}

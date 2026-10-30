@@ -1,8 +1,9 @@
 import { PHASES, TAGS, TAG_ORDER, TREND_WINDOW_S, getLimits } from '../config/plant';
-import { plantStore } from '../data/source';
+import { plantStore, simulation } from '../data/source';
 import { tagStatus, type PlantState } from '../data/store';
 import { AboutProject } from '../components/dashboard/AboutProject';
 import { AlarmBanner } from '../components/dashboard/AlarmBanner';
+import { BatchSummary, PhaseTrendGrid, RecentEvents } from '../components/dashboard/OverviewPanels';
 import { CommandPanel } from '../components/dashboard/CommandPanel';
 import { MlPanel } from '../components/dashboard/MlPanel';
 import { Synoptic } from '../components/dashboard/Synoptic';
@@ -52,6 +53,7 @@ function SensorRow({ plant }: { plant: PlantState }) {
           status={tagStatus(plant, tag)}
           history={plant.history[tag]}
           windowS={TREND_WINDOW_S}
+          processRate={simulation?.acceleration ?? 1}
         />
       ))}
     </div>
@@ -59,18 +61,21 @@ function SensorRow({ plant }: { plant: PlantState }) {
 }
 
 export function OverviewScreen({ plant }: { plant: PlantState }) {
-  const phase = PHASES[plant.snapshot?.batch.phaseIndex ?? 0];
   return (
     <div className={`${SCREEN} grid-rows-[auto_auto_auto_minmax(0,1fr)]`}>
       <Stepper plant={plant} />
       <AlarmBanner alarms={plant.alarms} />
       <SensorRow plant={plant} />
       <div className="grid min-h-0 grid-cols-12 gap-3">
-        <Panel title="Sinótico P&ID · BR-100" subtitle={`Limites da etapa: ${phase.name}`} className="col-span-12 min-h-0 lg:col-span-7" bodyClassName="min-h-0 p-2">
-          <Synoptic plant={plant} compact />
-        </Panel>
-        <Panel title="Comandos principais" subtitle="Válvulas na tela Sinótico (F2)" className="col-span-12 min-h-0 lg:col-span-5" bodyClassName="min-h-0 overflow-auto">
-          <CommandPanel plant={plant} showValves={false} />
+        <div className="col-span-12 grid min-h-0 grid-rows-[minmax(13rem,1fr)_auto] gap-3 xl:col-span-8">
+          <PhaseTrendGrid plant={plant} />
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <BatchSummary plant={plant} />
+            <RecentEvents plant={plant} />
+          </div>
+        </div>
+        <Panel title="Comandos principais" className="col-span-12 min-h-0 xl:col-span-4" bodyClassName="px-4 py-3">
+          <CommandPanel plant={plant} valves="summary" />
         </Panel>
       </div>
     </div>

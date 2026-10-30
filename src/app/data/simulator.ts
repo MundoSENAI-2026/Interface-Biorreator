@@ -50,6 +50,11 @@ const OUTLETS: ValveId[] = ['XV_100_02', 'XV_100_04'];
 
 const noise = (amplitude: number) => (Math.random() - 0.5) * 2 * amplitude;
 
+/** Tempo de processo (s) até `minute` da etapa `phase`, com as etapas anteriores na duração nominal. */
+function elapsedBefore(phase: number, minute: number): number {
+  return PHASES.slice(0, phase).reduce((acc, p) => acc + p.durationMin * 60, 0) + minute * 60;
+}
+
 function lotCode(date: Date): string {
   const ymd = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
   return `${PLANT.batchPrefix}-${ymd}-01`;
@@ -89,7 +94,7 @@ export class Simulator implements DataSource, SimulationControls {
       phaseIndex: phase,
       phaseElapsedS: tMin * 60,
       phaseDurationsS: PHASES.map((p, i) => (i < phase ? p.durationMin * 60 : null)),
-      startedAt: Date.now(),
+      startedAt: Date.now() - (elapsedBefore(phase, tMin) * 1000) / this.acceleration,
     };
     for (const tag of TAG_ORDER) {
       this.base[tag] = goldenValue(tag, phase, tMin);
@@ -193,7 +198,7 @@ export class Simulator implements DataSource, SimulationControls {
       phaseIndex,
       phaseElapsedS: minute * 60,
       phaseDurationsS: PHASES.map((p, i) => (i < phaseIndex ? p.durationMin * 60 : null)),
-      startedAt: this.batch.startedAt,
+      startedAt: Date.now() - (elapsedBefore(phaseIndex, minute) * 1000) / this.acceleration,
     };
     for (const tag of TAG_ORDER) {
       this.base[tag] = goldenValue(tag, phaseIndex, minute);
