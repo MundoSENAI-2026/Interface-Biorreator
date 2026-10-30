@@ -1,0 +1,10 @@
+{
+  "viewport": "1920x1080",
+  "checks": {
+    "fullscreenEntered": true,
+    "cursorHiddenAfterConfiguredDelay": true,
+    "rotatedFromF1ToF2": true,
+    "fullscreenExited": true
+  },
+  "finishedAt": "2026-10-30T17:54:08.120Z"
+}

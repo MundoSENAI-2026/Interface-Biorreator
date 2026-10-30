@@ -1,0 +1,1255 @@
+{
+  "startedAt": "2026-10-30T17:47:30.337Z",
+  "captures": [
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "normal",
+      "tab": "F1",
+      "file": "audit/screens/1920x1080/normal/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "normal",
+      "tab": "F2",
+      "file": "audit/screens/1920x1080/normal/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "normal",
+      "tab": "F3",
+      "file": "audit/screens/1920x1080/normal/f3-tendencias.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "normal",
+      "tab": "F4",
+      "file": "audit/screens/1920x1080/normal/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "normal",
+      "tab": "F5",
+      "file": "audit/screens/1920x1080/normal/f5-manutencao.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "normal",
+      "tab": "F6",
+      "file": "audit/screens/1920x1080/normal/f6-sobre-projeto.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "alerta",
+      "tab": "F1",
+      "file": "audit/screens/1920x1080/alerta/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "alerta",
+      "tab": "F2",
+      "file": "audit/screens/1920x1080/alerta/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "alerta",
+      "tab": "F3",
+      "file": "audit/screens/1920x1080/alerta/f3-tendencias.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "alerta",
+      "tab": "F4",
+      "file": "audit/screens/1920x1080/alerta/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "critico",
+      "tab": "F1",
+      "file": "audit/screens/1920x1080/critico/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "critico",
+      "tab": "F2",
+      "file": "audit/screens/1920x1080/critico/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "critico",
+      "tab": "F3",
+      "file": "audit/screens/1920x1080/critico/f3-tendencias.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "critico",
+      "tab": "F4",
+      "file": "audit/screens/1920x1080/critico/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "alarme-reconhecido",
+      "tab": "F1",
+      "file": "audit/screens/1920x1080/alarme-reconhecido/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "alarme-reconhecido",
+      "tab": "F4",
+      "file": "audit/screens/1920x1080/alarme-reconhecido/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "perda-comunicacao",
+      "tab": "F1",
+      "file": "audit/screens/1920x1080/perda-comunicacao/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "perda-comunicacao",
+      "tab": "F2",
+      "file": "audit/screens/1920x1080/perda-comunicacao/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "perda-comunicacao",
+      "tab": "F4",
+      "file": "audit/screens/1920x1080/perda-comunicacao/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "lote-concluido",
+      "tab": "F1",
+      "file": "audit/screens/1920x1080/lote-concluido/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "lote-concluido",
+      "tab": "F2",
+      "file": "audit/screens/1920x1080/lote-concluido/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "lote-concluido",
+      "tab": "F4",
+      "file": "audit/screens/1920x1080/lote-concluido/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "manual-liberado",
+      "tab": "F1",
+      "file": "audit/screens/1920x1080/manual-liberado/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scenario": "manual-liberado",
+      "tab": "F2",
+      "file": "audit/screens/1920x1080/manual-liberado/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 1080,
+        "clientHeight": 1080
+      },
+      "main": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "scrollHeight": 868,
+        "clientHeight": 868,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "normal",
+      "tab": "F1",
+      "file": "audit/screens/1366x768/normal/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 891,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "normal",
+      "tab": "F2",
+      "file": "audit/screens/1366x768/normal/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "normal",
+      "tab": "F3",
+      "file": "audit/screens/1366x768/normal/f3-tendencias.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "normal",
+      "tab": "F4",
+      "file": "audit/screens/1366x768/normal/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "normal",
+      "tab": "F5",
+      "file": "audit/screens/1366x768/normal/f5-manutencao.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 850,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "normal",
+      "tab": "F6",
+      "file": "audit/screens/1366x768/normal/f6-sobre-projeto.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 887,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "alerta",
+      "tab": "F1",
+      "file": "audit/screens/1366x768/alerta/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 849,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "alerta",
+      "tab": "F2",
+      "file": "audit/screens/1366x768/alerta/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "alerta",
+      "tab": "F3",
+      "file": "audit/screens/1366x768/alerta/f3-tendencias.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "alerta",
+      "tab": "F4",
+      "file": "audit/screens/1366x768/alerta/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "critico",
+      "tab": "F1",
+      "file": "audit/screens/1366x768/critico/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 849,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "critico",
+      "tab": "F2",
+      "file": "audit/screens/1366x768/critico/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "critico",
+      "tab": "F3",
+      "file": "audit/screens/1366x768/critico/f3-tendencias.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "critico",
+      "tab": "F4",
+      "file": "audit/screens/1366x768/critico/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "alarme-reconhecido",
+      "tab": "F1",
+      "file": "audit/screens/1366x768/alarme-reconhecido/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 849,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "alarme-reconhecido",
+      "tab": "F4",
+      "file": "audit/screens/1366x768/alarme-reconhecido/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "perda-comunicacao",
+      "tab": "F1",
+      "file": "audit/screens/1366x768/perda-comunicacao/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 873,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "perda-comunicacao",
+      "tab": "F2",
+      "file": "audit/screens/1366x768/perda-comunicacao/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "perda-comunicacao",
+      "tab": "F4",
+      "file": "audit/screens/1366x768/perda-comunicacao/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "lote-concluido",
+      "tab": "F1",
+      "file": "audit/screens/1366x768/lote-concluido/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 849,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "lote-concluido",
+      "tab": "F2",
+      "file": "audit/screens/1366x768/lote-concluido/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "lote-concluido",
+      "tab": "F4",
+      "file": "audit/screens/1366x768/lote-concluido/f4-alarmes-eventos.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "manual-liberado",
+      "tab": "F1",
+      "file": "audit/screens/1366x768/manual-liberado/f1-visao-geral.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 891,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "scenario": "manual-liberado",
+      "tab": "F2",
+      "file": "audit/screens/1366x768/manual-liberado/f2-sinotico.png",
+      "document": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 768,
+        "clientHeight": 768
+      },
+      "main": {
+        "scrollWidth": 1366,
+        "clientWidth": 1366,
+        "scrollHeight": 800,
+        "clientHeight": 556,
+        "scrollTop": 0
+      },
+      "elementsOutsideHorizontalViewport": []
+    }
+  ],
+  "issues": [],
+  "runs": [
+    {
+      "viewport": "1920x1080",
+      "consoleErrors": [
+        "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `SlotClone`. \n    at AlertDialogOverlay (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:52:3)\n    at http://127.0.0.1:4179/node_modules/.vite/deps/chunk-HDHGXYFG.js?v=01890d62:73:11\n    at http://127.0.0.1:4179/node_modules/.vite/deps/chunk-HDHGXYFG.js?v=01890d62:54:11\n    at http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:219:13\n    at http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:665:22\n    at Presence (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:683:11)\n    at Provider (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:50:15)\n    at DialogPortal (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1745:11)\n    at AlertDialogPortal (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:2010:11)\n    at AlertDialogPortal (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:41:28)\n    at AlertDialogContent (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:77:3)\n    at Provider (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:50:15)\n    at Dialog (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1686:5)\n    at AlertDialog (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1994:11)\n    at AlertDialog (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:21:22)\n    at div\n    at CommandButton (http://127.0.0.1:4179/src/app/components/hmi/CommandButton.tsx:35:33)\n    at div\n    at section\n    at div\n    at CommandPanel (http://127.0.0.1:4179/src/app/components/dashboard/CommandPanel.tsx:101:32)\n    at div\n    at section\n    at Panel (http://127.0.0.1:4179/src/app/components/hmi/Panel.tsx:18:25)\n    at div\n    at div\n    at OverviewScreen (http://127.0.0.1:4179/src/app/pages/screens.tsx:97:34)\n    at main\n    at div\n    at BioreactorRoot (http://127.0.0.1:4179/src/app/pages/BioreactorRoot.tsx:36:17)\n    at div\n    at App"
+      ],
+      "failedRequests": [],
+      "externalRequests": []
+    },
+    {
+      "viewport": "1366x768",
+      "consoleErrors": [
+        "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `SlotClone`. \n    at AlertDialogOverlay (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:52:3)\n    at http://127.0.0.1:4179/node_modules/.vite/deps/chunk-HDHGXYFG.js?v=01890d62:73:11\n    at http://127.0.0.1:4179/node_modules/.vite/deps/chunk-HDHGXYFG.js?v=01890d62:54:11\n    at http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:219:13\n    at http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:665:22\n    at Presence (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:683:11)\n    at Provider (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:50:15)\n    at DialogPortal (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1745:11)\n    at AlertDialogPortal (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:2010:11)\n    at AlertDialogPortal (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:41:28)\n    at AlertDialogContent (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:77:3)\n    at Provider (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:50:15)\n    at Dialog (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1686:5)\n    at AlertDialog (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1994:11)\n    at AlertDialog (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:21:22)\n    at div\n    at CommandButton (http://127.0.0.1:4179/src/app/components/hmi/CommandButton.tsx:35:33)\n    at div\n    at section\n    at div\n    at CommandPanel (http://127.0.0.1:4179/src/app/components/dashboard/CommandPanel.tsx:101:32)\n    at div\n    at section\n    at Panel (http://127.0.0.1:4179/src/app/components/hmi/Panel.tsx:18:25)\n    at div\n    at div\n    at OverviewScreen (http://127.0.0.1:4179/src/app/pages/screens.tsx:97:34)\n    at main\n    at div\n    at BioreactorRoot (http://127.0.0.1:4179/src/app/pages/BioreactorRoot.tsx:36:17)\n    at div\n    at App"
+      ],
+      "failedRequests": [],
+      "externalRequests": []
+    }
+  ],
+  "soak": {
+    "simulatedProcessHours": 10,
+    "acceleration": 300,
+    "realDurationSeconds": 120,
+    "samples": [
+      {
+        "elapsedRealS": 0,
+        "fps": 60,
+        "heapUsedMB": 25,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2295
+      },
+      {
+        "elapsedRealS": 10,
+        "fps": 62,
+        "heapUsedMB": 25,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2186
+      },
+      {
+        "elapsedRealS": 20,
+        "fps": 60,
+        "heapUsedMB": 20,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2440
+      },
+      {
+        "elapsedRealS": 30,
+        "fps": 60,
+        "heapUsedMB": 45,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2389
+      },
+      {
+        "elapsedRealS": 40,
+        "fps": 62,
+        "heapUsedMB": 24,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2387
+      },
+      {
+        "elapsedRealS": 50,
+        "fps": 62,
+        "heapUsedMB": 36,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2387
+      },
+      {
+        "elapsedRealS": 60,
+        "fps": 61,
+        "heapUsedMB": 44,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2387
+      },
+      {
+        "elapsedRealS": 70,
+        "fps": 61,
+        "heapUsedMB": 40,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2387
+      },
+      {
+        "elapsedRealS": 80,
+        "fps": 62,
+        "heapUsedMB": 42,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2387
+      },
+      {
+        "elapsedRealS": 90,
+        "fps": 61,
+        "heapUsedMB": 43,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2387
+      },
+      {
+        "elapsedRealS": 100,
+        "fps": 62,
+        "heapUsedMB": 45,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2387
+      },
+      {
+        "elapsedRealS": 110,
+        "fps": 62,
+        "heapUsedMB": 44,
+        "heapLimitMB": 4192,
+        "title": "BR-100 · Supervisório do Biorreator — SENAI",
+        "pageTextLength": 2379
+      }
+    ],
+    "restarts": [
+      {
+        "iteration": 1,
+        "completedText": "Supervisório do Biorreator\n\nEquipamento BR-100 · Projeto Mundo SENAI 2026\n\nModo demonstração\nDados simulados · velocidade ×300\nOperador 01\n14:51:07\n30/10/2026\nLOTE\nL-BR100-20261030-01\nETAPA ATUAL\n11/11 · Fim Produção\nTEMPO DO LOTE\n10 h 36 min\nPROCESSO\nLote concluído\nSTATUS GERAL\nNormal · sem alarmes\nCOMUNICAÇÃO CLP\nOnline\núltima leitura há 0 s\nPARADA DE EMERGÊNCIA",
+        "startedNewLot": true,
+        "headerAfterStart": "Supervisório do Biorreator\n\nEquipamento BR-100 · Projeto Mundo SENAI 2026\n\nModo demonstração\nDados simulados · velocidade ×300\nOperador 01\n14:51:08\n30/10/2026\nLOTE\nL-BR100-20261030-01\nETAPA ATUAL\n1/11 · Abastecimento\nTEMPO DO LOTE\n5 min\nPROCESSO\nAutomático · em execução\nSTATUS GERAL\nNormal · sem alarmes\nCOMUNICAÇÃO CLP\nOnline\núltima leitura há 0 s\nPARADA DE EMERGÊNCIA"
+      },
+      {
+        "iteration": 2,
+        "completedText": "Supervisório do Biorreator\n\nEquipamento BR-100 · Projeto Mundo SENAI 2026\n\nModo demonstração\nDados simulados · velocidade ×300\nOperador 01\n14:51:09\n30/10/2026\nLOTE\nL-BR100-20261030-01\nETAPA ATUAL\n11/11 · Fim Produção\nTEMPO DO LOTE\n10 h 36 min\nPROCESSO\nLote concluído\nSTATUS GERAL\nNormal · sem alarmes\nCOMUNICAÇÃO CLP\nOnline\núltima leitura há 0 s\nPARADA DE EMERGÊNCIA",
+        "startedNewLot": true,
+        "headerAfterStart": "Supervisório do Biorreator\n\nEquipamento BR-100 · Projeto Mundo SENAI 2026\n\nModo demonstração\nDados simulados · velocidade ×300\nOperador 01\n14:51:10\n30/10/2026\nLOTE\nL-BR100-20261030-01\nETAPA ATUAL\n1/11 · Abastecimento\nTEMPO DO LOTE\n5 min\nPROCESSO\nAutomático · em execução\nSTATUS GERAL\nNormal · sem alarmes\nCOMUNICAÇÃO CLP\nOnline\núltima leitura há 0 s\nPARADA DE EMERGÊNCIA"
+      },
+      {
+        "iteration": 3,
+        "completedText": "Supervisório do Biorreator\n\nEquipamento BR-100 · Projeto Mundo SENAI 2026\n\nModo demonstração\nDados simulados · velocidade ×300\nOperador 01\n14:51:11\n30/10/2026\nLOTE\nL-BR100-20261030-01\nETAPA ATUAL\n11/11 · Fim Produção\nTEMPO DO LOTE\n10 h 36 min\nPROCESSO\nLote concluído\nSTATUS GERAL\nNormal · sem alarmes\nCOMUNICAÇÃO CLP\nOnline\núltima leitura há 0 s\nPARADA DE EMERGÊNCIA",
+        "startedNewLot": true,
+        "headerAfterStart": "Supervisório do Biorreator\n\nEquipamento BR-100 · Projeto Mundo SENAI 2026\n\nModo demonstração\nDados simulados · velocidade ×300\nOperador 01\n14:51:12\n30/10/2026\nLOTE\nL-BR100-20261030-01\nETAPA ATUAL\n1/11 · Abastecimento\nTEMPO DO LOTE\n5 min\nPROCESSO\nAutomático · em execução\nSTATUS GERAL\nNormal · sem alarmes\nCOMUNICAÇÃO CLP\nOnline\núltima leitura há 0 s\nPARADA DE EMERGÊNCIA"
+      }
+    ],
+    "consoleErrors": [
+      "Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s \n\nCheck the render method of `SlotClone`. \n    at AlertDialogOverlay (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:52:3)\n    at http://127.0.0.1:4179/node_modules/.vite/deps/chunk-HDHGXYFG.js?v=01890d62:73:11\n    at http://127.0.0.1:4179/node_modules/.vite/deps/chunk-HDHGXYFG.js?v=01890d62:54:11\n    at http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:219:13\n    at http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:665:22\n    at Presence (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:683:11)\n    at Provider (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:50:15)\n    at DialogPortal (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1745:11)\n    at AlertDialogPortal (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:2010:11)\n    at AlertDialogPortal (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:41:28)\n    at AlertDialogContent (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:77:3)\n    at Provider (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:50:15)\n    at Dialog (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1686:5)\n    at AlertDialog (http://127.0.0.1:4179/node_modules/.vite/deps/@radix-ui_react-alert-dialog.js?v=01890d62:1994:11)\n    at AlertDialog (http://127.0.0.1:4179/src/app/components/ui/alert-dialog.tsx:21:22)\n    at div\n    at CommandButton (http://127.0.0.1:4179/src/app/components/hmi/CommandButton.tsx:35:33)\n    at div\n    at section\n    at div\n    at CommandPanel (http://127.0.0.1:4179/src/app/components/dashboard/CommandPanel.tsx:101:32)\n    at div\n    at section\n    at Panel (http://127.0.0.1:4179/src/app/components/hmi/Panel.tsx:18:25)\n    at div\n    at div\n    at OverviewScreen (http://127.0.0.1:4179/src/app/pages/screens.tsx:97:34)\n    at main\n    at div\n    at BioreactorRoot (http://127.0.0.1:4179/src/app/pages/BioreactorRoot.tsx:36:17)\n    at div\n    at App"
+    ]
+  },
+  "finishedAt": "2026-10-30T17:51:13.039Z"
+}
