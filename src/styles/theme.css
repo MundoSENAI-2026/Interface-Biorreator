@@ -1,91 +1,88 @@
-@custom-variant dark (&:is(.dark *));
-
+/*
+ * Tokens de design da IHM — tema claro único, princípios ISA-101.
+ *
+ * Ajuste aqui as cores oficiais do manual de marca SENAI.
+ * Regras:
+ *  - Fundo e elementos normais em cinzas/brancos neutros.
+ *  - Cor apenas para estados anormais (alerta/crítico) e para ativo/informação.
+ *  - Vermelho da marca (--brand-red) somente no logotipo/cabeçalho.
+ *    Vermelho de alarme (--status-critical) é outro token, reservado a alarmes críticos.
+ *  - Sem brilhos (glow), neon ou gradientes decorativos.
+ */
 :root {
-  --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
-  --destructive: #d4183d;
-  --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
-  --input: transparent;
-  --input-background: #f3f3f5;
-  --switch-background: #cbced4;
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
+  --font-size: 15px;
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', Consolas, 'Courier New', monospace;
 
-.dark {
-  --background: #0a0e14;
-  --foreground: #e0e0e0;
-  --card: #141920;
-  --card-foreground: #e0e0e0;
-  --popover: #141920;
-  --popover-foreground: #e0e0e0;
-  --primary: #00d9ff;
-  --primary-foreground: #0a0e14;
-  --secondary: #1e2530;
-  --secondary-foreground: #e0e0e0;
-  --muted: #1e2530;
-  --muted-foreground: #808080;
-  --accent: #00d9ff;
-  --accent-foreground: #0a0e14;
-  --destructive: #ff3b30;
+  /* Identidade SENAI (valores provisórios — conferir com o manual de marca) */
+  --brand-blue: #004b8d;
+  --brand-blue-strong: #003866;
+  --brand-blue-soft: #e6eef6;
+  --brand-red: #e3262d;
+
+  /* Neutros (ISA-101) */
+  --surface-page: #eceff2;
+  --surface-card: #ffffff;
+  --surface-sunken: #f5f6f8;
+  --line-subtle: #d5dae0;
+  --line-strong: #aab2bc;
+  --text-strong: #1c2430;
+  --text-default: #2f3a47;
+  --text-muted: #5e6a78;
+  --text-disabled: #8d97a3;
+
+  /* Paleta semântica fixa — a mesma em toda a tela */
+  --status-normal: #6b7480;
+  --status-normal-bg: #eef0f3;
+  --status-warning: #e0a000;
+  --status-warning-bg: #fff4d1;
+  --status-warning-text: #6b4a00;
+  --status-critical: #c8102e;
+  --status-critical-bg: #fde8eb;
+  --status-critical-text: #8a0b20;
+  --status-info: #1f63b5;
+  --status-info-bg: #e7f0fb;
+  --status-running: #2e7d32; /* verde: só no indicador de equipamento em operação */
+  --status-offline: #8d97a3;
+  --status-offline-bg: #f0f1f3;
+
+  /* Processo / sinótico */
+  --pipe-idle: #9aa3ad;
+  --pipe-flow: #1f63b5;
+  --liquid: #b9cde3;
+  --vessel: #4a5562;
+
+  /* Tokens consumidos pelos componentes shadcn em ui/ */
+  --background: var(--surface-page);
+  --foreground: var(--text-strong);
+  --card: var(--surface-card);
+  --card-foreground: var(--text-strong);
+  --popover: var(--surface-card);
+  --popover-foreground: var(--text-strong);
+  --primary: var(--brand-blue);
+  --primary-foreground: #ffffff;
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--text-strong);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--brand-blue-soft);
+  --accent-foreground: var(--brand-blue-strong);
+  --destructive: var(--status-critical);
   --destructive-foreground: #ffffff;
-  --border: #2a3240;
-  --input: #1e2530;
-  --ring: #00d9ff;
+  --border: var(--line-subtle);
+  --input: var(--line-strong);
+  --input-background: var(--surface-card);
+  --switch-background: var(--line-strong);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --chart-1: #00d9ff;
-  --chart-2: #00ff88;
-  --chart-3: #ffaa00;
-  --chart-4: #ff3b30;
-  --chart-5: #8b5cf6;
-  --sidebar: #0f1419;
-  --sidebar-foreground: #e0e0e0;
-  --sidebar-primary: #00d9ff;
-  --sidebar-primary-foreground: #0a0e14;
-  --sidebar-accent: #1e2530;
-  --sidebar-accent-foreground: #e0e0e0;
-  --sidebar-border: #2a3240;
-  --sidebar-ring: #00d9ff;
-  --industry-cyan: #00d9ff;
-  --industry-amber: #ffaa00;
-  --industry-red: #ff3b30;
-  --industry-green: #00ff88;
-  --industry-bg-dark: #0a0e14;
-  --industry-bg-card: #141920;
-  --industry-border: #2a3240;
+  --ring: var(--brand-blue);
+  --radius: 0.375rem;
 }
 
 @theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -107,30 +104,39 @@
   --color-input-background: var(--input-background);
   --color-switch-background: var(--switch-background);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-industry-cyan: var(--industry-cyan);
-  --color-industry-amber: var(--industry-amber);
-  --color-industry-red: var(--industry-red);
-  --color-industry-green: var(--industry-green);
-  --color-industry-bg-dark: var(--industry-bg-dark);
-  --color-industry-bg-card: var(--industry-bg-card);
-  --color-industry-border: var(--industry-border);
+
+  --color-brand: var(--brand-blue);
+  --color-brand-strong: var(--brand-blue-strong);
+  --color-brand-soft: var(--brand-blue-soft);
+  --color-brand-red: var(--brand-red);
+
+  --color-page: var(--surface-page);
+  --color-surface: var(--surface-card);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--line-subtle);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--text-strong);
+  --color-ink-default: var(--text-default);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-disabled: var(--text-disabled);
+
+  --color-st-normal: var(--status-normal);
+  --color-st-normal-bg: var(--status-normal-bg);
+  --color-st-warning: var(--status-warning);
+  --color-st-warning-bg: var(--status-warning-bg);
+  --color-st-warning-text: var(--status-warning-text);
+  --color-st-critical: var(--status-critical);
+  --color-st-critical-bg: var(--status-critical-bg);
+  --color-st-critical-text: var(--status-critical-text);
+  --color-st-info: var(--status-info);
+  --color-st-info-bg: var(--status-info-bg);
+  --color-st-running: var(--status-running);
+  --color-st-offline: var(--status-offline);
+  --color-st-offline-bg: var(--status-offline-bg);
 }
 
 @layer base {
@@ -138,58 +144,39 @@
     @apply border-border outline-ring/50;
   }
 
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
-
   html {
     font-size: var(--font-size);
   }
 
-  h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 
-  h2 {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  label {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+  h1, h2, h3, h4 {
+    font-weight: 600;
+    line-height: 1.3;
   }
 
   button {
-    font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
-    line-height: 1.5;
+  }
+}
+
+@layer utilities {
+  /* Valores de processo: números tabulares para não "pularem" ao atualizar */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
   }
 
-  input {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
+  /* Hachura usada quando o dado não é confiável (perda de comunicação) */
+  .bad-quality {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      transparent 0 6px,
+      rgb(141 151 163 / 0.14) 6px 7px
+    );
   }
 }
