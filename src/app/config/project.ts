@@ -11,8 +11,8 @@ export const PROJECT = {
   /** Versão do sistema (vem do package.json). */
   version: pkg.version,
 
-  /** Logotipo oficial: coloque o arquivo em public/brand/ com este nome. */
-  logoSrc: `${import.meta.env.BASE_URL}brand/senai-logo.svg`,
+  /** Logotipo SENAI-SP (arquivo local em public/brand/, funciona offline). */
+  logoSrc: `${import.meta.env.BASE_URL}brand/senai-sp.png`,
 
   objective:
     'Supervisionar um biorreator didático (BR-100) em tempo real: acompanhar as etapas do processo, ' +

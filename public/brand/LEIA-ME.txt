@@ -1,8 +1,6 @@
-Coloque aqui o arquivo OFICIAL do logotipo SENAI (manual de marca):
+senai-sp.png — logotipo SENAI São Paulo (fonte: Wikimedia Commons,
+https://upload.wikimedia.org/wikipedia/commons/8/8c/SENAI_S%C3%A3o_Paulo_logo.png).
 
-  senai-logo.svg
-
-O caminho é definido em src/app/config/project.ts (PROJECT.logoSrc).
-Se usar PNG, ajuste a extensão nesse arquivo.
-Enquanto o arquivo não existir, o cabeçalho mostra um espaço reservado
-indicando onde colocá-lo (o logo não é recriado com texto).
+O arquivo fica local para o sistema funcionar offline. O caminho é definido em
+src/app/config/project.ts (PROJECT.logoSrc). Para trocar pela versão do manual
+de marca, substitua o arquivo mantendo o nome ou ajuste o caminho.
