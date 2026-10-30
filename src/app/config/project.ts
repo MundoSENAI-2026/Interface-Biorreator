@@ -14,23 +14,43 @@ export const PROJECT = {
   /** Logotipo SENAI-SP (arquivo local em public/brand/, funciona offline). */
   logoSrc: `${import.meta.env.BASE_URL}brand/senai-sp.png`,
 
+  title: 'Supervisório do Biorreator BR-100',
+  subtitle: 'Monitoramento, alarmes e manutenção preditiva de um biorreator didático, em uma IHM de alto desempenho.',
+
   objective:
     'Supervisionar um biorreator didático (BR-100) em tempo real: acompanhar as etapas do processo, ' +
     'as variáveis de temperatura, pressão, nível e pH, os alarmes e os intertravamentos de segurança, ' +
     'e usar Machine Learning para antecipar falhas e planejar a manutenção.',
 
-  team: ['Integrante 1', 'Integrante 2', 'Integrante 3'],
-  advisor: 'Nome do(a) orientador(a)',
+  /** Cards "Problema", "Solução" e "Diferenciais" (2–3 linhas cada). */
+  pitch: {
+    problem:
+      'Em biorreatores, um desvio de temperatura ou pressão pode perder o lote inteiro. Telas confusas e alarmes em excesso atrasam a reação do operador.',
+    solution:
+      'Um supervisório que mostra o processo etapa por etapa, compara o lote com o lote de ouro, prioriza alarmes e bloqueia comandos inseguros.',
+    differentials:
+      'IHM no padrão ISA-101, alarmes ISA-18.2 com histórico auditável e Machine Learning que indica o que manter antes da falha.',
+  },
 
-  technologies: [
-    { name: 'React 18 + TypeScript', role: 'Interface do supervisório' },
-    { name: 'Vite', role: 'Build e servidor local (funciona offline)' },
-    { name: 'Tailwind CSS', role: 'Estilos e tokens de cor centralizados' },
-    { name: 'Recharts', role: 'Gráficos de tendência e lote de ouro' },
-    { name: 'Radix UI', role: 'Diálogos de confirmação acessíveis' },
-    { name: 'ISA-101 / ISA-18.2 / ISA-5.1', role: 'IHM de alto desempenho, gestão de alarmes e simbologia' },
-    { name: 'OPC UA / MQTT', role: 'Comunicação com o CLP (camada de dados preparada)' },
+  /** Equipe: nome, função no projeto e curso. */
+  team: [
+    { name: 'Integrante 1', role: 'Interface e IHM', course: 'Curso — nome do curso' },
+    { name: 'Integrante 2', role: 'Automação e CLP', course: 'Curso — nome do curso' },
+    { name: 'Integrante 3', role: 'Dados e Machine Learning', course: 'Curso — nome do curso' },
   ],
+  advisor: { name: 'Nome do(a) orientador(a)', role: 'Orientação técnica' },
+
+  /** Tecnologias em grupos de chips. */
+  techGroups: [
+    { group: 'Interface', items: ['React 18', 'TypeScript', 'Tailwind CSS', 'Radix UI'] },
+    { group: 'Dados e gráficos', items: ['Recharts', 'Store único', 'Simulador de processo'] },
+    { group: 'Comunicação', items: ['OPC UA', 'MQTT'] },
+    { group: 'Normas', items: ['ISA-101', 'ISA-18.2', 'ISA-5.1'] },
+  ],
+
+  /** Link do repositório ou vídeo do projeto para o QR code (vazio = não mostra). */
+  qrLink: '',
+  qrLabel: 'Repositório do projeto',
 };
 
 /** Modo apresentação (tecla P): tela cheia, cursor oculto e abas alternando. */
