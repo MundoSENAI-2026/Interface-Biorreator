@@ -21,6 +21,7 @@ import { SensorCard } from '../components/hmi/SensorCard';
  */
 
 const SCREEN = 'grid h-full min-h-[800px] gap-3 px-4 py-3';
+const OVERVIEW_SCREEN = 'grid h-full min-h-0 gap-3 px-4 py-3';
 
 function Stepper({ plant }: { plant: PlantState }) {
   const s = plant.snapshot;
@@ -64,12 +65,12 @@ function SensorRow({ plant }: { plant: PlantState }) {
 
 export function OverviewScreen({ plant }: { plant: PlantState }) {
   return (
-    <div className={`${SCREEN} grid-rows-[auto_auto_auto_minmax(0,1fr)]`}>
+    <div className={`${OVERVIEW_SCREEN} grid-rows-[auto_auto_auto_minmax(28rem,1fr)]`}>
       <Stepper plant={plant} />
       <AlarmBanner alarms={plant.alarms} lastNormalizedAt={plant.events.find((e) => e.category === 'alarm' && e.action === 'Normalizado')?.time} />
       <SensorRow plant={plant} />
-      <div className="grid min-h-0 grid-cols-12 grid-rows-[minmax(18rem,1fr)] gap-3">
-        <div className="col-span-12 grid min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,1fr)] gap-3 xl:col-span-8">
+      <div className="grid min-h-0 grid-cols-12 grid-rows-[minmax(28rem,1fr)] gap-3">
+        <div className="col-span-12 grid min-h-0 grid-rows-[minmax(13rem,1fr)_minmax(13rem,1fr)] gap-3 xl:col-span-8">
           <PhaseTrendGrid plant={plant} />
           <div className="grid min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
             <BatchSummary plant={plant} />

@@ -64,7 +64,7 @@ export function niceScale(values: number[], targetTicks = 5): { domain: [number,
  * (quando houver), linhas de alerta/crítico e tooltip com real × referência.
  */
 export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, formatXLong, marker, limits, className, compact, minY }: TrendChartProps) {
-  const axis = compact ? { ...AXIS, fontSize: 13 } : AXIS;
+  const axis = compact ? { ...AXIS, fontSize: 10 } : AXIS;
   const fmt = (v: number) => formatNumber(v, decimals);
   const values = rows.flatMap((r) => [r.actual, r.reference, r.band?.[0], r.band?.[1]].filter((v): v is number => v !== undefined));
   for (const l of [limits.warnLo, limits.warnHi, limits.critLo, limits.critHi]) if (l !== undefined) values.push(l);

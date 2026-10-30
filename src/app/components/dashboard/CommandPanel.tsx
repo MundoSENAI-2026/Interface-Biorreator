@@ -180,10 +180,10 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             {VALVES.map((v) => {
               const st = s?.valves[v.id] ?? 'closed';
               return (
-                <li key={v.id} className="grid min-w-0 grid-cols-[1.25rem_1fr] items-center gap-x-1 rounded bg-sunken px-1.5 py-1" title={`${v.short} — ${v.function}: ${v.description}`}>
-                  <ValveGlyph state={st} className="h-3.5 w-5 shrink-0" />
-                  <span className="truncate font-mono text-xs font-medium text-ink">{v.short}</span>
-                  <span className={cn('col-start-2 truncate text-xs', st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
+                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-1" title={`${v.short} — ${v.function}: ${v.description}`}>
+                  <ValveGlyph state={st} className="h-3 w-4 shrink-0" />
+                  <span className="truncate font-mono text-[11px] font-medium text-ink">{v.short}</span>
+                  <span className={cn('col-start-2 truncate text-[10px]', st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
                     {VALVE_STATE_LABEL[st]}
                   </span>
                 </li>

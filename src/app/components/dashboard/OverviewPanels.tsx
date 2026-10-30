@@ -1,4 +1,5 @@
 import { Activity, ArrowRight, Bell, UserRound } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { PHASES, TAGS, TAG_ORDER, getLimits } from '../../config/plant';
 import { alarmStats } from '../../data/alarmStats';
 import { BATCH_NOMINAL_S, batchTiming, phaseConformity, phaseTrendRows } from '../../data/batchStats';
@@ -125,9 +126,20 @@ function MiniMetric({ label, value, detail }: { label: string; value: string; de
 
 /** Latest events in a compact, fixed-height list. */
 export function RecentEvents({ plant }: { plant: PlantState }) {
-  const events = plant.events.slice(0, 8);
+  const listRef = useRef<HTMLUListElement>(null);
+  const [visibleRows, setVisibleRows] = useState(8);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const updateRows = () => setVisibleRows(Math.max(6, Math.min(8, Math.floor(list.clientHeight / 22))));
+    updateRows();
+    const observer = new ResizeObserver(updateRows);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, []);
+  const events = plant.events.slice(0, visibleRows);
   return <Panel title="Últimos eventos" className="min-h-0" bodyClassName="flex min-h-0 flex-col p-4" actions={<button onClick={() => uiStore.navigate('alarms')} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">ver todos (F4) <ArrowRight className="size-4" aria-hidden /></button>}>
-    <ul className="grid min-h-0 flex-1 divide-y divide-line" style={{ gridTemplateRows: `repeat(${Math.max(events.length, 1)}, minmax(0, 1fr))` }}>
+    <ul ref={listRef} className="grid min-h-0 flex-1 divide-y divide-line" style={{ gridTemplateRows: `repeat(${Math.max(events.length, 1)}, minmax(0, 1fr))` }}>
       {events.map((event) => <li key={event.seq} className="grid min-h-0 grid-cols-[3.7rem_1rem_minmax(0,1fr)_5.5rem] items-center gap-2 py-0.5 text-xs">
         <span className="text-ink-muted num">{formatTime(event.time).slice(0, 5)}</span>
         <EventIcon event={event} />
