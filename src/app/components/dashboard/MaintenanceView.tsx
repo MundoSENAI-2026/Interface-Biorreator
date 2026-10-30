@@ -17,6 +17,7 @@ import { ML_MODEL, TAGS, VALVES, type TagId } from '../../config/plant';
 import { daysUntil, formatDate, formatNumber, parseLocalDate, pluralize } from '../../lib/format';
 import { Panel } from '../hmi/Panel';
 import { StatusBadge, type BadgeStatus } from '../hmi/StatusBadge';
+import { Chip, type ChipTone } from '../hmi/Chip';
 import { cn } from '../ui/utils';
 import {
   CartesianGrid,
@@ -45,22 +46,18 @@ function dueStatus(iso: string, today: Date): { kind: DueKind; label: string } {
 }
 
 function DueLabel({ kind, children }: { kind: DueKind; children: React.ReactNode }) {
-  const style = kind === 'overdue'
-    ? 'border-st-critical/40 bg-st-critical-bg text-st-critical-text'
-    : kind === 'soon'
-      ? 'border-st-warning/50 bg-st-warning-bg text-st-warning-text'
-      : 'border-line bg-sunken text-ink-muted';
-  return <span className={cn('inline-flex whitespace-nowrap rounded border px-1.5 py-0.5 text-xs font-medium leading-4', style)}>{children}</span>;
+  const tone: ChipTone = kind === 'overdue' ? 'critical' : kind === 'soon' ? 'warning' : 'neutral';
+  return <Chip label={String(children)} tone={tone} />;
 }
 
-const TASK_STYLE: Record<TaskType, string> = {
-  Preventiva: 'border-line bg-st-normal-bg text-ink-default',
-  Preditiva: 'border-st-info/40 bg-st-info-bg text-st-info',
-  Calibração: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+const TASK_TONE: Record<TaskType, ChipTone> = {
+  Preventiva: 'neutral',
+  Preditiva: 'info',
+  Calibração: 'purple',
 };
 
 function TaskTypeBadge({ type }: { type: TaskType }) {
-  return <span className={cn('inline-flex whitespace-nowrap rounded border px-1.5 py-0.5 text-xs font-medium leading-4', TASK_STYLE[type])}>{type}</span>;
+  return <Chip label={type} tone={TASK_TONE[type]} />;
 }
 
 function DailyChart({

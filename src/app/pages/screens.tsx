@@ -131,7 +131,7 @@ export function AlarmsScreen({ plant }: { plant: PlantState }) {
       </div>
       <div className="grid min-h-0 grid-cols-12 gap-3 xl:grid-rows-1">
         <div className="col-span-12 grid min-h-0 xl:col-span-5">
-          <AlarmIndicators stats={stats} />
+          <AlarmIndicators stats={stats} unacknowledged={plant.alarms.filter((alarm) => alarm.state !== 'acknowledged').length} />
         </div>
         <Panel title="Histórico de alarmes e eventos" subtitle="Trilha de auditoria completa" className="col-span-12 min-h-0 xl:col-span-7" bodyClassName="flex min-h-0 flex-col">
           <HistoryTable events={plant.events} />

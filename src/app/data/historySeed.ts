@@ -88,6 +88,8 @@ export function seedHistory(startedAt: number, phaseIndex: number, phaseElapsedS
 
   // Alarmes já tratados: ativação → reconhecimento pelo operador → normalização
   for (const a of SEED_ALARMS) {
+    // Communication loss is only logged when triggered by simulation or scenario.
+    if (a.kind === 'COMM') continue;
     const t = phaseStartS(a.phase) + a.minute * 60;
     const alarmId = `${a.source}:${a.kind}`;
     const base = { source: a.source, priority: a.priority, level: a.level, alarmId };

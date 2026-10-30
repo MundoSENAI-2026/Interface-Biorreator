@@ -5,28 +5,31 @@ import { LEVEL_LABEL, LEVELS } from '../../data/alarmStats';
 import type { Alarm, AlarmState, EventCategory, IsaPriority, PlantEvent } from '../../data/types';
 import { formatDate, formatTime } from '../../lib/format';
 import { cn } from '../ui/utils';
-import { StatusBadge } from './StatusBadge';
+import { Chip, type ChipTone } from './Chip';
 
 const STATE_ORDER: Record<AlarmState, number> = { active: 0, normalized: 1, acknowledged: 2 };
 const LEVEL_ORDER: Record<IsaPriority, number> = { critica: 0, alta: 1, media: 2, baixa: 3 };
 
-export const CATEGORY: Record<EventCategory, { label: string; short: string; icon: LucideIcon }> = {
-  alarm: { label: 'Alarme', short: 'Alarme', icon: Bell },
-  process: { label: 'Evento de processo', short: 'Processo', icon: Activity },
-  operator: { label: 'Ação do operador', short: 'Operador', icon: UserRound },
+export const CATEGORY: Record<EventCategory, { label: string; icon: LucideIcon }> = {
+  alarm: { label: 'Alarme', icon: Bell },
+  process: { label: 'Evento de processo', icon: Activity },
+  operator: { label: 'Ação do operador', icon: UserRound },
 };
 
 /**
  * Tipo do evento com ícone e cor próprios: alarme na cor da severidade (com a
  * prioridade ISA), evento de processo em neutro, ação do operador em azul.
  */
-export function EventTypeBadge({ event, compact }: { event: PlantEvent; compact?: boolean }) {
+export function EventTypeBadge({ event }: { event: PlantEvent }) {
   const c = CATEGORY[event.category];
-  if (event.category === 'alarm' && event.priority) {
-    const level = event.level ? LEVEL_LABEL[event.level] : '';
-    return <StatusBadge status={event.priority} icon={c.icon} label={compact ? c.short : `Alarme · ${level}`} className="shrink-0" />;
-  }
-  return <StatusBadge status={event.category === 'operator' ? 'info' : 'neutral'} icon={c.icon} label={compact ? c.short : c.label} className="shrink-0" />;
+  const tone: ChipTone = event.category === 'alarm' ? event.priority === 'critical' ? 'critical' : 'warning' : event.category === 'operator' ? 'info' : 'neutral';
+  return <Chip tone={tone} icon={c.icon} label={event.category === 'process' ? 'Processo' : event.category === 'operator' ? 'Operador' : 'Alarme'} className="w-full" title={c.label} />;
+}
+
+function PriorityChip({ event }: { event: PlantEvent }) {
+  if (event.category !== 'alarm' || !event.level) return <Chip label="—" tone="neutral" className="w-full" />;
+  const tone: ChipTone = event.level === 'critica' ? 'critical' : event.level === 'alta' ? 'warning' : event.level === 'media' ? 'info' : 'neutral';
+  return <Chip label={LEVEL_LABEL[event.level]} tone={tone} className="w-full" />;
 }
 
 /** Ordenação ISA-18.2: prioridade, depois não reconhecidos, depois mais recentes. */
@@ -38,7 +41,7 @@ export function sortAlarms(alarms: Alarm[]) {
 
 const th = 'bg-sunken px-3 py-2 text-left text-[13px] font-semibold uppercase tracking-wide text-ink-muted';
 const td = 'px-3 align-middle';
-const ROW_H = 40;
+const ROW_H = 44;
 
 const csvCell = (v: string) => (/[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
@@ -155,16 +158,18 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
         <table className="w-full table-fixed border-collapse text-[15px]">
           <colgroup>
             <col className="w-24" />
-            <col className="w-32 2xl:w-48" />
-            <col className="w-28 2xl:w-32" />
-            <col className="hidden w-40 2xl:table-column" />
+            <col className="w-24" />
+            <col className="w-28" />
+            <col className="w-28" />
+            <col className="hidden w-24 2xl:table-column" />
             <col />
-            <col className="w-36 2xl:w-40" />
+            <col className="w-32" />
           </colgroup>
           <thead>
             <tr>
               <th className={th}>Hora</th>
               <th className={th}>Tipo</th>
+              <th className={th}>Prioridade</th>
               <th className={th}>Origem</th>
               <th className={cn(th, 'hidden 2xl:table-cell')}>Ação</th>
               <th className={th}>Mensagem</th>
@@ -174,20 +179,20 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-ink-muted">Nenhum evento para os filtros escolhidos</td>
+                <td colSpan={7} className="px-3 py-8 text-center text-ink-muted">Nenhum evento para os filtros escolhidos</td>
               </tr>
             ) : (
               rows.map((e) => (
                 <tr key={e.seq} className="border-t border-line" style={{ height: ROW_H }}>
                   <td className={cn(td, 'whitespace-nowrap text-ink-default num')}>{formatTime(e.time)}</td>
                   <td className={cn(td, 'whitespace-nowrap')}>
-                    <span className="2xl:hidden"><EventTypeBadge event={e} compact /></span>
-                    <span className="hidden 2xl:inline"><EventTypeBadge event={e} /></span>
+                    <EventTypeBadge event={e} />
                   </td>
+                  <td><PriorityChip event={e} /></td>
                   <td className={cn(td, 'truncate font-mono text-[13px] text-ink-default')}>{e.source}</td>
-                  <td className={cn(td, 'hidden truncate whitespace-nowrap text-ink-default 2xl:table-cell')}>{e.action}</td>
-                  <td className={cn(td, 'truncate text-ink')} title={e.message}>{e.message}</td>
-                  <td className={cn(td, 'truncate whitespace-nowrap', e.category === 'operator' ? 'font-medium text-st-info' : 'text-ink-muted')}>{e.user}</td>
+                  <td title={e.action} className={cn(td, 'hidden truncate text-ink-default 2xl:table-cell')}>{e.action}</td>
+                  <td className={cn(td, 'whitespace-normal text-ink')} title={e.message}><span className="line-clamp-2 leading-4">{e.message}</span></td>
+                  <td title={e.user ?? ''} className={cn(td, 'truncate whitespace-nowrap', e.category === 'operator' ? 'font-medium text-st-info' : 'text-ink-muted')}>{e.user}</td>
                 </tr>
               ))
             )}

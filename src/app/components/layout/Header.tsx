@@ -31,6 +31,7 @@ export function Header({ plant }: { plant: PlantState }) {
   const s = plant.snapshot;
   const status = overallStatus(plant);
   const activeAlarms = plant.alarms.filter((a) => a.state !== 'normalized');
+  const unacknowledged = plant.alarms.filter((a) => a.state !== 'acknowledged').length;
   const counts = {
     critical: activeAlarms.filter((a) => a.priority === 'critical').length,
     warning: activeAlarms.filter((a) => a.priority === 'warning').length,
@@ -41,12 +42,12 @@ export function Header({ plant }: { plant: PlantState }) {
     ? s.batch.phaseDurationsS.reduce<number>((acc, d) => acc + (d ?? 0), 0) + (s.batch.status === 'completed' ? 0 : s.batch.phaseElapsedS)
     : 0;
 
-  const statusLabel =
-    status === 'critical'
-      ? `Crítico · ${pluralize(counts.critical || 1, 'alarme', 'alarmes')}`
-      : status === 'warning'
-        ? `Alerta · ${pluralize(counts.warning, 'alarme', 'alarmes')}`
-        : 'Normal · sem alarmes';
+  const pendingLabel = unacknowledged ? ` · ${unacknowledged} não reconhecido${unacknowledged === 1 ? '' : 's'}` : '';
+  const statusLabel = status === 'critical'
+    ? `Crítico · ${pluralize(counts.critical || 1, 'alarme', 'alarmes')}${pendingLabel}`
+    : status === 'warning'
+      ? `Alerta · ${pluralize(counts.warning, 'alarme', 'alarmes')}${pendingLabel}`
+      : unacknowledged ? `Normal${pendingLabel}` : 'Normal · sem alarmes';
 
   return (
     <header className="sticky top-0 z-40 border-b border-line-strong bg-surface">

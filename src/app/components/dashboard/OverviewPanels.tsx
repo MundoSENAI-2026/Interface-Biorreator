@@ -1,4 +1,4 @@
-import { Activity, ArrowRight, Bell, UserRound } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { PHASES, TAGS, TAG_ORDER, getLimits } from '../../config/plant';
 import { alarmStats } from '../../data/alarmStats';
@@ -9,6 +9,7 @@ import { tagStatus, type PlantState } from '../../data/store';
 import { uiStore } from '../../data/ui';
 import { formatDateTime, formatDuration, formatNumber, formatTime } from '../../lib/format';
 import { Panel } from '../hmi/Panel';
+import { EventTypeBadge } from '../hmi/AlarmList';
 import { niceScale, TrendChart } from '../hmi/TrendChart';
 import { cn } from '../ui/utils';
 
@@ -140,18 +141,12 @@ export function RecentEvents({ plant }: { plant: PlantState }) {
   const events = plant.events.slice(0, visibleRows);
   return <Panel title="Últimos eventos" className="min-h-0" bodyClassName="flex min-h-0 flex-col p-4" actions={<button onClick={() => uiStore.navigate('alarms')} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">ver todos (F4) <ArrowRight className="size-4" aria-hidden /></button>}>
     <ul ref={listRef} className="grid min-h-0 flex-1 divide-y divide-line" style={{ gridTemplateRows: `repeat(${Math.max(events.length, 1)}, minmax(0, 1fr))` }}>
-      {events.map((event) => <li key={event.seq} className="grid min-h-0 grid-cols-[3.7rem_1rem_minmax(0,1fr)_5.5rem] items-center gap-2 py-0.5 text-xs">
+      {events.map((event) => <li key={event.seq} className="grid min-h-0 grid-cols-[3.7rem_5.5rem_minmax(0,1fr)_5.5rem] items-center gap-2 py-0.5 text-xs">
         <span className="text-ink-muted num">{formatTime(event.time).slice(0, 5)}</span>
-        <EventIcon event={event} />
+        <EventTypeBadge event={event} />
         <span className="min-w-0 truncate text-ink" title={event.message}>{event.message}</span>
         <span className="truncate text-right text-ink-muted" title={event.user ?? 'Sistema (CLP)'}>{event.category === 'operator' ? (event.user ?? 'Operador 01') : 'Sistema (CLP)'}</span>
       </li>)}
     </ul>
   </Panel>;
-}
-
-function EventIcon({ event }: { event: PlantState['events'][number] }) {
-  const Icon = event.category === 'alarm' ? Bell : event.category === 'operator' ? UserRound : Activity;
-  const color = event.category === 'process' ? 'text-ink-muted' : event.category === 'operator' ? 'text-st-info' : event.priority === 'critical' ? 'text-st-critical' : 'text-st-warning-text';
-  return <Icon className={cn('size-3.5', color)} aria-label={event.category} />;
 }

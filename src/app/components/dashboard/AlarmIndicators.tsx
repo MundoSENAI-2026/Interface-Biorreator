@@ -28,7 +28,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 /** Indicadores de desempenho do sistema de alarmes (ISA-18.2). */
-export function AlarmIndicators({ stats }: { stats: AlarmStats }) {
+export function AlarmIndicators({ stats, unacknowledged }: { stats: AlarmStats; unacknowledged: number }) {
   const maxLevel = Math.max(1, ...LEVELS.map((l) => stats.byLevel[l]));
   const rateData = stats.rate.map((b) => ({ label: formatTime(b.start).slice(0, 5), count: b.count }));
   const yMax = Math.max(2, ...rateData.map((d) => d.count));
@@ -38,14 +38,14 @@ export function AlarmIndicators({ stats }: { stats: AlarmStats }) {
     <Panel title="Indicadores de alarmes (ISA-18.2)" className="min-h-0" bodyClassName="flex min-h-0 flex-col gap-3 py-3">
       <dl className="grid grid-cols-3 gap-px overflow-hidden rounded border border-line bg-line">
         <Kpi label="Alarmes no lote" value={String(stats.totalLot)} />
-        <Kpi label="Últimas 24 h" value={String(stats.total24h)} />
+        <Kpi label="Não reconhecidos" value={String(unacknowledged)} />
         <Kpi label="Tempo médio p/ reconhecer" value={stats.meanAckS === null ? '—' : formatDuration(stats.meanAckS)} />
       </dl>
 
       <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
         <section className="flex min-h-0 flex-col">
           <SectionTitle>Por prioridade (lote)</SectionTitle>
-          <ul className="flex flex-1 flex-col justify-center gap-5">
+          <ul className="flex flex-1 flex-col justify-between gap-2">
             {LEVELS.map((l) => (
               <li key={l} className="grid grid-cols-[4rem_1fr_2rem] items-center gap-2 text-[15px]">
                 <span className="text-ink-default">{LEVEL_LABEL[l]}</span>
@@ -63,9 +63,9 @@ export function AlarmIndicators({ stats }: { stats: AlarmStats }) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={rateData} margin={{ top: 6, right: 4, bottom: 0, left: -24 }}>
                 <CartesianGrid stroke={css('--line-subtle')} strokeDasharray="2 4" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 13, fill: css('--text-muted') }} tickLine={false} axisLine={{ stroke: css('--line-strong') }} interval={1} />
+                <XAxis dataKey="label" tick={{ fontSize: 13, fill: css('--text-muted') }} tickLine={false} axisLine={{ stroke: css('--line-strong') }} interval={0} />
                 <YAxis domain={[0, yMax]} allowDecimals={false} tick={{ fontSize: 13, fill: css('--text-muted') }} tickLine={false} axisLine={false} />
-                <ReferenceLine y={ALARM_RATE_TARGET_PER_10MIN} stroke={css('--status-info')} strokeDasharray="5 3" strokeWidth={1.5} />
+                <ReferenceLine y={ALARM_RATE_TARGET_PER_10MIN} stroke={css('--status-info')} strokeDasharray="5 3" strokeWidth={1.5} label={{ value: `Meta ≤ ${ALARM_RATE_TARGET_PER_10MIN}`, position: 'insideTopRight', fill: css('--status-info'), fontSize: 10 }} />
                 <Tooltip
                   cursor={{ fill: css('--surface-sunken') }}
                   isAnimationActive={false}
@@ -75,7 +75,7 @@ export function AlarmIndicators({ stats }: { stats: AlarmStats }) {
                 />
                 <Bar dataKey="count" isAnimationActive={false} radius={[3, 3, 0, 0]}>
                   {rateData.map((d, i) => (
-                    <Cell key={i} fill={d.count > ALARM_RATE_TARGET_PER_10MIN ? css('--status-warning') : css('--text-default')} />
+                    <Cell key={i} fill={d.count > ALARM_RATE_TARGET_PER_10MIN ? css('--status-warning') : css('--line-strong')} />
                   ))}
                 </Bar>
               </BarChart>
@@ -89,7 +89,7 @@ export function AlarmIndicators({ stats }: { stats: AlarmStats }) {
       </div>
 
       <section className="min-h-0">
-        <SectionTitle>Top 5 alarmes mais frequentes (lote)</SectionTitle>
+        <SectionTitle>{stats.top.length < 5 ? 'Top alarmes mais frequentes (lote)' : 'Top 5 alarmes mais frequentes (lote)'}</SectionTitle>
         {stats.top.length === 0 ? (
           <p className="text-[15px] text-ink-muted">Nenhum alarme registrado neste lote.</p>
         ) : (
