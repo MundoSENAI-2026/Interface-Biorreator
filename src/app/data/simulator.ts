@@ -114,8 +114,8 @@ export class Simulator implements DataSource, SimulationControls {
       await new Promise((r) => setTimeout(r, 800));
       return { ok: false, reason: 'Sem resposta do CLP' };
     }
-    const reason = blockReason(cmd, this.last ?? this.snapshot(), true);
-    if (reason) return { ok: false, reason };
+    const block = blockReason(cmd, this.last ?? this.snapshot(), true);
+    if (block) return { ok: false, reason: block.message };
 
     switch (cmd.type) {
       case 'start':

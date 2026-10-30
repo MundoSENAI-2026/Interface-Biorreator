@@ -28,7 +28,7 @@ export function ValveGlyph({ state, className }: { state: ValveState; className?
     <svg viewBox="0 0 24 16" className={cn('h-4 w-6', className)} aria-hidden>
       <path
         d="M2 2 L12 8 L2 14 Z M22 2 L12 8 L22 14 Z"
-        className={fill}
+        className={cn(fill, 'transition-[fill,stroke] duration-200')}
         strokeWidth={1.5}
         strokeLinejoin="round"
         strokeDasharray={state === 'transition' ? '2 2' : undefined}
@@ -37,21 +37,18 @@ export function ValveGlyph({ state, className }: { state: ValveState; className?
   );
 }
 
-interface ValveControlProps {
-  valve: ValveConfig;
-  state: ValveState;
-  sharedReason?: string | null;
-}
-
-export function ValveControl({ valve, state, sharedReason }: ValveControlProps) {
+export function ValveControl({ valve, state }: { valve: ValveConfig; state: ValveState }) {
   const opening = state !== 'open';
   return (
-    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-2.5 gap-y-1.5 rounded border border-line bg-surface px-2.5 py-2" title={`${valve.short} — ${valve.description}`}>
-      <ValveGlyph state={state} className="shrink-0" />
-      <div className="min-w-0 flex-1">
+    <div
+      className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1 rounded border border-line bg-surface px-3 py-2"
+      title={`${valve.short} — ${valve.description}`}
+    >
+      <ValveGlyph state={state} />
+      <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-mono text-sm font-medium text-ink">{valve.short}</span>
-          <span className="text-sm text-ink-default">{valve.function}</span>
+          <span className="font-mono text-[15px] font-medium text-ink">{valve.short}</span>
+          <span className="truncate text-sm text-ink-default">{valve.function}</span>
         </div>
         <StatusBadge status={VALVE_BADGE[state]} label={VALVE_STATE_LABEL[state]} className="mt-1" />
       </div>
@@ -60,7 +57,6 @@ export function ValveControl({ valve, state, sharedReason }: ValveControlProps) 
         reasonClassName="col-span-full"
         command={{ type: 'valve', id: valve.id, open: opening }}
         label={opening ? 'Abrir' : 'Fechar'}
-        sharedReason={sharedReason}
         confirm={
           valve.confirm
             ? {

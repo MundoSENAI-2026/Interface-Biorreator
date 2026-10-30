@@ -28,12 +28,12 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
           <li
             key={phase.id}
             aria-current={current ? 'step' : undefined}
-            className={cn('relative flex min-h-[5rem] flex-col gap-1 px-2 py-2', current ? 'bg-st-info-bg' : 'bg-surface')}
+            className={cn('relative flex min-h-[4rem] flex-col gap-1 px-2.5 py-1.5 transition-colors duration-200', current ? 'bg-st-info-bg' : 'bg-surface')}
           >
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-start gap-1 2xl:flex-row 2xl:items-center 2xl:gap-2">
               <span
                 className={cn(
-                  'flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold num',
+                  'flex size-6 shrink-0 items-center justify-center rounded-full border text-[13px] font-semibold num',
                   done && 'border-ink-default bg-ink-default text-white',
                   current && 'border-st-info bg-st-info text-white',
                   !done && !current && 'border-line-strong bg-surface text-ink-muted',
@@ -42,23 +42,23 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
               >
                 {done ? <Check className="size-3" strokeWidth={3} /> : i + 1}
               </span>
-              <span className={cn('text-[12.5px] leading-tight', current ? 'font-semibold text-st-info' : done ? 'text-ink' : 'text-ink-muted')}>
+              <span className={cn('text-sm leading-tight 2xl:text-[15px]', current ? 'font-semibold text-st-info' : done ? 'text-ink' : 'text-ink-muted')}>
                 {phase.name}
               </span>
             </div>
-            <span className="text-[11px] text-ink-muted num">
+            <span className="text-[13px] text-ink-muted num">
               {done && <>Concluída · {formatDuration(durationsS[i] ?? nominalS)}</>}
               {current && (
                 <>
-                  {status === 'running' ? 'Em andamento' : status === 'emergency' ? 'Interrompida' : 'Pausada'} ·{' '}
-                  {formatDuration(elapsedS)} / {formatDuration(nominalS)}
+                  {status === 'running' ? 'Em curso' : status === 'emergency' ? 'Interrompida' : 'Pausada'} ·{' '}
+                  {formatDuration(elapsedS)}/{formatDuration(nominalS)}
                 </>
               )}
               {!done && !current && <>Prevista · {formatDuration(nominalS)}</>}
             </span>
             {current && (
               <div className="absolute inset-x-0 bottom-0 h-1 bg-st-info/15">
-                <div className="h-full bg-st-info" style={{ width: `${progress * 100}%` }} />
+                <div className="h-full bg-st-info transition-[width] duration-200" style={{ width: `${progress * 100}%` }} />
               </div>
             )}
           </li>

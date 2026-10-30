@@ -1,4 +1,4 @@
-import { User, Wifi, WifiOff } from 'lucide-react';
+import { MonitorPlay, User, Wifi, WifiOff } from 'lucide-react';
 import { PHASES, PLANT } from '../../config/plant';
 import { overallStatus, type PlantState } from '../../data/store';
 import { simulation } from '../../data/source';
@@ -27,9 +27,9 @@ function SenaiLogo() {
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('flex min-w-0 flex-col justify-center gap-0.5', className)}>
-      <span className="text-[11px] font-medium uppercase tracking-wide text-ink-muted">{label}</span>
-      <div className="truncate text-sm font-medium text-ink">{children}</div>
+    <div className={cn('flex shrink-0 flex-col justify-center gap-0.5', className)}>
+      <span className="text-[13px] font-medium uppercase tracking-wide text-ink-muted">{label}</span>
+      <div className="whitespace-nowrap text-base font-medium text-ink">{children}</div>
     </div>
   );
 }
@@ -58,33 +58,45 @@ export function Header({ plant }: { plant: PlantState }) {
   return (
     <header className="sticky top-0 z-40 border-b border-line-strong bg-surface">
       {/* Faixa institucional */}
-      <div className="flex items-center gap-4 border-b border-line px-6 py-2">
+      <div className="flex items-center gap-4 border-b border-line px-6 py-1.5">
         <SenaiLogo />
         <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold text-brand">{PLANT.systemName}</h1>
-          <p className="truncate text-xs text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · Mundo SENAI</p>
+          <h1 className="truncate text-xl font-semibold text-brand">{PLANT.systemName}</h1>
+          <p className="truncate text-sm text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · Mundo SENAI</p>
         </div>
         <div className="ml-auto flex items-center gap-6">
-          <div className="flex items-center gap-2 text-sm text-ink-default">
+          {simulation && (
+            <span className="group relative inline-flex items-center gap-1.5 rounded border border-dashed border-line-strong px-2 py-1 text-sm text-ink-muted">
+              <MonitorPlay className="size-4" aria-hidden />
+              Modo demonstração
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute right-0 top-full z-50 mt-1 whitespace-nowrap rounded border border-line bg-surface px-2 py-1 text-[13px] text-ink-default opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 num"
+              >
+                Dados simulados · velocidade ×{simulation.acceleration}
+              </span>
+            </span>
+          )}
+          <div className="flex items-center gap-2 text-base text-ink-default">
             <User className="size-4 text-ink-muted" aria-hidden />
             <span>{PLANT.operator}</span>
           </div>
           <div className="text-right num">
-            <div className="text-lg font-semibold leading-tight text-ink">{formatTime(plant.now)}</div>
-            <div className="text-xs text-ink-muted">{formatDate(plant.now)}</div>
+            <div className="text-2xl font-semibold leading-tight text-ink">{formatTime(plant.now)}</div>
+            <div className="text-sm text-ink-muted">{formatDate(plant.now)}</div>
           </div>
         </div>
       </div>
 
       {/* Faixa de estado do processo */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 bg-sunken px-6 py-2">
+      <div className="flex items-center gap-x-4 bg-sunken px-6 py-1.5 2xl:gap-x-6">
         <Field label="Lote">
           <span className="font-mono">{s?.batch.lot ?? '—'}</span>
         </Field>
         <Field label="Etapa atual" className="min-w-36">
           {s ? `${s.batch.phaseIndex + 1}/${PHASES.length} · ${PHASES[s.batch.phaseIndex].name}` : '—'}
         </Field>
-        <Field label="Tempo do lote">
+        <Field label="Tempo do lote" className="hidden 2xl:flex">
           <span className="num">{s ? formatDuration(batchElapsedS) : '—'}</span>
         </Field>
         <Field label="Processo">
@@ -102,17 +114,16 @@ export function Header({ plant }: { plant: PlantState }) {
             ) : (
               <StatusBadge status="transition" label="Conectando" />
             )}
-            <span className={cn('text-xs num', plant.comm === 'offline' ? 'font-semibold text-st-critical-text' : 'text-ink-muted')}>
-              {ageS === null ? 'sem leitura' : `última leitura há ${ageS} s`}
+            <span className={cn('text-sm num', plant.comm === 'offline' ? 'font-semibold text-st-critical-text' : 'text-ink-muted')}>
+              {ageS === null ? 'sem leitura' : (
+                <>
+                  <span className="hidden 2xl:inline">última leitura </span>há {ageS} s
+                </>
+              )}
             </span>
-            {simulation && (
-              <span className="rounded border border-dashed border-line-strong px-1.5 py-0.5 text-[11px] text-ink-muted num">
-                Simulação ×{simulation.acceleration}
-              </span>
-            )}
           </div>
         </Field>
-        <div className="ml-auto flex items-center border-l border-line-strong pl-5">
+        <div className="ml-auto flex shrink-0 items-center border-l border-line-strong pl-4 2xl:pl-6">
           <EmergencyButton status={s?.batch.status ?? null} />
         </div>
       </div>

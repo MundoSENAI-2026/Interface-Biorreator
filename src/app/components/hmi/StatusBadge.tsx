@@ -60,8 +60,8 @@ export function StatusBadge({ status, label, icon, size = 'sm', className }: Sta
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap rounded border font-medium leading-none',
-        size === 'lg' ? 'px-3 py-2 text-sm' : size === 'md' ? 'px-2.5 py-1.5 text-[13px]' : 'px-2 py-1 text-xs',
+        'inline-flex items-center gap-1.5 whitespace-nowrap rounded border font-medium leading-none transition-colors duration-200',
+        size === 'lg' ? 'px-3 py-2 text-base' : size === 'md' ? 'px-2.5 py-1.5 text-sm' : 'px-2 py-1 text-[13px]',
         variant.className,
         className,
       )}

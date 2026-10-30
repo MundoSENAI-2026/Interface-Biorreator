@@ -16,7 +16,7 @@ import { SensorCard } from '../components/hmi/SensorCard';
  * rolagem); abaixo da altura mínima o <main> rola (ex.: notebook 1366×768).
  */
 
-const SCREEN = 'grid h-full min-h-[820px] gap-3 p-4';
+const SCREEN = 'grid h-full min-h-[800px] gap-3 px-4 py-3';
 
 function Stepper({ plant }: { plant: PlantState }) {
   const s = plant.snapshot;

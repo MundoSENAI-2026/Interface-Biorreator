@@ -13,7 +13,7 @@ import {
 } from '../config/plant';
 import { formatWithUnit } from '../lib/format';
 import { goldenValue } from './goldenBatch';
-import { blockReason, manualBlockReason } from './interlocks';
+import { blockReason, manualBlockReason, type Block } from './interlocks';
 import type {
   Alarm,
   AlarmKind,
@@ -134,7 +134,7 @@ export class PlantStore {
 
   // ─── Comandos ────────────────────────────────────────────────────────────
 
-  blockReason(cmd: Command): string | null {
+  blockReason(cmd: Command): Block | null {
     return blockReason(cmd, this.state.snapshot, this.state.comm === 'online');
   }
 
@@ -144,11 +144,11 @@ export class PlantStore {
 
   async send(cmd: Command): Promise<CommandResult> {
     const label = COMMAND_LABEL[cmd.type](cmd);
-    const reason = this.blockReason(cmd);
-    if (reason) {
-      this.logOperator('Bloqueado', 'Operador', `${label} — bloqueado: ${reason}`);
+    const block = this.blockReason(cmd);
+    if (block) {
+      this.logOperator('Bloqueado', 'Operador', `${label} — bloqueado: ${block.message}`);
       this.emit();
-      return { ok: false, reason };
+      return { ok: false, reason: block.message };
     }
     // Registra o comando antes do envio, para que apareça antes das mudanças que ele causa
     this.logOperator('Comando', 'Operador', label);

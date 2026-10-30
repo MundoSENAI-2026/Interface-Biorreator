@@ -29,7 +29,7 @@ export function MlPanel({ now }: { now: number }) {
       <section className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+            <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">
               Probabilidade de falha · próximos {horizonDays} dias
             </h3>
             <p className="text-3xl font-semibold text-ink num">{pct(p)}</p>
@@ -73,7 +73,7 @@ export function MlPanel({ now }: { now: number }) {
       {/* Recomendações, manutenção, modelo */}
       <section className="flex flex-col gap-4">
         <div>
-          <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Recomendações</h3>
+          <h3 className="mb-1.5 text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Recomendações</h3>
           <ol className="list-decimal space-y-1.5 pl-5 text-[13px] leading-snug text-ink">
             {recommendations.map((r) => (
               <li key={r}>{r}</li>
@@ -86,7 +86,7 @@ export function MlPanel({ now }: { now: number }) {
             <div className="flex items-start gap-2">
               <Wrench className="mt-0.5 size-4 text-ink-muted" aria-hidden />
               <div>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Próxima manutenção</h3>
+                <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Próxima manutenção</h3>
                 <p className="text-sm font-medium text-ink">{formatDateLong(parseLocalDate(MAINTENANCE.nextDate))}</p>
                 <p className="text-xs text-ink-muted">{MAINTENANCE.description}</p>
               </div>

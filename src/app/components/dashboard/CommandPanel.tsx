@@ -7,18 +7,16 @@ import { StatusBadge } from '../hmi/StatusBadge';
 import { ValveControl } from '../hmi/ValveControl';
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{children}</h3>;
+  return <h3 className="mb-1.5 text-sm font-semibold uppercase tracking-wide text-ink-muted">{children}</h3>;
 }
 
 function EquipmentRow({ name, tag, badge, children }: { name: string; tag: string; badge: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-1.5 rounded border border-line px-3 py-2.5">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-sm font-medium text-ink">{name}</span>
-          <span className="font-mono text-xs text-ink-muted">{tag}</span>
-        </div>
-        <div className="mt-1.5">{badge}</div>
+    <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded border border-line px-3 py-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[15px] font-medium text-ink">{name}</span>
+        <span className="font-mono text-[13px] text-ink-muted">{tag}</span>
+        {badge}
       </div>
       {children}
     </div>
@@ -33,8 +31,7 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
   const phaseName = s ? PHASES[s.batch.phaseIndex].name : '';
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Processo */}
+    <div className="flex flex-col gap-3">
       <section>
         <SectionTitle>Processo</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
@@ -66,8 +63,9 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
         </div>
       </section>
 
+      {/* Único aviso de bloqueio comum (o cadeado aparece só aqui) */}
       {shared && (
-        <div className="flex items-start gap-2 rounded border border-line bg-sunken px-3 py-2 text-xs text-ink-default" role="status">
+        <div className="flex items-start gap-2 rounded border border-line bg-sunken px-3 py-2 text-sm text-ink-default" role="status">
           {status === 'running' ? <Info className="mt-0.5 size-4 shrink-0 text-st-info" aria-hidden /> : <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />}
           <span>
             <strong className="font-semibold">Comandos manuais bloqueados.</strong> {shared}.
@@ -75,19 +73,17 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
         </div>
       )}
 
-      {/* Equipamentos */}
       <section>
         <SectionTitle>Equipamentos</SectionTitle>
         <div className="flex flex-col gap-2">
           <EquipmentRow
             name={EQUIPMENT.motor.name}
-            tag={EQUIPMENT.motor.id}
+            tag={EQUIPMENT.motor.short}
             badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={s?.motorOn ? 'Ligado' : 'Desligado'} />}
           >
             <CommandButton
               className="contents"
               reasonClassName="col-span-full"
-              sharedReason={shared}
               command={{ type: 'motor', on: !s?.motorOn }}
               label={s?.motorOn ? 'Desligar' : 'Ligar'}
               icon={s?.motorOn ? PowerOff : Power}
@@ -95,13 +91,12 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
           </EquipmentRow>
           <EquipmentRow
             name={EQUIPMENT.pump.name}
-            tag={EQUIPMENT.pump.id}
+            tag={EQUIPMENT.pump.short}
             badge={<StatusBadge status={s?.pumpOn ? 'running' : 'stopped'} label={s?.pumpOn ? 'Ligada' : 'Desligada'} />}
           >
             <CommandButton
               className="contents"
               reasonClassName="col-span-full"
-              sharedReason={shared}
               command={{ type: 'pump', on: !s?.pumpOn }}
               label={s?.pumpOn ? 'Desligar' : 'Ligar'}
               icon={s?.pumpOn ? PowerOff : Power}
@@ -118,7 +113,7 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
           </EquipmentRow>
           <EquipmentRow
             name={EQUIPMENT.manway.name}
-            tag={EQUIPMENT.manway.id}
+            tag={EQUIPMENT.manway.short}
             badge={
               s?.manwayOpen
                 ? <StatusBadge status="warning" icon={DoorOpen} label="Aberta" />
@@ -128,7 +123,6 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
             <CommandButton
               className="contents"
               reasonClassName="col-span-full"
-              sharedReason={shared}
               command={{ type: 'manway', open: !s?.manwayOpen }}
               label={s?.manwayOpen ? 'Fechar' : 'Abrir'}
               confirm={
@@ -145,16 +139,15 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
         </div>
       </section>
 
-      {/* Válvulas */}
       {showValves && (
-      <section>
-        <SectionTitle>Válvulas</SectionTitle>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {VALVES.map((v) => (
-            <ValveControl key={v.id} valve={v} state={s?.valves[v.id] ?? 'closed'} sharedReason={shared} />
-          ))}
-        </div>
-      </section>
+        <section>
+          <SectionTitle>Válvulas</SectionTitle>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {VALVES.map((v) => (
+              <ValveControl key={v.id} valve={v} state={s?.valves[v.id] ?? 'closed'} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

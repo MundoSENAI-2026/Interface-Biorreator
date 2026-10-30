@@ -48,9 +48,14 @@ export interface TagConfig {
   name: string;
   unit: string;
   decimals: number;
-  /** Faixa do instrumento (escala da barra). */
+  /** Escala de engenharia fixa (valores redondos): 0–150 °C, 0–100 %, 0–2 kgf/cm², 0–14 pH. */
   rangeMin: number;
   rangeMax: number;
+  /**
+   * Passo "redondo" do zoom da barra de faixas: quando os limites da etapa ocupam
+   * pouco da escala, a barra mostra só a faixa da etapa, com extremos múltiplos deste passo.
+   */
+  zoomStep: number;
   /** Histerese para normalizar um alarme (evita alarmes "piscando"). */
   deadband: number;
   /** Variação mínima por minuto para mostrar seta de tendência. */
@@ -60,19 +65,19 @@ export interface TagConfig {
 export const TAGS: Record<TagId, TagConfig> = {
   TIT_100_01: {
     id: 'TIT_100_01', isa: 'TIT 100-01', name: 'Temperatura', unit: '°C',
-    decimals: 1, rangeMin: 0, rangeMax: 150, deadband: 0.5, trendThresholdPerMin: 0.3,
+    decimals: 1, rangeMin: 0, rangeMax: 150, zoomStep: 5, deadband: 0.5, trendThresholdPerMin: 0.3,
   },
   LIT_100_01: {
     id: 'LIT_100_01', isa: 'LIT 100-01', name: 'Nível', unit: '%',
-    decimals: 1, rangeMin: 0, rangeMax: 100, deadband: 1, trendThresholdPerMin: 0.5,
+    decimals: 1, rangeMin: 0, rangeMax: 100, zoomStep: 10, deadband: 1, trendThresholdPerMin: 0.5,
   },
   PIT_100_01: {
     id: 'PIT_100_01', isa: 'PIT 100-01', name: 'Pressão', unit: 'kgf/cm²',
-    decimals: 2, rangeMin: 0, rangeMax: 2, deadband: 0.03, trendThresholdPerMin: 0.02,
+    decimals: 2, rangeMin: 0, rangeMax: 2, zoomStep: 0.1, deadband: 0.03, trendThresholdPerMin: 0.02,
   },
   AIT_100_01: {
     id: 'AIT_100_01', isa: 'AIT 100-01', name: 'pH', unit: 'pH',
-    decimals: 2, rangeMin: 0, rangeMax: 14, deadband: 0.05, trendThresholdPerMin: 0.02,
+    decimals: 2, rangeMin: 0, rangeMax: 14, zoomStep: 0.5, deadband: 0.05, trendThresholdPerMin: 0.02,
   },
 };
 

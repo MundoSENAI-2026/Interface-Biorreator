@@ -83,7 +83,7 @@ export function SimulationPanel() {
 
       <div className="flex flex-col gap-4 p-4 text-sm">
         <section className="flex flex-col gap-2">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Forçar variável (limites da etapa atual)</h3>
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Forçar variável (limites da etapa atual)</h3>
           {TAG_ORDER.map((tag: TagId) => (
             <div key={tag} className="flex items-center justify-between gap-2">
               <span className="text-ink">
@@ -95,7 +95,7 @@ export function SimulationPanel() {
         </section>
 
         <section className="flex flex-col gap-2 border-t border-line pt-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Comunicação e equipamentos</h3>
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Comunicação e equipamentos</h3>
           <div className="flex items-center justify-between gap-2">
             <span className="text-ink">Comunicação com o CLP</span>
             <Segmented
@@ -124,7 +124,7 @@ export function SimulationPanel() {
         </section>
 
         <section className="flex flex-col gap-2 border-t border-line pt-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Tempo de processo</h3>
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Tempo de processo</h3>
           <div className="flex items-center justify-between gap-2">
             <span className="text-ink">Aceleração</span>
             <Segmented

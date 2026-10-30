@@ -6,7 +6,7 @@ import { CommandButton } from '../hmi/CommandButton';
 
 /**
  * Parada de emergência: separada dos demais comandos, formato e cor próprios
- * (vermelho sobre anel amarelo, como o botoeira física). Atua sem confirmação.
+ * (vermelho sólido, reservado a emergência/crítico). Atua sem confirmação.
  */
 export function EmergencyButton({ status }: { status: BatchStatus | null }) {
   const [error, setError] = useState<string | null>(null);
@@ -38,12 +38,12 @@ export function EmergencyButton({ status }: { status: BatchStatus | null }) {
       <button
         type="button"
         onClick={trigger}
-        className="inline-flex items-center gap-2 rounded-md border-[3px] border-st-warning bg-st-critical px-4 py-2 text-sm font-bold uppercase tracking-wide text-white hover:bg-st-critical-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-st-critical"
+        className="inline-flex h-12 items-center gap-2 rounded-md bg-st-critical px-5 text-base font-bold uppercase tracking-wide text-white transition-colors duration-150 hover:bg-st-critical-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-st-critical"
       >
-        <OctagonX className="size-5" aria-hidden />
+        <OctagonX className="size-6" aria-hidden />
         Parada de emergência
       </button>
-      {error && <span className="text-xs text-st-critical-text">{error}</span>}
+      {error && <span className="text-[13px] text-st-critical-text">{error}</span>}
     </div>
   );
 }
