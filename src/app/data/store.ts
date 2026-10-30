@@ -4,7 +4,7 @@ import {
   PHASES,
   TAGS,
   TAG_ORDER,
-  TREND_WINDOW_S,
+  HISTORY_WINDOW_S,
   VALVES,
   getLimits,
   type TagId,
@@ -173,7 +173,7 @@ export class PlantStore {
     const phaseChanged = s.batch.phaseIndex !== prev.tracePhaseIndex || (prev.snapshot?.batch.lot ?? s.batch.lot) !== s.batch.lot;
 
     const history = { ...prev.history };
-    const cutoff = now - TREND_WINDOW_S * 1000;
+    const cutoff = now - HISTORY_WINDOW_S * 1000;
     for (const tag of TAG_ORDER) {
       const points = prev.history[tag].filter((p) => p.t >= cutoff);
       points.push({ t: now, v: s.tags[tag] });

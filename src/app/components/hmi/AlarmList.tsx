@@ -23,7 +23,7 @@ const PRIORITY_LABEL = { critical: 'Crítico', warning: 'Alerta', info: 'Informa
 const STATE_ORDER: Record<AlarmState, number> = { active: 0, normalized: 1, acknowledged: 2 };
 
 /** Ordenação ISA-18.2: prioridade, depois não reconhecidos, depois mais recentes. */
-function sortAlarms(alarms: Alarm[]) {
+export function sortAlarms(alarms: Alarm[]) {
   return [...alarms].sort(
     (a, b) =>
       (a.priority === b.priority ? 0 : a.priority === 'critical' ? -1 : 1) ||
@@ -82,7 +82,7 @@ export function AlarmList({ alarms, events, onAcknowledge, onAcknowledgeAll }: A
   );
 }
 
-function ActiveTable({ alarms, onAcknowledge }: { alarms: Alarm[]; onAcknowledge: (id: string) => void }) {
+export function ActiveTable({ alarms, onAcknowledge }: { alarms: Alarm[]; onAcknowledge: (id: string) => void }) {
   if (alarms.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center rounded border border-dashed border-line py-8 text-sm text-ink-muted">
@@ -91,7 +91,7 @@ function ActiveTable({ alarms, onAcknowledge }: { alarms: Alarm[]; onAcknowledge
     );
   }
   return (
-    <div className="max-h-[22rem] flex-1 overflow-auto rounded border border-line">
+    <div className="min-h-0 flex-1 overflow-auto rounded border border-line">
       <table className="w-full border-collapse text-[13px]">
         <thead className="sticky top-0 bg-sunken">
           <tr>
@@ -147,7 +147,7 @@ function ActiveTable({ alarms, onAcknowledge }: { alarms: Alarm[]; onAcknowledge
 
 const EVENT_TYPES: EventType[] = ['Ativado', 'Reconhecido', 'Normalizado', 'Comando', 'Bloqueado'];
 
-function HistoryTable({ events }: { events: AlarmEvent[] }) {
+export function HistoryTable({ events }: { events: AlarmEvent[] }) {
   const [priority, setPriority] = useState<'all' | AlarmEvent['priority']>('all');
   const [type, setType] = useState<'all' | EventType>('all');
   const [query, setQuery] = useState('');
@@ -165,7 +165,7 @@ function HistoryTable({ events }: { events: AlarmEvent[] }) {
   const select = 'h-8 rounded border border-line-strong bg-surface px-2 text-sm text-ink';
 
   return (
-    <div className="flex flex-1 flex-col gap-2">
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor="hist-priority">Prioridade</label>
         <select id="hist-priority" className={select} value={priority} onChange={(e) => setPriority(e.target.value as typeof priority)}>
@@ -192,7 +192,7 @@ function HistoryTable({ events }: { events: AlarmEvent[] }) {
           />
         </div>
       </div>
-      <div className="max-h-[19rem] overflow-auto rounded border border-line">
+      <div className="min-h-0 flex-1 overflow-auto rounded border border-line">
         <table className="w-full border-collapse text-[13px]">
           <thead className="sticky top-0 bg-sunken">
             <tr>

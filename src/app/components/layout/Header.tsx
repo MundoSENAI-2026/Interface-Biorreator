@@ -3,7 +3,7 @@ import { PHASES, PLANT } from '../../config/plant';
 import { overallStatus, type PlantState } from '../../data/store';
 import { simulation } from '../../data/source';
 import type { BatchStatus } from '../../data/types';
-import { formatDate, formatTime, pluralize } from '../../lib/format';
+import { formatDate, formatDuration, formatTime, pluralize } from '../../lib/format';
 import { EmergencyButton } from '../dashboard/EmergencyButton';
 import { StatusBadge, type BadgeStatus } from '../hmi/StatusBadge';
 import { cn } from '../ui/utils';
@@ -44,6 +44,9 @@ export function Header({ plant }: { plant: PlantState }) {
   };
   const ageS = plant.lastReadAt ? Math.max(0, Math.round((plant.now - plant.lastReadAt) / 1000)) : null;
   const batchStatus = s ? BATCH_STATUS[s.batch.status] : null;
+  const batchElapsedS = s
+    ? s.batch.phaseDurationsS.reduce<number>((acc, d) => acc + (d ?? 0), 0) + (s.batch.status === 'completed' ? 0 : s.batch.phaseElapsedS)
+    : 0;
 
   const statusLabel =
     status === 'critical'
@@ -80,6 +83,9 @@ export function Header({ plant }: { plant: PlantState }) {
         </Field>
         <Field label="Etapa atual" className="min-w-36">
           {s ? `${s.batch.phaseIndex + 1}/${PHASES.length} · ${PHASES[s.batch.phaseIndex].name}` : '—'}
+        </Field>
+        <Field label="Tempo do lote">
+          <span className="num">{s ? formatDuration(batchElapsedS) : '—'}</span>
         </Field>
         <Field label="Processo">
           {batchStatus ? <StatusBadge status={batchStatus.badge} label={batchStatus.label} /> : '—'}

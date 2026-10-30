@@ -23,6 +23,17 @@ export const COMM_TIMEOUT_MS = 5_000;
 /** Janela das mini-tendências nos cards (tempo real). */
 export const TREND_WINDOW_S = 5 * 60;
 
+/** Histórico em memória para a tela de Tendências (tempo real). */
+export const HISTORY_WINDOW_S = 30 * 60;
+
+/** Períodos selecionáveis na tela de Tendências (s); 'phase' = etapa atual × lote de ouro. */
+export const TREND_PERIODS: { id: 'phase' | number; label: string }[] = [
+  { id: 'phase', label: 'Etapa atual' },
+  { id: 5 * 60, label: '5 min' },
+  { id: 15 * 60, label: '15 min' },
+  { id: 30 * 60, label: '30 min' },
+];
+
 /** Número máximo de notificações visíveis ao mesmo tempo. */
 export const MAX_VISIBLE_TOASTS = 3;
 

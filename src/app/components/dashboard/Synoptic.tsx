@@ -109,14 +109,14 @@ export function Synoptic({ plant }: { plant: PlantState }) {
   const isFlowing = (line: Line) => s.valves[line.valve] === 'open' && (!line.needsPump || s.pumpOn);
 
   return (
-    <div>
+    <div className="flex h-full min-h-0 flex-col">
       {bad && (
         <div className="mb-2 flex items-center gap-2 rounded border border-st-offline bg-st-offline-bg px-3 py-1.5 text-xs font-medium text-ink-default">
           <WifiOff className="size-4" aria-hidden />
           Comunicação perdida — valores e estados exibidos não são confiáveis
         </div>
       )}
-      <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className={bad ? 'w-full opacity-60 grayscale' : 'w-full'} role="img" aria-label="Diagrama P&ID do biorreator BR-100">
+      <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className={bad ? 'min-h-0 w-full flex-1 opacity-60 grayscale' : 'min-h-0 w-full flex-1'} role="img" aria-label="Diagrama P&ID do biorreator BR-100">
         <defs>
           <marker id="arrow-flow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M0,0 L8,4 L0,8 Z" className="fill-st-info" />

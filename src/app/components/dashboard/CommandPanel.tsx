@@ -25,7 +25,8 @@ function EquipmentRow({ name, tag, badge, children }: { name: string; tag: strin
   );
 }
 
-export function CommandPanel({ plant }: { plant: PlantState }) {
+/** showValves=false: só comandos principais (processo e equipamentos), para a Visão Geral. */
+export function CommandPanel({ plant, showValves = true }: { plant: PlantState; showValves?: boolean }) {
   const s = plant.snapshot;
   const shared = plantStore.manualBlockReason();
   const status = s?.batch.status;
@@ -145,6 +146,7 @@ export function CommandPanel({ plant }: { plant: PlantState }) {
       </section>
 
       {/* Válvulas */}
+      {showValves && (
       <section>
         <SectionTitle>Válvulas</SectionTitle>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -153,6 +155,7 @@ export function CommandPanel({ plant }: { plant: PlantState }) {
           ))}
         </div>
       </section>
+      )}
     </div>
   );
 }
