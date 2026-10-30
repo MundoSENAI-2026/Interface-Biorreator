@@ -107,13 +107,17 @@ export class PlantStore {
 
   subscribe = (listener: Listener) => {
     this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   };
 
   /** Notificado apenas quando um alarme é ATIVADO (não a cada leitura). */
   onAlarmRaised(listener: AlarmListener) {
     this.alarmListeners.add(listener);
-    return () => this.alarmListeners.delete(listener);
+    return () => {
+      this.alarmListeners.delete(listener);
+    };
   }
 
   // ─── Comandos ────────────────────────────────────────────────────────────
