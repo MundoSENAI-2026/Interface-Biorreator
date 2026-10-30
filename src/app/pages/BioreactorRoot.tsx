@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { plantStore, usePlant } from '../data/source';
 import { Header } from '../components/layout/Header';
 import { TankSchematic } from '../components/dashboard/TankSchematic';
 import { GaugeCard } from '../components/dashboard/GaugeCard';
@@ -9,64 +10,16 @@ import { Thermometer, Droplets, Gauge, FlaskConical } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function BioreactorRoot() {
-  const [temperature, setTemperature] = useState(127.3);
-  const [level, setLevel] = useState(68.5);
-  const [pressure, setPressure] = useState(0.85);
-  const [ph, setPh] = useState(6.8);
-
+  const plant = usePlant();
   useEffect(() => {
-    const interval = setInterval(() => {
-      setTemperature(prev => {
-        const variation = (Math.random() - 0.5) * 2;
-        const newTemp = prev + variation;
-
-        if (newTemp >= 130) {
-          toast.error('ALERTA: Temperatura crítica ultrapassada!', {
-            duration: 3000,
-          });
-        } else if (newTemp >= 128) {
-          toast.warning('ATENÇÃO: Temperatura se aproximando do limite crítico', {
-            duration: 2000,
-          });
-        }
-
-        return Math.max(120, Math.min(135, newTemp));
-      });
-
-      setLevel(prev => {
-        const variation = (Math.random() - 0.5) * 1.5;
-        const newLevel = prev + variation;
-
-        if (newLevel >= 75) {
-          toast.warning('ATENÇÃO: Nível do tanque alto', {
-            duration: 2000,
-          });
-        }
-
-        return Math.max(60, Math.min(80, newLevel));
-      });
-
-      setPressure(prev => {
-        const variation = (Math.random() - 0.5) * 0.05;
-        const newPressure = prev + variation;
-
-        if (newPressure >= 0.95) {
-          toast.error('ALERTA: Pressão elevada detectada!', {
-            duration: 3000,
-          });
-        }
-
-        return Math.max(0.7, Math.min(1.1, newPressure));
-      });
-
-      setPh(prev => {
-        const variation = (Math.random() - 0.5) * 0.2;
-        return Math.max(6.0, Math.min(7.5, prev + variation));
-      });
-    }, 3000);
-
-    return () => clearInterval(interval);
+    plantStore.start();
+    return () => plantStore.stop();
   }, []);
+  const tags = plant.snapshot?.tags;
+  const temperature = tags?.TIT_100_01 ?? 0;
+  const level = tags?.LIT_100_01 ?? 0;
+  const pressure = tags?.PIT_100_01 ?? 0;
+  const ph = tags?.AIT_100_01 ?? 0;
 
   const handleEmergencyStop = () => {
     toast.error('PARADA DE EMERGÊNCIA ACIONADA!', {

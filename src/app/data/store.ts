@@ -1,0 +1,308 @@
+import {
+  COMM_TIMEOUT_MS,
+  EQUIPMENT,
+  PHASES,
+  TAGS,
+  TAG_ORDER,
+  TREND_WINDOW_S,
+  VALVES,
+  getLimits,
+  type TagId,
+} from '../config/plant';
+import { formatWithUnit } from '../lib/format';
+import { goldenValue } from './goldenBatch';
+import { blockReason } from './interlocks';
+import type {
+  Alarm,
+  AlarmEvent,
+  AlarmKind,
+  AlarmPriority,
+  Command,
+  CommandResult,
+  CommStatus,
+  DataSource,
+  OverallStatus,
+  PhaseTracePoint,
+  PlcSnapshot,
+  TrendPoint,
+} from './types';
+
+const MAX_EVENTS = 500;
+const TRACE_POINTS_PER_PHASE = 400;
+
+export interface PlantState {
+  /** Última leitura recebida do CLP (fonte única de verdade para todos os componentes). */
+  snapshot: PlcSnapshot | null;
+  lastReadAt: number | null;
+  now: number;
+  comm: CommStatus;
+  history: Record<TagId, TrendPoint[]>;
+  phaseTrace: PhaseTracePoint[];
+  tracePhaseIndex: number;
+  /** Lista de alarmes ativos / reconhecidos / normalizados não reconhecidos. */
+  alarms: Alarm[];
+  /** Histórico (mais recente primeiro). */
+  events: AlarmEvent[];
+  /** Limites baixos armados na etapa atual (ver armLowAfterSetpoint). */
+  lowArmed: Record<TagId, boolean>;
+}
+
+type Listener = () => void;
+type AlarmListener = (alarm: Alarm) => void;
+
+const COMMAND_LABEL: Record<Command['type'], (c: any) => string> = {
+  start: () => 'START do processo',
+  stop: () => 'STOP do processo',
+  emergency: () => 'PARADA DE EMERGÊNCIA',
+  resetEmergency: () => 'Rearme da emergência',
+  valve: (c) => `${c.open ? 'Abrir' : 'Fechar'} ${VALVES.find((v) => v.id === c.id)?.short}`,
+  motor: (c) => `${c.on ? 'Ligar' : 'Desligar'} ${EQUIPMENT.motor.name.toLowerCase()}`,
+  pump: (c) => `${c.on ? 'Ligar' : 'Desligar'} ${EQUIPMENT.pump.name.toLowerCase()}`,
+  manway: (c) => `${c.open ? 'Abrir' : 'Fechar'} ${EQUIPMENT.manway.name.toLowerCase()}`,
+};
+
+const emptyByTag = <T,>(make: () => T) =>
+  Object.fromEntries(TAG_ORDER.map((t) => [t, make()])) as Record<TagId, T>;
+
+/**
+ * Store único da planta. Recebe as leituras do DataSource, mantém histórico,
+ * avalia alarmes (ISA-18.2) e encaminha comandos com intertravamento.
+ * Componentes não têm lógica de processo: apenas leem daqui.
+ */
+export class PlantStore {
+  private state: PlantState;
+  private listeners = new Set<Listener>();
+  private alarmListeners = new Set<AlarmListener>();
+  private seq = 0;
+  private startedAt = Date.now();
+  private watchdog: ReturnType<typeof setInterval> | null = null;
+
+  constructor(readonly source: DataSource) {
+    this.state = {
+      snapshot: null,
+      lastReadAt: null,
+      now: Date.now(),
+      comm: 'connecting',
+      history: emptyByTag<TrendPoint[]>(() => []),
+      phaseTrace: [],
+      tracePhaseIndex: -1,
+      alarms: [],
+      events: [],
+      lowArmed: emptyByTag(() => false),
+    };
+  }
+
+  start() {
+    this.startedAt = Date.now();
+    this.source.start((s) => this.onSnapshot(s));
+    this.watchdog = setInterval(() => this.checkComm(), 1000);
+  }
+
+  stop() {
+    this.source.stop();
+    if (this.watchdog) clearInterval(this.watchdog);
+  }
+
+  getState = () => this.state;
+
+  subscribe = (listener: Listener) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
+
+  /** Notificado apenas quando um alarme é ATIVADO (não a cada leitura). */
+  onAlarmRaised(listener: AlarmListener) {
+    this.alarmListeners.add(listener);
+    return () => this.alarmListeners.delete(listener);
+  }
+
+  // ─── Comandos ────────────────────────────────────────────────────────────
+
+  blockReason(cmd: Command): string | null {
+    return blockReason(cmd, this.state.snapshot, this.state.comm === 'online');
+  }
+
+  async send(cmd: Command): Promise<CommandResult> {
+    const label = COMMAND_LABEL[cmd.type](cmd);
+    const reason = this.blockReason(cmd);
+    if (reason) {
+      this.log('Bloqueado', 'info', 'Operador', `${label} — ${reason}`);
+      this.emit();
+      return { ok: false, reason };
+    }
+    const result = await this.source.send(cmd);
+    this.log(result.ok ? 'Comando' : 'Bloqueado', 'info', 'Operador',
+      result.ok ? label : `${label} — ${result.reason}`);
+    this.emit();
+    return result;
+  }
+
+  acknowledge(id: string) {
+    const now = Date.now();
+    const alarms: Alarm[] = [];
+    for (const a of this.state.alarms) {
+      if (a.id !== id || a.state === 'acknowledged') {
+        alarms.push(a);
+        continue;
+      }
+      this.log('Reconhecido', a.priority, a.source, a.message);
+      // Normalizado + reconhecido sai da lista de ativos
+      if (a.state === 'active') alarms.push({ ...a, state: 'acknowledged', acknowledgedAt: now });
+    }
+    this.state = { ...this.state, alarms };
+    this.emit();
+  }
+
+  acknowledgeAll() {
+    for (const a of this.state.alarms) if (a.state !== 'acknowledged') this.acknowledge(a.id);
+  }
+
+  // ─── Leituras ────────────────────────────────────────────────────────────
+
+  private onSnapshot(s: PlcSnapshot) {
+    const now = Date.now();
+    const prev = this.state;
+    const phaseChanged = s.batch.phaseIndex !== prev.tracePhaseIndex || (prev.snapshot?.batch.lot ?? s.batch.lot) !== s.batch.lot;
+
+    const history = { ...prev.history };
+    const cutoff = now - TREND_WINDOW_S * 1000;
+    for (const tag of TAG_ORDER) {
+      const points = prev.history[tag].filter((p) => p.t >= cutoff);
+      points.push({ t: now, v: s.tags[tag] });
+      history[tag] = points;
+    }
+
+    const tMin = s.batch.phaseElapsedS / 60;
+    let phaseTrace = phaseChanged ? [] : prev.phaseTrace;
+    const minStep = PHASES[s.batch.phaseIndex].durationMin / TRACE_POINTS_PER_PHASE;
+    const lastPoint = phaseTrace[phaseTrace.length - 1];
+    if (!lastPoint || tMin - lastPoint.tMin >= minStep) {
+      phaseTrace = [...phaseTrace, { tMin, ...s.tags }];
+    }
+
+    const lowArmed = phaseChanged ? emptyByTag(() => false) : { ...prev.lowArmed };
+    // Arma os limites baixos quando a RECEITA atinge o setpoint (fim da rampa),
+    // e não pelo valor medido — um distúrbio na rampa não deve armá-los.
+    for (const tag of TAG_ORDER) {
+      const lim = getLimits(tag, s.batch.phaseIndex);
+      const ref = goldenValue(tag, s.batch.phaseIndex, tMin);
+      if (!lowArmed[tag] && Math.abs(ref - lim.setpoint) <= lim.tolerance) lowArmed[tag] = true;
+    }
+
+    this.state = {
+      ...prev,
+      snapshot: s,
+      lastReadAt: now,
+      now,
+      comm: 'online',
+      history,
+      phaseTrace,
+      tracePhaseIndex: s.batch.phaseIndex,
+      lowArmed,
+    };
+
+    this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', false);
+    this.evaluateProcessAlarms(s);
+    this.emit();
+  }
+
+  private checkComm() {
+    const now = Date.now();
+    const ref = this.state.lastReadAt ?? this.startedAt;
+    const lost = now - ref > COMM_TIMEOUT_MS;
+    const comm: CommStatus = lost ? 'offline' : this.state.lastReadAt ? 'online' : 'connecting';
+    this.state = { ...this.state, now, comm };
+    if (lost) this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', true);
+    this.emit();
+  }
+
+  // ─── Alarmes ─────────────────────────────────────────────────────────────
+
+  private evaluateProcessAlarms(s: PlcSnapshot) {
+    const phase = s.batch.phaseIndex;
+    for (const tag of TAG_ORDER) {
+      const cfg = TAGS[tag];
+      const lim = getLimits(tag, phase);
+      const v = s.tags[tag];
+      const db = cfg.deadband;
+      const lowArmed = !lim.armLowAfterSetpoint || this.state.lowArmed[tag];
+      const fmt = (x: number) => formatWithUnit(x, cfg.decimals, cfg.unit);
+      const isActive = (kind: AlarmKind) =>
+        this.state.alarms.some((a) => a.id === `${tag}:${kind}` && a.state !== 'normalized');
+
+      const check = (kind: AlarmKind, limit: number | undefined, high: boolean, priority: AlarmPriority, label: string) => {
+        let on = false;
+        if (limit !== undefined && (high || lowArmed)) {
+          const threshold = isActive(kind) ? (high ? limit - db : limit + db) : limit;
+          on = high ? v >= threshold : v <= threshold;
+        }
+        this.setAlarm(`${tag}:${kind}`, tag, kind, priority,
+          `${cfg.name} ${label} (limite ${fmt(limit ?? 0)})`, on);
+      };
+
+      check('HH', lim.critHi, true, 'critical', 'muito alta');
+      check('H', lim.warnHi, true, 'warning', 'alta');
+      check('L', lim.warnLo, false, 'warning', 'baixa');
+      check('LL', lim.critLo, false, 'critical', 'muito baixa');
+    }
+
+    for (const v of VALVES) {
+      this.setAlarm(`${v.id}:FAULT`, v.id, 'FAULT', 'warning',
+        `${v.short} (${v.function.toLowerCase()}) em falha — sem confirmação de posição`, s.valves[v.id] === 'fault');
+    }
+
+    this.setAlarm('ESD:ESD', 'ESD', 'ESD', 'critical', 'Parada de emergência acionada', s.batch.status === 'emergency');
+  }
+
+  private setAlarm(id: string, source: string, kind: AlarmKind, priority: AlarmPriority, message: string, on: boolean) {
+    const now = Date.now();
+    const existing = this.state.alarms.find((a) => a.id === id);
+
+    if (on) {
+      if (existing && existing.state !== 'normalized') return;
+      const alarm: Alarm = { id, source, kind, priority, message, state: 'active', activatedAt: now };
+      const others = this.state.alarms.filter((a) => a.id !== id);
+      this.state = { ...this.state, alarms: [alarm, ...others] };
+      this.log('Ativado', priority, source, message);
+      for (const l of this.alarmListeners) l(alarm);
+      return;
+    }
+
+    if (!existing || existing.state === 'normalized') return;
+    this.log('Normalizado', existing.priority, source, existing.message);
+    const alarms = existing.state === 'acknowledged'
+      ? this.state.alarms.filter((a) => a.id !== id)
+      : this.state.alarms.map((a) => (a.id === id ? { ...a, state: 'normalized' as const, normalizedAt: now } : a));
+    this.state = { ...this.state, alarms };
+  }
+
+  private log(type: AlarmEvent['type'], priority: AlarmEvent['priority'], source: string, message: string) {
+    const event: AlarmEvent = { seq: ++this.seq, time: Date.now(), type, priority, source, message };
+    this.state = { ...this.state, events: [event, ...this.state.events].slice(0, MAX_EVENTS) };
+  }
+
+  private emit() {
+    for (const l of this.listeners) l();
+  }
+}
+
+// ─── Derivações (sem estado próprio) ──────────────────────────────────────
+
+/** Status geral derivado dos alarmes ativos e da comunicação. */
+export function overallStatus(state: PlantState): OverallStatus {
+  if (state.comm === 'offline') return 'critical';
+  const active = state.alarms.filter((a) => a.state !== 'normalized');
+  if (active.some((a) => a.priority === 'critical')) return 'critical';
+  if (active.some((a) => a.priority === 'warning')) return 'warning';
+  return 'normal';
+}
+
+export type TagStatus = 'normal' | 'warning' | 'critical' | 'bad';
+
+export function tagStatus(state: PlantState, tag: TagId): TagStatus {
+  if (state.comm !== 'online') return 'bad';
+  const active = state.alarms.filter((a) => a.source === tag && a.state !== 'normalized');
+  if (active.some((a) => a.priority === 'critical')) return 'critical';
+  if (active.length) return 'warning';
+  return 'normal';
+}
