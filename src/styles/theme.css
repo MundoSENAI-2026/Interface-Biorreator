@@ -180,3 +180,10 @@
     );
   }
 }
+
+@theme inline {
+  --color-vessel: var(--vessel);
+  --color-pipe-flow: var(--pipe-flow);
+  --color-pipe-idle: var(--pipe-idle);
+  --color-liquid: var(--liquid);
+}

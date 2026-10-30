@@ -5,6 +5,14 @@ import type { Command, PlcSnapshot } from './types';
 const fmtTag = (tag: keyof typeof TAGS, v: number) =>
   formatWithUnit(v, TAGS[tag].decimals, TAGS[tag].unit);
 
+/** Motivo comum que bloqueia TODOS os comandos manuais (ou null). */
+export function manualBlockReason(s: PlcSnapshot | null, commOnline: boolean): string | null {
+  if (!commOnline || !s) return 'Sem comunicação com o CLP';
+  if (s.batch.status === 'emergency') return 'Parada de emergência ativa: rearme antes de operar';
+  if (s.batch.status === 'running') return 'Processo em automático: pressione STOP para comandar manualmente';
+  return null;
+}
+
 /**
  * Intertravamentos: devolve o motivo do bloqueio ou null se o comando é permitido.
  * Usado pela IHM (para mostrar o motivo) e pelo simulador (que recusa o comando),
@@ -30,9 +38,8 @@ export function blockReason(cmd: Command, s: PlcSnapshot | null, commOnline: boo
   }
 
   // Comandos manuais só com a sequência automática parada
-  if (status === 'running') {
-    return 'Processo em automático: pressione STOP para comandar manualmente';
-  }
+  const manual = manualBlockReason(s, commOnline);
+  if (manual) return manual;
 
   const pressure = s.tags.PIT_100_01;
   const temperature = s.tags.TIT_100_01;

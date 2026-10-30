@@ -28,9 +28,9 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
           <li
             key={phase.id}
             aria-current={current ? 'step' : undefined}
-            className={cn('relative flex min-h-[4.25rem] flex-col gap-1 px-2.5 py-2', current ? 'bg-st-info-bg' : 'bg-surface')}
+            className={cn('relative flex min-h-[5rem] flex-col gap-1 px-2 py-2', current ? 'bg-st-info-bg' : 'bg-surface')}
           >
-            <div className="flex items-center gap-1.5">
+            <div className="flex flex-col items-start gap-1">
               <span
                 className={cn(
                   'flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold num',
@@ -42,7 +42,7 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
               >
                 {done ? <Check className="size-3" strokeWidth={3} /> : i + 1}
               </span>
-              <span className={cn('text-[13px] leading-tight', current ? 'font-semibold text-st-info' : done ? 'text-ink' : 'text-ink-muted')}>
+              <span className={cn('text-[12.5px] leading-tight', current ? 'font-semibold text-st-info' : done ? 'text-ink' : 'text-ink-muted')}>
                 {phase.name}
               </span>
             </div>

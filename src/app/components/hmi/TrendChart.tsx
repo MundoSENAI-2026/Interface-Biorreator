@@ -33,13 +33,20 @@ interface TrendChartProps {
 const css = (name: string) => `var(${name})`;
 const AXIS = { fontSize: 11, fill: css('--text-muted') };
 
-function niceDomain(rows: TrendRow[], limits: TagLimits): [number, number] {
+/** Escala "redonda" (passos 1/2/5 × 10ⁿ) cobrindo dados, tolerância e limites. */
+function niceScale(rows: TrendRow[], limits: TagLimits): { domain: [number, number]; ticks: number[] } {
   const values = rows.flatMap((r) => [r.band[0], r.band[1], r.actual ?? r.reference]);
   for (const l of [limits.warnLo, limits.warnHi, limits.critLo, limits.critHi]) if (l !== undefined) values.push(l);
   const lo = Math.min(...values);
   const hi = Math.max(...values);
-  const pad = Math.max((hi - lo) * 0.06, 0.01);
-  return [lo - pad, hi + pad];
+  const raw = Math.max((hi - lo) / 5, 0.01);
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw)!;
+  const start = Math.floor(lo / step) * step;
+  const end = Math.ceil(hi / step) * step;
+  const ticks: number[] = [];
+  for (let v = start; v <= end + step / 2; v += step) ticks.push(Number(v.toFixed(6)));
+  return { domain: [start, end], ticks };
 }
 
 /**
@@ -48,6 +55,7 @@ function niceDomain(rows: TrendRow[], limits: TagLimits): [number, number] {
  */
 export function TrendChart({ rows, unit, decimals, durationMin, nowMin, limits, height = 260 }: TrendChartProps) {
   const fmt = (v: number) => formatNumber(v, decimals);
+  const scale = niceScale(rows, limits);
   const refLines = [
     { y: limits.critHi, color: '--status-critical', label: 'Crítico' },
     { y: limits.warnHi, color: '--status-warning', label: 'Alerta' },
@@ -81,7 +89,7 @@ export function TrendChart({ rows, unit, decimals, durationMin, nowMin, limits, 
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={rows} margin={{ top: 8, right: 56, bottom: 4, left: 4 }}>
+        <ComposedChart data={rows} margin={{ top: 16, right: 16, bottom: 4, left: 4 }}>
           <CartesianGrid stroke={css('--line-subtle')} strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="tMin"
@@ -93,12 +101,13 @@ export function TrendChart({ rows, unit, decimals, durationMin, nowMin, limits, 
             tickFormatter={(v) => `${formatNumber(v, 0)} min`}
           />
           <YAxis
-            domain={niceDomain(rows, limits)}
+            domain={scale.domain}
+            ticks={scale.ticks}
             tick={AXIS}
             tickLine={false}
             axisLine={false}
             width={56}
-            tickFormatter={(v) => formatNumber(v, Math.max(0, decimals - 1))}
+            tickFormatter={(v) => formatNumber(v, scale.ticks[1] - scale.ticks[0] < 1 ? decimals : 0)}
             label={{ value: unit, position: 'insideTopLeft', offset: 0, dy: -4, style: { ...AXIS, fontWeight: 500 } }}
           />
           <Area
@@ -117,7 +126,6 @@ export function TrendChart({ rows, unit, decimals, durationMin, nowMin, limits, 
               stroke={css(l.color)}
               strokeDasharray="6 4"
               strokeWidth={1.5}
-              label={{ value: `${l.label} ${fmt(l.y)}`, position: 'right', style: { fontSize: 10, fill: css('--text-muted') } }}
             />
           ))}
           <ReferenceLine x={nowMin} stroke={css('--line-strong')} strokeWidth={1} />

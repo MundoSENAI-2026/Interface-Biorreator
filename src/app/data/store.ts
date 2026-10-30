@@ -11,7 +11,7 @@ import {
 } from '../config/plant';
 import { formatWithUnit } from '../lib/format';
 import { goldenValue } from './goldenBatch';
-import { blockReason } from './interlocks';
+import { blockReason, manualBlockReason } from './interlocks';
 import type {
   Alarm,
   AlarmEvent,
@@ -120,6 +120,10 @@ export class PlantStore {
 
   blockReason(cmd: Command): string | null {
     return blockReason(cmd, this.state.snapshot, this.state.comm === 'online');
+  }
+
+  manualBlockReason(): string | null {
+    return manualBlockReason(this.state.snapshot, this.state.comm === 'online');
   }
 
   async send(cmd: Command): Promise<CommandResult> {
