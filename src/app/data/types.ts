@@ -23,6 +23,8 @@ export interface PlcSnapshot {
   tags: Record<TagId, number>;
   valves: Record<ValveId, ValveState>;
   motorOn: boolean;
+  /** Rotação do agitador (rpm). */
+  motorRpm: number;
   pumpOn: boolean;
   manwayOpen: boolean;
   batch: BatchInfo;

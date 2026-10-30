@@ -193,3 +193,19 @@
   --color-pipe-idle: var(--pipe-idle);
   --color-liquid: var(--liquid);
 }
+
+/* Sentido do fluxo no sinótico: traços claros deslizando sobre a tubulação */
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+.flow-anim {
+  stroke-dasharray: 6 22;
+  animation: flow-dash 1.4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-anim {
+    animation: none;
+  }
+}

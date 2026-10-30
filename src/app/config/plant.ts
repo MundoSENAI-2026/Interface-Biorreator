@@ -171,7 +171,7 @@ export const PHASES: PhaseConfig[] = [
         armLowAfterSetpoint: true,
       },
     },
-    valvesOpen: [], motor: true, pump: false,
+    valvesOpen: ['XV_100_06'], motor: true, pump: false,
   },
   {
     id: 'resfriamento', name: 'Resfriamento', durationMin: 35, primaryTag: 'TIT_100_01',
@@ -179,7 +179,7 @@ export const PHASES: PhaseConfig[] = [
       TIT_100_01: { setpoint: 37, tolerance: 4, warnHi: 125, critHi: 128 },
       PIT_100_01: { setpoint: 0, tolerance: 0.15, warnHi: 1.25, critHi: 1.4 },
     },
-    valvesOpen: ['XV_100_08'], motor: true, pump: false,
+    valvesOpen: ['XV_100_07', 'XV_100_08'], motor: true, pump: false,
   },
   {
     id: 'cultura', name: 'Cultura', durationMin: 8, primaryTag: 'LIT_100_01',
@@ -233,7 +233,7 @@ export function getLimits(tag: TagId, phaseIndex: number): TagLimits {
 // ─── Válvulas e equipamentos ───────────────────────────────────────────────
 
 export type ValveFunction =
-  | 'Entrada' | 'Saída' | 'Aeração' | 'Exaustão' | 'Transferência' | 'Reserva';
+  | 'Entrada' | 'Saída' | 'Aeração' | 'Exaustão' | 'Transferência' | 'Vapor' | 'Resfriamento';
 
 export interface ValveConfig {
   id: ValveId;
@@ -250,9 +250,9 @@ export const VALVES: ValveConfig[] = [
   { id: 'XV_100_03', short: 'XV-03', function: 'Entrada', description: 'Entrada de meio de cultura', confirm: false },
   { id: 'XV_100_04', short: 'XV-04', function: 'Saída', description: 'Saída para amostragem', confirm: true },
   { id: 'XV_100_05', short: 'XV-05', function: 'Aeração', description: 'Entrada de ar estéril (aspersor)', confirm: false },
-  // XV-06 e XV-07 não têm função definida na IHM de referência
-  { id: 'XV_100_06', short: 'XV-06', function: 'Reserva', description: 'Função a confirmar', confirm: true },
-  { id: 'XV_100_07', short: 'XV-07', function: 'Reserva', description: 'Função a confirmar', confirm: true },
+  // XV-06 e XV-07: funções provisórias (a IHM de referência não as define) — ajuste aqui
+  { id: 'XV_100_06', short: 'XV-06', function: 'Vapor', description: 'Vapor – esterilização (camisa)', confirm: true },
+  { id: 'XV_100_07', short: 'XV-07', function: 'Resfriamento', description: 'Água de resfriamento – camisa', confirm: false },
   { id: 'XV_100_08', short: 'XV-08', function: 'Exaustão', description: 'Exaustão / alívio de gases', confirm: false },
   { id: 'XV_100_09', short: 'XV-09', function: 'Entrada', description: 'Entrada de inóculo (microrganismo)', confirm: false },
   { id: 'XV_100_10', short: 'XV-10', function: 'Transferência', description: 'Transferência do produto', confirm: true },
@@ -261,7 +261,7 @@ export const VALVES: ValveConfig[] = [
 export const VALVE_BY_ID = Object.fromEntries(VALVES.map((v) => [v.id, v])) as Record<ValveId, ValveConfig>;
 
 export const EQUIPMENT = {
-  motor: { id: 'M_100_01', short: 'M-01', name: 'Motor do agitador' },
+  motor: { id: 'M_100_01', short: 'M-01', name: 'Motor do agitador', ratedRpm: 120 },
   pump: { id: 'P_100_01', short: 'P-01', name: 'Bomba de transferência' },
   manway: { id: 'ZS_100_01', short: 'ZS-01', name: 'Porta de visita' },
 } as const;

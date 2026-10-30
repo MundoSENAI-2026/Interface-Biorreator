@@ -1,4 +1,5 @@
 import {
+  EQUIPMENT,
   INTERLOCKS,
   PHASES,
   PLANT,
@@ -69,6 +70,7 @@ export class Simulator implements DataSource, SimulationControls {
   private valves = {} as Record<ValveId, ValveState>;
   private valveMoves = new Map<ValveId, { open: boolean; until: number }>();
   private motorOn = false;
+  private motorRpm = 0;
   private pumpOn = false;
   private manwayOpen = false;
   private batch: BatchInfo;
@@ -289,9 +291,15 @@ export class Simulator implements DataSource, SimulationControls {
       if (open('XV_100_08')) this.base.PIT_100_01 *= Math.exp(-dtReal / 3);
       else if (open('XV_100_05')) this.base.PIT_100_01 += 0.02 * dtReal;
 
-      const ambient = SIMULATION.ambientTemperature;
-      this.base.TIT_100_01 += (ambient - this.base.TIT_100_01) * (1 - Math.exp(-dtReal / 1800));
+      // Camisa: vapor (XV-06) aquece até ~125 °C; água (XV-07) resfria até ~20 °C
+      const jacketTarget = open('XV_100_06') ? 125 : open('XV_100_07') ? 20 : SIMULATION.ambientTemperature;
+      const jacketTau = open('XV_100_06') || open('XV_100_07') ? 60 : 1800;
+      this.base.TIT_100_01 += (jacketTarget - this.base.TIT_100_01) * (1 - Math.exp(-dtReal / jacketTau));
     }
+
+    // Rotação do agitador com rampa de partida/parada
+    const rpmTarget = this.motorOn ? EQUIPMENT.motor.ratedRpm : 0;
+    this.motorRpm += (rpmTarget - this.motorRpm) * (1 - Math.exp(-dtReal / 2));
 
     // Distúrbios forçados pelo painel de simulação
     const beta = 1 - Math.exp(-dtReal / DISTURBANCE_LAG_S);
@@ -324,6 +332,7 @@ export class Simulator implements DataSource, SimulationControls {
       tags,
       valves: { ...this.valves },
       motorOn: this.motorOn,
+      motorRpm: this.motorRpm < 0.5 ? 0 : Math.max(0, this.motorRpm + noise(this.motorOn ? 0.8 : 0)),
       pumpOn: this.pumpOn,
       manwayOpen: this.manwayOpen,
       batch: { ...this.batch, phaseDurationsS: [...this.batch.phaseDurationsS] },

@@ -66,7 +66,7 @@ export function OverviewScreen({ plant }: { plant: PlantState }) {
       <SensorRow plant={plant} />
       <div className="grid min-h-0 grid-cols-12 gap-3">
         <Panel title="Sinótico P&ID · BR-100" subtitle={`Limites da etapa: ${phase.name}`} className="col-span-12 min-h-0 lg:col-span-7" bodyClassName="min-h-0 p-2">
-          <Synoptic plant={plant} />
+          <Synoptic plant={plant} compact />
         </Panel>
         <Panel title="Comandos principais" subtitle="Válvulas na tela Sinótico (F2)" className="col-span-12 min-h-0 lg:col-span-5" bodyClassName="min-h-0 overflow-auto">
           <CommandPanel plant={plant} showValves={false} />

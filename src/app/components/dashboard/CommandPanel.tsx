@@ -1,6 +1,7 @@
 import { DoorClosed, DoorOpen, Info, Lock, Play, Power, PowerOff, Square } from 'lucide-react';
 import { EQUIPMENT, PHASES, VALVES } from '../../config/plant';
 import { plantStore } from '../../data/source';
+import { formatNumber } from '../../lib/format';
 import type { PlantState } from '../../data/store';
 import { CommandButton } from '../hmi/CommandButton';
 import { StatusBadge } from '../hmi/StatusBadge';
@@ -79,7 +80,7 @@ export function CommandPanel({ plant, showValves = true }: { plant: PlantState; 
           <EquipmentRow
             name={EQUIPMENT.motor.name}
             tag={EQUIPMENT.motor.short}
-            badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={s?.motorOn ? 'Ligado' : 'Desligado'} />}
+            badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={`${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
           >
             <CommandButton
               className="contents"
