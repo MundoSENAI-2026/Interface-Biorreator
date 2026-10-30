@@ -13,8 +13,9 @@ import {
   type ValveId,
 } from '../config/plant';
 import { goldenValue } from './goldenBatch';
+import { seedHistory } from './historySeed';
 import { blockReason } from './interlocks';
-import type { BatchInfo, Command, CommandResult, DataSource, PlcSnapshot, ValveState } from './types';
+import type { BatchInfo, Command, CommandResult, DataSource, HistoryRecord, PlcSnapshot, ValveState } from './types';
 
 export type ForceLevel = 'normal' | 'warning' | 'critical';
 
@@ -94,7 +95,7 @@ export class Simulator implements DataSource, SimulationControls {
       phaseIndex: phase,
       phaseElapsedS: tMin * 60,
       phaseDurationsS: PHASES.map((p, i) => (i < phase ? p.durationMin * 60 : null)),
-      startedAt: Date.now() - (elapsedBefore(phase, tMin) * 1000) / this.acceleration,
+      startedAt: Date.now() - elapsedBefore(phase, tMin) * 1000,
     };
     for (const tag of TAG_ORDER) {
       this.base[tag] = goldenValue(tag, phase, tMin);
@@ -116,6 +117,11 @@ export class Simulator implements DataSource, SimulationControls {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     this.listener = null;
+  }
+
+  loadHistory(): HistoryRecord[] {
+    const b = this.batch;
+    return seedHistory(b.startedAt, b.phaseIndex, b.phaseElapsedS, b.lot);
   }
 
   async send(cmd: Command): Promise<CommandResult> {
@@ -198,7 +204,7 @@ export class Simulator implements DataSource, SimulationControls {
       phaseIndex,
       phaseElapsedS: minute * 60,
       phaseDurationsS: PHASES.map((p, i) => (i < phaseIndex ? p.durationMin * 60 : null)),
-      startedAt: Date.now() - (elapsedBefore(phaseIndex, minute) * 1000) / this.acceleration,
+      startedAt: Date.now() - elapsedBefore(phaseIndex, minute) * 1000,
     };
     for (const tag of TAG_ORDER) {
       this.base[tag] = goldenValue(tag, phaseIndex, minute);

@@ -1,20 +1,14 @@
-import { Activity, Bell, Check, Download, Search, UserRound, type LucideIcon } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Activity, Bell, ChevronLeft, ChevronRight, Download, Search, UserRound, type LucideIcon } from 'lucide-react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PLANT } from '../../config/plant';
-import type { Alarm, AlarmPriority, AlarmState, EventCategory, PlantEvent } from '../../data/types';
+import { LEVEL_LABEL, LEVELS } from '../../data/alarmStats';
+import type { Alarm, AlarmState, EventCategory, IsaPriority, PlantEvent } from '../../data/types';
 import { formatDate, formatTime } from '../../lib/format';
 import { cn } from '../ui/utils';
 import { StatusBadge } from './StatusBadge';
 
-const STATE_LABEL: Record<AlarmState, string> = {
-  active: 'Ativo',
-  acknowledged: 'Reconhecido',
-  normalized: 'Normalizado',
-};
-
 const STATE_ORDER: Record<AlarmState, number> = { active: 0, normalized: 1, acknowledged: 2 };
-
-const PRIORITY_LABEL: Record<AlarmPriority, string> = { critical: 'Crítico', warning: 'Alerta' };
+const LEVEL_ORDER: Record<IsaPriority, number> = { critica: 0, alta: 1, media: 2, baixa: 3 };
 
 export const CATEGORY: Record<EventCategory, { label: string; short: string; icon: LucideIcon }> = {
   alarm: { label: 'Alarme', short: 'Alarme', icon: Bell },
@@ -23,13 +17,14 @@ export const CATEGORY: Record<EventCategory, { label: string; short: string; ico
 };
 
 /**
- * Tipo do evento com ícone e cor próprios: alarme na cor da prioridade,
- * evento de processo em neutro, ação do operador em azul (informação).
+ * Tipo do evento com ícone e cor próprios: alarme na cor da severidade (com a
+ * prioridade ISA), evento de processo em neutro, ação do operador em azul.
  */
 export function EventTypeBadge({ event, compact }: { event: PlantEvent; compact?: boolean }) {
   const c = CATEGORY[event.category];
-  if (event.priority) {
-    return <StatusBadge status={event.priority} icon={c.icon} label={compact ? c.short : `Alarme · ${PRIORITY_LABEL[event.priority]}`} className="shrink-0" />;
+  if (event.category === 'alarm' && event.priority) {
+    const level = event.level ? LEVEL_LABEL[event.level] : '';
+    return <StatusBadge status={event.priority} icon={c.icon} label={compact ? c.short : `Alarme · ${level}`} className="shrink-0" />;
   }
   return <StatusBadge status={event.category === 'operator' ? 'info' : 'neutral'} icon={c.icon} label={compact ? c.short : c.label} className="shrink-0" />;
 }
@@ -37,76 +32,13 @@ export function EventTypeBadge({ event, compact }: { event: PlantEvent; compact?
 /** Ordenação ISA-18.2: prioridade, depois não reconhecidos, depois mais recentes. */
 export function sortAlarms(alarms: Alarm[]) {
   return [...alarms].sort(
-    (a, b) =>
-      (a.priority === b.priority ? 0 : a.priority === 'critical' ? -1 : 1) ||
-      STATE_ORDER[a.state] - STATE_ORDER[b.state] ||
-      b.activatedAt - a.activatedAt,
+    (a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level] || STATE_ORDER[a.state] - STATE_ORDER[b.state] || b.activatedAt - a.activatedAt,
   );
 }
 
-const th = 'sticky top-0 bg-sunken px-3 py-2 text-left text-[13px] font-semibold uppercase tracking-wide text-ink-muted';
-const td = 'px-3 py-2 align-top';
-
-/** Alarmes ativos (ativo, reconhecido, normalizado não reconhecido). */
-export function ActiveTable({ alarms, onAcknowledge }: { alarms: Alarm[]; onAcknowledge: (id: string) => void }) {
-  const sorted = useMemo(() => sortAlarms(alarms), [alarms]);
-  if (sorted.length === 0) {
-    return (
-      <div className="flex flex-1 items-center justify-center rounded border border-dashed border-line py-8 text-[15px] text-ink-muted">
-        Nenhum alarme ativo
-      </div>
-    );
-  }
-  return (
-    <div className="min-h-0 flex-1 overflow-auto rounded border border-line">
-      <table className="w-full border-collapse text-[15px]">
-        <thead>
-          <tr>
-            <th className={th}>Prioridade</th>
-            <th className={th}>Hora</th>
-            <th className={th}>Tag · mensagem</th>
-            <th className={th}>Estado</th>
-            <th className={cn(th, 'text-right')}>Ação</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((a) => (
-            <tr
-              key={a.id}
-              className={cn(
-                'border-t border-line transition-colors duration-200',
-                a.state === 'active' && (a.priority === 'critical' ? 'bg-st-critical-bg' : 'bg-st-warning-bg'),
-              )}
-            >
-              <td className={td}><StatusBadge status={a.priority} /></td>
-              <td className={cn(td, 'text-ink-default num')}>{formatTime(a.activatedAt)}</td>
-              <td className={td}>
-                <div className="font-mono text-[13px] text-ink-muted">{a.source}</div>
-                <div className={a.state === 'normalized' ? 'text-ink-muted' : 'text-ink'}>{a.message}</div>
-              </td>
-              <td className={cn(td, 'whitespace-nowrap', a.state === 'active' ? 'font-semibold text-ink' : 'text-ink-muted')}>
-                {STATE_LABEL[a.state]}
-              </td>
-              <td className={cn(td, 'text-right')}>
-                {a.state !== 'acknowledged' && (
-                  <button
-                    onClick={() => onAcknowledge(a.id)}
-                    className="inline-flex h-8 items-center gap-1.5 rounded border border-line-strong bg-surface px-3 text-sm text-ink hover:bg-sunken"
-                  >
-                    <Check className="size-4" aria-hidden />
-                    Reconhecer
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ─── Histórico ─────────────────────────────────────────────────────────────
+const th = 'bg-sunken px-3 py-2 text-left text-[13px] font-semibold uppercase tracking-wide text-ink-muted';
+const td = 'px-3 align-middle';
+const ROW_H = 40;
 
 const csvCell = (v: string) => (/[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
@@ -118,7 +50,7 @@ function exportCsv(events: PlantEvent[]) {
       formatDate(e.time),
       formatTime(e.time),
       CATEGORY[e.category].label,
-      e.priority ? PRIORITY_LABEL[e.priority] : '',
+      e.category === 'alarm' && e.level ? LEVEL_LABEL[e.level] : '',
       e.source,
       e.action,
       e.message,
@@ -134,23 +66,53 @@ function exportCsv(events: PlantEvent[]) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-/** Histórico filtrável de todos os eventos (alarmes, processo e operador), com exportação CSV. */
+/** Quantas linhas cabem na altura disponível (paginação em vez de rolagem interna). */
+function useRowsThatFit(ref: React.RefObject<HTMLElement | null>, rowHeight: number, headerHeight: number) {
+  const [rows, setRows] = useState(10);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Mede o cabeçalho e a linha reais (fonte e bordas incluídas)
+    const update = () => {
+      const head = el.querySelector('thead')?.getBoundingClientRect().height || headerHeight;
+      const row = el.querySelector('tbody tr')?.getBoundingClientRect().height || rowHeight;
+      setRows(Math.max(3, Math.floor((el.clientHeight - head) / row)));
+    };
+    update();
+    document.fonts?.ready.then(update);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, rowHeight, headerHeight]);
+  return rows;
+}
+
+/** Histórico filtrável de todos os eventos (alarmes, processo e operador), paginado e com exportação CSV. */
 export function HistoryTable({ events }: { events: PlantEvent[] }) {
   const [category, setCategory] = useState<'all' | EventCategory>('all');
-  const [priority, setPriority] = useState<'all' | AlarmPriority>('all');
+  const [level, setLevel] = useState<'all' | IsaPriority>('all');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const pageSize = useRowsThatFit(boxRef, ROW_H, 38);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return events.filter(
       (e) =>
         (category === 'all' || e.category === category) &&
-        (priority === 'all' || e.priority === priority) &&
+        (level === 'all' || e.level === level) &&
         (!q || [e.source, e.message, e.action, e.user ?? ''].some((f) => f.toLowerCase().includes(q))),
     );
-  }, [events, category, priority, query]);
+  }, [events, category, level, query]);
+
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  useEffect(() => setPage(0), [category, level, query]);
+  const current = Math.min(page, pages - 1);
+  const rows = filtered.slice(current * pageSize, (current + 1) * pageSize);
 
   const select = 'h-9 rounded border border-line-strong bg-surface px-2 text-sm text-ink';
+  const pageBtn = 'inline-flex size-9 items-center justify-center rounded border border-line-strong bg-surface text-ink hover:bg-sunken disabled:cursor-not-allowed disabled:text-ink-disabled';
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -162,11 +124,12 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
             <option key={c} value={c}>{CATEGORY[c].label}</option>
           ))}
         </select>
-        <label className="sr-only" htmlFor="hist-priority">Prioridade</label>
-        <select id="hist-priority" className={select} value={priority} onChange={(e) => setPriority(e.target.value as typeof priority)}>
+        <label className="sr-only" htmlFor="hist-level">Prioridade</label>
+        <select id="hist-level" className={select} value={level} onChange={(e) => setLevel(e.target.value as typeof level)}>
           <option value="all">Todas as prioridades</option>
-          <option value="critical">Crítico</option>
-          <option value="warning">Alerta</option>
+          {LEVELS.map((l) => (
+            <option key={l} value={l}>{LEVEL_LABEL[l]}</option>
+          ))}
         </select>
         <div className="relative min-w-48 flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-ink-muted" aria-hidden />
@@ -178,7 +141,6 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
             className="h-9 w-full rounded border border-line-strong bg-surface pl-8 pr-2 text-sm text-ink placeholder:text-ink-muted"
           />
         </div>
-        <span className="text-sm text-ink-muted num">{filtered.length} de {events.length}</span>
         <button
           onClick={() => exportCsv(filtered)}
           disabled={filtered.length === 0}
@@ -188,41 +150,65 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
           Exportar CSV
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto rounded border border-line">
-        <table className="w-full border-collapse text-[15px]">
+
+      <div ref={boxRef} className="min-h-0 flex-1 overflow-hidden rounded border border-line">
+        <table className="w-full table-fixed border-collapse text-[15px]">
+          <colgroup>
+            <col className="w-24" />
+            <col className="w-32 2xl:w-48" />
+            <col className="w-28 2xl:w-32" />
+            <col className="hidden w-40 2xl:table-column" />
+            <col />
+            <col className="w-36 2xl:w-40" />
+          </colgroup>
           <thead>
             <tr>
               <th className={th}>Hora</th>
               <th className={th}>Tipo</th>
               <th className={th}>Origem</th>
-              <th className={th}>Ação</th>
+              <th className={cn(th, 'hidden 2xl:table-cell')}>Ação</th>
               <th className={th}>Mensagem</th>
               <th className={th}>Usuário</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {rows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-3 py-8 text-center text-ink-muted">Nenhum evento para os filtros escolhidos</td>
               </tr>
             ) : (
-              filtered.map((e) => {
-                return (
-                  <tr key={e.seq} className="border-t border-line">
-                    <td className={cn(td, 'whitespace-nowrap text-ink-default num')}>{formatTime(e.time)}</td>
-                    <td className={cn(td, 'whitespace-nowrap')}>
-                      <EventTypeBadge event={e} />
-                    </td>
-                    <td className={cn(td, 'font-mono text-[13px] text-ink-default')}>{e.source}</td>
-                    <td className={cn(td, 'whitespace-nowrap text-ink-default')}>{e.action}</td>
-                    <td className={cn(td, 'text-ink')}>{e.message}</td>
-                    <td className={cn(td, 'whitespace-nowrap text-ink-default')}>{e.user ?? '—'}</td>
-                  </tr>
-                );
-              })
+              rows.map((e) => (
+                <tr key={e.seq} className="border-t border-line" style={{ height: ROW_H }}>
+                  <td className={cn(td, 'whitespace-nowrap text-ink-default num')}>{formatTime(e.time)}</td>
+                  <td className={cn(td, 'whitespace-nowrap')}>
+                    <span className="2xl:hidden"><EventTypeBadge event={e} compact /></span>
+                    <span className="hidden 2xl:inline"><EventTypeBadge event={e} /></span>
+                  </td>
+                  <td className={cn(td, 'truncate font-mono text-[13px] text-ink-default')}>{e.source}</td>
+                  <td className={cn(td, 'hidden truncate whitespace-nowrap text-ink-default 2xl:table-cell')}>{e.action}</td>
+                  <td className={cn(td, 'truncate text-ink')} title={e.message}>{e.message}</td>
+                  <td className={cn(td, 'truncate whitespace-nowrap', e.category === 'operator' ? 'font-medium text-st-info' : 'text-ink-muted')}>{e.user}</td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex items-center justify-between text-sm text-ink-muted num">
+        <span>
+          {filtered.length === 0 ? '0 eventos' : `${current * pageSize + 1}–${Math.min(filtered.length, (current + 1) * pageSize)} de ${filtered.length} eventos`}
+          {filtered.length !== events.length && ` (filtrados de ${events.length})`}
+        </span>
+        <div className="flex items-center gap-2">
+          <button className={pageBtn} onClick={() => setPage(current - 1)} disabled={current === 0} aria-label="Página anterior">
+            <ChevronLeft className="size-4" />
+          </button>
+          <span>Página {current + 1} de {pages}</span>
+          <button className={pageBtn} onClick={() => setPage(current + 1)} disabled={current >= pages - 1} aria-label="Próxima página">
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

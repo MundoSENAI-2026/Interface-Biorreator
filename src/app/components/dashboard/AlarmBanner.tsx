@@ -3,27 +3,36 @@ import { plantStore } from '../../data/source';
 import type { Alarm } from '../../data/types';
 import { uiStore } from '../../data/ui';
 import { formatTime } from '../../lib/format';
+import { LEVEL_LABEL } from '../../data/alarmStats';
 import { sortAlarms } from '../hmi/AlarmList';
 import { StatusBadge } from '../hmi/StatusBadge';
 import { cn } from '../ui/utils';
 
-const MAX_ROWS = 3;
-
 const STATE_LABEL = { active: 'Ativo', acknowledged: 'Reconhecido', normalized: 'Normalizado' } as const;
 
-/** Faixa de alarmes da Visão Geral: uma linha quando vazia, até 3 alarmes quando houver. */
-export function AlarmBanner({ alarms }: { alarms: Alarm[] }) {
+interface AlarmBannerProps {
+  alarms: Alarm[];
+  /** Horário do último alarme normalizado (informação útil quando não há alarmes). */
+  lastNormalizedAt?: number | null;
+  maxRows?: number;
+  /** Mostra o atalho para a tela de alarmes quando há mais alarmes que linhas. */
+  linkToAlarms?: boolean;
+}
+
+/** Faixa de alarmes ativos: uma linha quando vazia, até `maxRows` alarmes quando houver. */
+export function AlarmBanner({ alarms, lastNormalizedAt, maxRows = 3, linkToAlarms = true }: AlarmBannerProps) {
   if (alarms.length === 0) {
     return (
       <div className="flex h-11 items-center gap-2 rounded-md border border-line bg-surface px-4 text-[15px] text-ink-default">
         <CircleCheck className="size-5 text-st-normal" aria-hidden />
-        Sem alarmes ativos
+        Nenhum alarme ativo
+        {lastNormalizedAt && <span className="text-ink-muted num">· último alarme normalizado às {formatTime(lastNormalizedAt).slice(0, 5)}</span>}
       </div>
     );
   }
 
   const sorted = sortAlarms(alarms);
-  const shown = sorted.slice(0, MAX_ROWS);
+  const shown = sorted.slice(0, maxRows);
   const hidden = sorted.length - shown.length;
 
   return (
@@ -36,7 +45,7 @@ export function AlarmBanner({ alarms }: { alarms: Alarm[] }) {
             a.state === 'active' && (a.priority === 'critical' ? 'bg-st-critical-bg' : 'bg-st-warning-bg'),
           )}
         >
-          <StatusBadge status={a.priority} size="md" className="w-28 justify-center" />
+          <StatusBadge status={a.priority} label={LEVEL_LABEL[a.level]} size="md" className="w-28 justify-center" />
           <span className="w-20 text-ink-default num">{formatTime(a.activatedAt)}</span>
           <span className="w-28 font-mono text-sm text-ink-default">{a.source}</span>
           <span className={cn('min-w-0 flex-1 truncate', a.state === 'normalized' ? 'text-ink-muted' : 'text-ink')}>{a.message}</span>
@@ -54,7 +63,10 @@ export function AlarmBanner({ alarms }: { alarms: Alarm[] }) {
           )}
         </div>
       ))}
-      {hidden > 0 && (
+      {hidden > 0 && !linkToAlarms && (
+        <div className="h-9 border-t border-line bg-sunken px-4 text-sm leading-9 text-ink-muted">+ {hidden} {hidden === 1 ? 'alarme' : 'alarmes'} de menor prioridade</div>
+      )}
+      {hidden > 0 && linkToAlarms && (
         <button
           onClick={() => uiStore.navigate('alarms')}
           className="h-9 border-t border-line bg-sunken text-sm font-medium text-brand hover:underline"

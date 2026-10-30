@@ -8,7 +8,9 @@ import { CommandPanel } from '../components/dashboard/CommandPanel';
 import { MlPanel } from '../components/dashboard/MlPanel';
 import { Synoptic } from '../components/dashboard/Synoptic';
 import { TrendsView } from '../components/dashboard/TrendsView';
-import { ActiveTable, HistoryTable } from '../components/hmi/AlarmList';
+import { HistoryTable } from '../components/hmi/AlarmList';
+import { AlarmIndicators } from '../components/dashboard/AlarmIndicators';
+import { alarmStats } from '../data/alarmStats';
 import { Panel } from '../components/hmi/Panel';
 import { ProcessStepper } from '../components/hmi/ProcessStepper';
 import { SensorCard } from '../components/hmi/SensorCard';
@@ -64,7 +66,7 @@ export function OverviewScreen({ plant }: { plant: PlantState }) {
   return (
     <div className={`${SCREEN} grid-rows-[auto_auto_auto_minmax(0,1fr)]`}>
       <Stepper plant={plant} />
-      <AlarmBanner alarms={plant.alarms} />
+      <AlarmBanner alarms={plant.alarms} lastNormalizedAt={plant.events.find((e) => e.category === 'alarm' && e.action === 'Normalizado')?.time} />
       <SensorRow plant={plant} />
       <div className="grid min-h-0 grid-cols-12 gap-3">
         <div className="col-span-12 grid min-h-0 grid-rows-[minmax(13rem,1fr)_auto] gap-3 xl:col-span-8">
@@ -107,28 +109,32 @@ export function TrendsScreen({ plant }: { plant: PlantState }) {
 }
 
 export function AlarmsScreen({ plant }: { plant: PlantState }) {
+  const stats = alarmStats(plant.events, plant.snapshot?.batch.startedAt ?? plant.now, plant.now);
+  const pending = plant.alarms.some((a) => a.state !== 'acknowledged');
   return (
-    <div className={`${SCREEN} grid-cols-12`}>
-      <Panel
-        title="Alarmes ativos"
-        subtitle="ISA-18.2 · prioridade, estado e reconhecimento"
-        className="col-span-12 min-h-0 xl:col-span-5"
-        bodyClassName="flex min-h-0 flex-col"
-        actions={
+    <div className={`${SCREEN} grid-rows-[auto_minmax(0,1fr)]`}>
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <AlarmBanner alarms={plant.alarms} lastNormalizedAt={stats.lastNormalizedAt} maxRows={4} linkToAlarms={false} />
+        </div>
+        {plant.alarms.length > 0 && (
           <button
             onClick={() => plantStore.acknowledgeAll()}
-            disabled={!plant.alarms.some((a) => a.state !== 'acknowledged')}
-            className="h-8 rounded border border-line-strong bg-surface px-3 text-sm text-ink hover:bg-sunken disabled:cursor-not-allowed disabled:text-ink-disabled"
+            disabled={!pending}
+            className="h-11 shrink-0 rounded-md border border-line-strong bg-surface px-4 text-[15px] text-ink hover:bg-sunken disabled:cursor-not-allowed disabled:text-ink-disabled"
           >
             Reconhecer todos
           </button>
-        }
-      >
-        <ActiveTable alarms={plant.alarms} onAcknowledge={(id) => plantStore.acknowledge(id)} />
-      </Panel>
-      <Panel title="Histórico de alarmes e eventos" className="col-span-12 min-h-0 xl:col-span-7" bodyClassName="flex min-h-0 flex-col">
-        <HistoryTable events={plant.events} />
-      </Panel>
+        )}
+      </div>
+      <div className="grid min-h-0 grid-cols-12 gap-3 xl:grid-rows-1">
+        <div className="col-span-12 grid min-h-0 xl:col-span-5">
+          <AlarmIndicators stats={stats} />
+        </div>
+        <Panel title="Histórico de alarmes e eventos" subtitle="Trilha de auditoria completa" className="col-span-12 min-h-0 xl:col-span-7" bodyClassName="flex min-h-0 flex-col">
+          <HistoryTable events={plant.events} />
+        </Panel>
+      </div>
     </div>
   );
 }

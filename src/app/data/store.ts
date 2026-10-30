@@ -24,6 +24,7 @@ import type {
   DataSource,
   EventAction,
   EventCategory,
+  IsaPriority,
   OverallStatus,
   PhaseTracePoint,
   PlantEvent,
@@ -73,6 +74,20 @@ const BATCH_STATUS_TEXT: Record<PlcSnapshot['batch']['status'], string> = {
   completed: 'Lote concluído',
 };
 
+/** Prioridade ISA-18.2 por tipo de alarme. */
+const ISA_LEVEL: Record<AlarmKind, IsaPriority> = {
+  HH: 'critica', LL: 'critica', COMM: 'critica', ESD: 'critica',
+  H: 'alta', L: 'alta',
+  FAULT: 'media',
+};
+
+/** Quem registrou o evento quando não é uma ação do operador. */
+export const SYSTEM_USER: Record<EventCategory, string> = {
+  process: 'Sistema (CLP)',
+  alarm: 'Sistema (alarme)',
+  operator: PLANT.operator,
+};
+
 const emptyByTag = <T,>(make: () => T) =>
   Object.fromEntries(TAG_ORDER.map((t) => [t, make()])) as Record<TagId, T>;
 
@@ -106,6 +121,12 @@ export class PlantStore {
 
   start() {
     this.startedAt = Date.now();
+    // Histórico anterior à conexão (do historiador/CLP; no simulador, desde o início do lote)
+    const past = this.source.loadHistory?.() ?? [];
+    if (past.length && this.state.events.length === 0) {
+      const events = [...past].sort((a, b) => a.time - b.time).map((e) => ({ ...e, seq: ++this.seq }));
+      this.state = { ...this.state, events: events.reverse().slice(0, MAX_EVENTS) };
+    }
     this.source.start((s) => this.onSnapshot(s));
     this.watchdog = setInterval(() => this.checkComm(), 1000);
   }
@@ -166,7 +187,7 @@ export class PlantStore {
         alarms.push(a);
         continue;
       }
-      this.logOperator('Reconhecimento', a.source, `Reconheceu alarme: ${a.message}`);
+      this.log('operator', 'Reconhecimento', a.source, `Reconheceu alarme: ${a.message}`, { user: PLANT.operator, alarmId: a.id, level: a.level });
       // Normalizado + reconhecido sai da lista de ativos
       if (a.state === 'active') alarms.push({ ...a, state: 'acknowledged', acknowledgedAt: now });
     }
@@ -288,16 +309,16 @@ export class PlantStore {
 
     if (on) {
       if (existing && existing.state !== 'normalized') return;
-      const alarm: Alarm = { id, source, kind, priority, message, state: 'active', activatedAt: now };
+      const alarm: Alarm = { id, source, kind, priority, level: ISA_LEVEL[kind], message, state: 'active', activatedAt: now };
       const others = this.state.alarms.filter((a) => a.id !== id);
       this.state = { ...this.state, alarms: [alarm, ...others] };
-      this.log('alarm', 'Ativado', source, message, { priority });
+      this.log('alarm', 'Ativado', source, message, { priority, level: alarm.level, alarmId: id });
       for (const l of this.alarmListeners) l(alarm);
       return;
     }
 
     if (!existing || existing.state === 'normalized') return;
-    this.log('alarm', 'Normalizado', source, existing.message, { priority: existing.priority });
+    this.log('alarm', 'Normalizado', source, existing.message, { priority: existing.priority, level: existing.level, alarmId: id });
     const alarms = existing.state === 'acknowledged'
       ? this.state.alarms.filter((a) => a.id !== id)
       : this.state.alarms.map((a) => (a.id === id ? { ...a, state: 'normalized' as const, normalizedAt: now } : a));
@@ -345,9 +366,9 @@ export class PlantStore {
     action: EventAction,
     source: string,
     message: string,
-    extra: { priority?: AlarmPriority; user?: string } = {},
+    extra: Partial<Pick<PlantEvent, 'priority' | 'level' | 'user' | 'alarmId'>> = {},
   ) {
-    const event: PlantEvent = { seq: ++this.seq, time: Date.now(), category, action, source, message, ...extra };
+    const event: PlantEvent = { seq: ++this.seq, time: Date.now(), category, action, source, message, user: SYSTEM_USER[category], ...extra };
     this.state = { ...this.state, events: [event, ...this.state.events].slice(0, MAX_EVENTS) };
   }
 

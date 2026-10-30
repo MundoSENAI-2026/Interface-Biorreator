@@ -54,9 +54,15 @@ export interface DataSource {
   start(onSnapshot: (snapshot: PlcSnapshot) => void): void;
   stop(): void;
   send(command: Command): Promise<CommandResult>;
+  /** Histórico já registrado no CLP/historiador antes da conexão (opcional). */
+  loadHistory?(): HistoryRecord[];
 }
 
+/** Severidade (define a cor): crítico = vermelho, alerta = âmbar. */
 export type AlarmPriority = 'critical' | 'warning';
+
+/** Prioridade ISA-18.2 em 4 níveis. */
+export type IsaPriority = 'critica' | 'alta' | 'media' | 'baixa';
 /** ISA-18.2: ativo não reconhecido, ativo reconhecido, normalizado não reconhecido. */
 export type AlarmState = 'active' | 'acknowledged' | 'normalized';
 export type AlarmKind = 'HH' | 'H' | 'L' | 'LL' | 'FAULT' | 'COMM' | 'ESD';
@@ -66,6 +72,7 @@ export interface Alarm {
   source: string;
   kind: AlarmKind;
   priority: AlarmPriority;
+  level: IsaPriority;
   message: string;
   state: AlarmState;
   activatedAt: number;
@@ -94,8 +101,11 @@ export interface PlantEvent {
   time: number;
   category: EventCategory;
   action: EventAction;
-  /** Só para alarmes. */
+  /** Só para alarmes (e reconhecimentos). */
   priority?: AlarmPriority;
+  level?: IsaPriority;
+  /** Alarme relacionado (ativação, normalização, reconhecimento). */
+  alarmId?: string;
   source: string;
   message: string;
   /** Quem executou (ações do operador). */
@@ -113,3 +123,6 @@ export type PhaseTracePoint = { tMin: number } & Record<TagId, number>;
 export type CommStatus = 'connecting' | 'online' | 'offline';
 
 export type OverallStatus = 'normal' | 'warning' | 'critical';
+
+/** Registro histórico vindo da fonte de dados (sem número de sequência). */
+export type HistoryRecord = Omit<PlantEvent, 'seq'>;
