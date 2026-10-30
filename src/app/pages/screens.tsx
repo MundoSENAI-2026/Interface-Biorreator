@@ -22,6 +22,7 @@ import { SensorCard } from '../components/hmi/SensorCard';
 
 const SCREEN = 'grid h-full min-h-[800px] gap-3 px-4 py-3';
 const OVERVIEW_SCREEN = 'grid h-full min-h-0 gap-3 px-4 py-3';
+const MAINTENANCE_SCREEN = 'grid h-full min-h-[850px] gap-3 px-4 py-3';
 
 function Stepper({ plant }: { plant: PlantState }) {
   const s = plant.snapshot;
@@ -142,7 +143,7 @@ export function AlarmsScreen({ plant }: { plant: PlantState }) {
 
 export function MaintenanceScreen({ plant }: { plant: PlantState }) {
   return (
-    <div className={SCREEN}>
+    <div className={MAINTENANCE_SCREEN}>
       <MaintenanceView now={plant.now} />
     </div>
   );
