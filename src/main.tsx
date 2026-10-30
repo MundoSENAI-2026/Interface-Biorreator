@@ -1,7 +1,13 @@
 
-  import { createRoot } from "react-dom/client";
-  import App from "./app/App.tsx";
-  import "./styles/index.css";
+  declare module "react-dom/client" {
+  export function createRoot(container: Element | DocumentFragment): {
+    render(children: any): void;
+  };
+}
 
-  createRoot(document.getElementById("root")!).render(<App />);
+import { createRoot } from "react-dom/client";
+import App from "./app/App.tsx";
+import "./styles/index.css";
+
+createRoot(document.getElementById("root")!).render(<App />);
   
