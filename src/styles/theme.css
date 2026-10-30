@@ -209,3 +209,9 @@
     animation: none;
   }
 }
+
+/* Modo apresentação: cursor some após inatividade */
+.hide-cursor,
+.hide-cursor * {
+  cursor: none !important;
+}

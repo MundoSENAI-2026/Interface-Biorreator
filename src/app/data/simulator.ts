@@ -29,6 +29,8 @@ export interface SimulationControls {
   readonly faults: ReadonlySet<ValveId>;
   setValveFault(id: ValveId, fault: boolean): void;
   skipPhase(): void;
+  /** Recomeça o lote em execução na etapa/minuto indicados, sem distúrbios nem falhas. */
+  resetToPhase(phaseIndex: number, minute: number): void;
 }
 
 const NOISE: Record<TagId, number> = {
@@ -180,6 +182,27 @@ export class Simulator implements DataSource, SimulationControls {
     }
   }
 
+  resetToPhase(phaseIndex: number, minute: number) {
+    this.forced = {};
+    this.faults.clear();
+    this.commLost = false;
+    this.manwayOpen = false;
+    this.batch = {
+      lot: this.batch.lot,
+      status: 'running',
+      phaseIndex,
+      phaseElapsedS: minute * 60,
+      phaseDurationsS: PHASES.map((p, i) => (i < phaseIndex ? p.durationMin * 60 : null)),
+      startedAt: this.batch.startedAt,
+    };
+    for (const tag of TAG_ORDER) {
+      this.base[tag] = goldenValue(tag, phaseIndex, minute);
+      this.disturbance[tag] = 0;
+    }
+    this.applyPhaseEquipment(true);
+    this.publish();
+  }
+
   skipPhase() {
     if (this.batch.status !== 'running') return;
     this.batch.phaseElapsedS = PHASES[this.batch.phaseIndex].durationMin * 60;
@@ -288,8 +311,11 @@ export class Simulator implements DataSource, SimulationControls {
       if (open('XV_100_10') && this.pumpOn) dLevel -= 0.8;
       this.base.LIT_100_01 = Math.min(100, Math.max(0, this.base.LIT_100_01 + dLevel * dtReal));
 
-      if (open('XV_100_08')) this.base.PIT_100_01 *= Math.exp(-dtReal / 3);
-      else if (open('XV_100_05')) this.base.PIT_100_01 += 0.02 * dtReal;
+      // Ar de aeração (XV-05) pressuriza; exaustão (XV-08) alivia. Ambas abertas:
+      // equilíbrio em ~0,13 kgf/cm² (contrapressão da aeração).
+      const p = this.base.PIT_100_01;
+      const dp = (open('XV_100_05') ? 0.045 : 0) - (open('XV_100_08') ? p / 3 : 0);
+      this.base.PIT_100_01 = Math.min(TAGS.PIT_100_01.rangeMax, Math.max(0, p + dp * dtReal));
 
       // Camisa: vapor (XV-06) aquece até ~125 °C; água (XV-07) resfria até ~20 °C
       const jacketTarget = open('XV_100_06') ? 125 : open('XV_100_07') ? 20 : SIMULATION.ambientTemperature;

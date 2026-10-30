@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { usePlant } from '../../data/source';
 import { SCREENS, uiStore, useUi } from '../../data/ui';
+import { PRESENTATION } from '../../config/project';
 import { cn } from '../ui/utils';
 
 /** Barra de navegação estilo SCADA: abas fixas com atalhos F1–F6. */
 export function NavBar() {
-  const { screen } = useUi();
+  const { screen, presentation, rotation, caption } = useUi();
   const plant = usePlant();
   const unacked = plant.alarms.filter((a) => a.state !== 'acknowledged').length;
 
@@ -23,7 +24,7 @@ export function NavBar() {
   }, []);
 
   return (
-    <nav aria-label="Telas" className="border-b border-line-strong bg-surface px-6">
+    <nav aria-label="Telas" className="flex items-center justify-between gap-4 border-b border-line-strong bg-surface px-6">
       <ul role="tablist" className="flex gap-1">
         {SCREENS.map((s) => {
           const active = s.id === screen;
@@ -53,6 +54,19 @@ export function NavBar() {
           );
         })}
       </ul>
+      {presentation && (
+        <span className="whitespace-nowrap rounded border border-line px-2.5 py-1 text-sm text-ink-muted num" role="status">
+          Modo apresentação ·{' '}
+          {caption
+            ? 'demonstração em andamento'
+            : rotation.pausedUntil
+              ? `rotação pausada · retoma em ${Math.max(0, Math.ceil((rotation.pausedUntil - plant.now) / 1000))} s`
+              : rotation.nextAt
+                ? `próxima tela em ${Math.max(0, Math.ceil((rotation.nextAt - plant.now) / 1000))} s`
+                : ''}
+          <span className="ml-2 text-[13px]">({PRESENTATION.key.toUpperCase()} para sair)</span>
+        </span>
+      )}
     </nav>
   );
 }

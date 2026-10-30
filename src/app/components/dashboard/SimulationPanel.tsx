@@ -1,8 +1,10 @@
-import { FlaskConical, SkipForward, X } from 'lucide-react';
+import { FlaskConical, Play, SkipForward, Square, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SIMULATION, TAGS, TAG_ORDER, VALVES, type TagId, type ValveId } from '../../config/plant';
 import type { ForceLevel } from '../../data/simulator';
+import { demoScenario } from '../../data/demoScenario';
 import { simulation, usePlant } from '../../data/source';
+import { useUi } from '../../data/ui';
 import { cn } from '../ui/utils';
 
 const LEVELS: { id: ForceLevel; label: string }[] = [
@@ -42,6 +44,7 @@ function Segmented<T extends string | number>({
  */
 export function SimulationPanel() {
   usePlant(); // atualiza junto com as leituras
+  const { caption } = useUi();
   const [open, setOpen] = useState(false);
   const [, force] = useState(0);
   const [faultValve, setFaultValve] = useState<ValveId>('XV_100_03');
@@ -83,6 +86,28 @@ export function SimulationPanel() {
 
       <div className="flex flex-col gap-4 p-4 text-sm">
         <section className="flex flex-col gap-2">
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Cenário de demonstração (~2 min)</h3>
+          <p className="text-[13px] text-ink-muted">Normal → alerta → crítico → reconhecimento → intertravamento → normalização.</p>
+          {caption ? (
+            <button
+              onClick={() => demoScenario.stop()}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded border border-line-strong bg-surface text-sm text-ink hover:bg-sunken"
+            >
+              <Square className="size-4" aria-hidden />
+              Encerrar cenário (passo {caption.step}/{caption.total})
+            </button>
+          ) : (
+            <button
+              onClick={() => demoScenario.start()}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded border border-brand bg-brand text-sm text-white hover:bg-brand-strong"
+            >
+              <Play className="size-4" aria-hidden />
+              Iniciar cenário roteirizado
+            </button>
+          )}
+        </section>
+
+        <section className="flex flex-col gap-2 border-t border-line pt-3">
           <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Forçar variável (limites da etapa atual)</h3>
           {TAG_ORDER.map((tag: TagId) => (
             <div key={tag} className="flex items-center justify-between gap-2">

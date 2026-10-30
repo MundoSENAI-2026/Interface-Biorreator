@@ -32,3 +32,17 @@ export const PROJECT = {
     { name: 'OPC UA / MQTT', role: 'Comunicação com o CLP (camada de dados preparada)' },
   ],
 };
+
+/** Modo apresentação (tecla P): tela cheia, cursor oculto e abas alternando. */
+export const PRESENTATION = {
+  /** Tecla que liga/desliga o modo apresentação. */
+  key: 'p',
+  /** Intervalo da troca automática de abas (s). */
+  rotateEveryS: 20,
+  /** Após um toque/clique, a rotação pausa e retoma depois deste tempo sem interação (s). */
+  resumeAfterS: 60,
+  /** Cursor some após este tempo parado (s). */
+  hideCursorAfterS: 3,
+  /** Abas da rotação, em ordem. */
+  screens: ['overview', 'synoptic', 'trends', 'alarms', 'maintenance', 'about'] as const,
+};

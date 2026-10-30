@@ -1,5 +1,7 @@
 import { SimulationPanel } from './components/dashboard/SimulationPanel';
 import { AlarmToasts } from './components/hmi/AlarmToasts';
+import { DemoCaption } from './components/layout/DemoCaption';
+import { PresentationMode } from './components/layout/PresentationMode';
 import { BioreactorRoot } from './pages/BioreactorRoot';
 
 export default function App() {
@@ -8,6 +10,8 @@ export default function App() {
       <BioreactorRoot />
       <AlarmToasts />
       <SimulationPanel />
+      <DemoCaption />
+      <PresentationMode />
     </div>
   );
 }

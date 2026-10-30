@@ -12,11 +12,19 @@ export const SCREENS = [
 
 export type ScreenId = (typeof SCREENS)[number]['id'];
 
+export interface DemoCaption {
+  step: number;
+  total: number;
+  text: string;
+}
+
 export interface UiState {
   screen: ScreenId;
-  /** Legenda exibida durante o cenário roteirizado de demonstração. */
-  caption: string | null;
+  /** Legenda do cenário roteirizado de demonstração (null = cenário parado). */
+  caption: DemoCaption | null;
   presentation: boolean;
+  /** Rotação automática de abas no modo apresentação. */
+  rotation: { nextAt: number | null; pausedUntil: number | null };
 }
 
 type Listener = () => void;
@@ -29,7 +37,12 @@ const fromHash = (): ScreenId => {
 
 /** Estado de interface (navegação, modo apresentação, legenda da demonstração). */
 class UiStore {
-  private state: UiState = { screen: fromHash(), caption: null, presentation: false };
+  private state: UiState = {
+    screen: fromHash(),
+    caption: null,
+    presentation: false,
+    rotation: { nextAt: null, pausedUntil: null },
+  };
   private listeners = new Set<Listener>();
 
   constructor() {
@@ -50,12 +63,16 @@ class UiStore {
     this.set({ screen });
   }
 
-  setCaption(caption: string | null) {
+  setCaption(caption: DemoCaption | null) {
     this.set({ caption });
   }
 
   setPresentation(presentation: boolean) {
     this.set({ presentation });
+  }
+
+  setRotation(rotation: UiState['rotation']) {
+    this.set({ rotation });
   }
 
   private set(patch: Partial<UiState>) {
