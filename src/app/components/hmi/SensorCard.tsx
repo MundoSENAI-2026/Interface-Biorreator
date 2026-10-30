@@ -69,11 +69,17 @@ export function SensorCard({ config, value, limits, status, history, windowS }: 
           className={cn('mb-1.5 flex items-center gap-1 text-xs num', bad ? 'text-ink-disabled' : 'text-ink-muted')}
           title="Tendência no último minuto"
         >
-          <TrendIcon className="size-4" aria-hidden />
-          <span>
-            {slope >= 0 ? '+' : '−'}
-            {formatNumber(Math.abs(slope), config.decimals)} {config.unit}/min
-          </span>
+          {bad ? (
+            <span>Tendência indisponível</span>
+          ) : (
+            <>
+              <TrendIcon className="size-4" aria-hidden />
+              <span>
+                {slope >= 0 ? '+' : '−'}
+                {formatNumber(Math.abs(slope), config.decimals)} {config.unit}/min
+              </span>
+            </>
+          )}
         </div>
       </div>
 

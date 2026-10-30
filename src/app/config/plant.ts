@@ -299,6 +299,9 @@ export const SIMULATION = {
   startPhase: 4,
   startMinute: 12,
   ambientTemperature: 25,
-  /** Atalho para abrir o painel de simulação (Ctrl + Shift + tecla). */
-  panelShortcutKey: 'S',
+  /**
+   * Atalho para abrir/fechar o painel de simulação (Ctrl + Shift + tecla).
+   * Evite S (captura de tela no Edge) e D (favoritos no Chrome).
+   */
+  panelShortcutKey: 'F9',
 };

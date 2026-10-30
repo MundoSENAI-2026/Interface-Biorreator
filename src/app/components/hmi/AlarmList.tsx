@@ -97,8 +97,7 @@ function ActiveTable({ alarms, onAcknowledge }: { alarms: Alarm[]; onAcknowledge
           <tr>
             <th className={th}>Prioridade</th>
             <th className={th}>Hora</th>
-            <th className={th}>Tag</th>
-            <th className={th}>Mensagem</th>
+            <th className={th}>Tag · mensagem</th>
             <th className={th}>Estado</th>
             <th className={cn(th, 'text-right')}>Ação</th>
           </tr>
@@ -119,8 +118,10 @@ function ActiveTable({ alarms, onAcknowledge }: { alarms: Alarm[]; onAcknowledge
                   <StatusBadge status={a.priority} />
                 </td>
                 <td className={cn(td, 'num text-ink-default')}>{formatTime(a.activatedAt)}</td>
-                <td className={cn(td, 'font-mono text-xs text-ink-default')}>{a.source}</td>
-                <td className={cn(td, muted ? 'text-ink-muted' : 'text-ink')}>{a.message}</td>
+                <td className={td}>
+                  <div className="font-mono text-xs text-ink-muted">{a.source}</div>
+                  <div className={muted ? 'text-ink-muted' : 'text-ink'}>{a.message}</div>
+                </td>
                 <td className={cn(td, 'whitespace-nowrap', a.state === 'active' ? 'font-semibold text-ink' : 'text-ink-muted')}>
                   {STATE_LABEL[a.state]}
                 </td>

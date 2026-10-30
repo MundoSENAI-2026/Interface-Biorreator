@@ -109,9 +109,9 @@ export function Synoptic({ plant }: { plant: PlantState }) {
   const isFlowing = (line: Line) => s.valves[line.valve] === 'open' && (!line.needsPump || s.pumpOn);
 
   return (
-    <div className="relative">
+    <div>
       {bad && (
-        <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 rounded border border-st-offline bg-st-offline-bg px-3 py-1.5 text-xs font-medium text-ink-default">
+        <div className="mb-2 flex items-center gap-2 rounded border border-st-offline bg-st-offline-bg px-3 py-1.5 text-xs font-medium text-ink-default">
           <WifiOff className="size-4" aria-hidden />
           Comunicação perdida — valores e estados exibidos não são confiáveis
         </div>
