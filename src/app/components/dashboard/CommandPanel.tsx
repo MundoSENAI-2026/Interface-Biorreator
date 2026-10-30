@@ -16,7 +16,7 @@ function SectionTitle({ children, className }: { children: React.ReactNode; clas
 function EquipmentRow({ name, tag, badge, reason, children, dense }: { name: string; tag: string; badge: React.ReactNode; reason?: string; children: React.ReactNode; dense?: boolean }) {
   if (dense) {
     return (
-      <div className="grid h-14 grid-cols-[minmax(0,1fr)_2.75rem_auto_6.5rem] grid-rows-[1fr_1rem] items-center gap-x-2 rounded border border-line px-2">
+      <div className="grid h-14 grid-cols-[minmax(0,1fr)_7rem_auto_6.5rem] grid-rows-[1fr_1rem] items-center gap-x-2 rounded border border-line px-2">
         <span className="truncate text-sm font-medium text-ink" title={name}>{name}</span>
         <span className="font-mono text-xs text-ink-muted">{tag}</span>
         <div className="min-w-0">{badge}</div>
@@ -110,7 +110,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
           <EquipmentRow
             dense={dense}
             name={dense ? 'Motor' : EQUIPMENT.motor.name}
-            tag={EQUIPMENT.motor.short}
+            tag={EQUIPMENT.motor.id}
             reason={equipmentBlock({ type: 'motor', on: !s?.motorOn })}
             badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={dense ? (s?.motorOn ? 'Ligado' : 'Desligado') : `${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
           >
@@ -128,7 +128,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
           <EquipmentRow
             dense={dense}
             name={dense ? 'Bomba' : EQUIPMENT.pump.name}
-            tag={EQUIPMENT.pump.short}
+            tag={EQUIPMENT.pump.id}
             reason={equipmentBlock({ type: 'pump', on: !s?.pumpOn })}
             badge={<StatusBadge status={s?.pumpOn ? 'running' : 'stopped'} label={s?.pumpOn ? 'Ligada' : 'Desligada'} />}
           >
@@ -155,7 +155,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
           <EquipmentRow
             dense={dense}
             name={EQUIPMENT.manway.name}
-            tag={EQUIPMENT.manway.short}
+            tag={EQUIPMENT.manway.id}
             reason={equipmentBlock({ type: 'manway', open: !s?.manwayOpen })}
             badge={
               s?.manwayOpen
@@ -199,7 +199,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
               return (
                 <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-0.5" title={`${v.short} — ${v.function}: ${v.description}`}>
                   <ValveGlyph state={st} className="h-3 w-4 shrink-0" />
-                  <span className="truncate font-mono text-[11px] font-medium text-ink">{v.short}</span>
+                  <span className="truncate font-mono text-[11px] font-medium text-ink" title={v.id}>{v.id}</span>
                   <span className={cn('col-start-2 truncate text-[10px]', st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
                     {VALVE_STATE_LABEL[st]}
                   </span>
