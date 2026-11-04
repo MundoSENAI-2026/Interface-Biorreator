@@ -68,11 +68,11 @@ function SensorRow({ plant }: { plant: PlantState }) {
 
 export function OverviewScreen({ plant }: { plant: PlantState }) {
   return (
-    <div className={`${OVERVIEW_SCREEN} grid-rows-[auto_auto_auto_minmax(28rem,1fr)]`}>
+    <div className={`${OVERVIEW_SCREEN} grid-rows-[auto_auto_auto_minmax(32rem,1fr)] 2xl:grid-rows-[auto_auto_auto_minmax(28rem,1fr)]`}>
       <Stepper plant={plant} />
       <AlarmBanner alarms={plant.alarms} lastNormalizedAt={plant.events.find((e) => e.category === 'alarm' && e.action === 'Normalizado')?.time} />
       <SensorRow plant={plant} />
-      <div className="grid min-h-0 grid-cols-12 grid-rows-[minmax(28rem,1fr)] gap-3">
+      <div className="grid min-h-0 grid-cols-12 grid-rows-[minmax(32rem,1fr)] gap-3 2xl:grid-rows-[minmax(28rem,1fr)]">
         <div className="col-span-12 grid min-h-0 grid-rows-[minmax(13rem,1fr)_minmax(13rem,1fr)] gap-3 xl:col-span-8">
           <PhaseTrendGrid plant={plant} />
           <div className="grid min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
@@ -91,11 +91,12 @@ export function OverviewScreen({ plant }: { plant: PlantState }) {
 export function SynopticScreen({ plant }: { plant: PlantState }) {
   const phase = PHASES[plant.snapshot?.batch.phaseIndex ?? 0];
   return (
-    <div className={`${SCREEN} grid-cols-12`}>
-      <Panel title="Sinótico P&ID · BR-100" subtitle={`Limites da etapa: ${phase.name}`} className="col-span-12 min-h-0 lg:col-span-8" bodyClassName="min-h-0 p-3">
+    // No notebook os comandos ocupam mais altura (coluna estreita): a tela rola, o card não
+    <div className={`${SCREEN} grid-cols-12 max-2xl:min-h-[920px]`}>
+      <Panel title="Sinótico P&ID · BR-100" subtitle={`Limites da etapa: ${phase.name}`} className="col-span-12 min-h-0 lg:col-span-7 2xl:col-span-8" bodyClassName="min-h-0 p-3">
         <Synoptic plant={plant} />
       </Panel>
-      <Panel title="Comandos" subtitle="Ações críticas pedem confirmação" className="col-span-12 min-h-0 lg:col-span-4" bodyClassName="min-h-0 overflow-auto">
+      <Panel title="Comandos" subtitle="Ações críticas pedem confirmação" className="col-span-12 min-h-0 lg:col-span-5 2xl:col-span-4" bodyClassName="min-h-0 overflow-auto">
         <CommandPanel plant={plant} />
       </Panel>
     </div>

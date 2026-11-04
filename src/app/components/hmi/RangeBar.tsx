@@ -66,7 +66,7 @@ export function RangeBar({ config, limits: lim, value, muted }: RangeBarProps) {
       <div className="mt-1 flex items-baseline justify-between gap-2 text-[13px] text-ink-muted num">
         <span>{below ? `◄ ${fmt(min)}` : fmt(min)}</span>
         {zoomed && (
-          <span className="truncate">
+          <span className="text-center">
             faixa da etapa · escala {formatNumber(config.rangeMin, 0)}–{formatNumber(config.rangeMax, 0)} {config.unit}
           </span>
         )}

@@ -64,7 +64,7 @@ export function SensorCard({ config, value, limits, status, history, windowS, pr
         <StatusBadge status={status} size="md" label={bad && freshness?.rejected ? 'Fora da escala' : waiting ? 'Aguardando dados' : undefined} />
       </header>
 
-      <div className="flex items-end justify-between gap-2">
+      <div className="flex flex-wrap items-end justify-between gap-x-2 gap-y-1">
         <div title={freshness?.title} className={cn('-mx-1.5 flex items-baseline gap-2 rounded px-1.5 transition-colors duration-200 num', VALUE_STYLE[status])}>
           <span className="text-4xl font-semibold leading-none tracking-tight 2xl:text-5xl">{value === null ? '—' : formatNumber(value, config.decimals)}</span>
           <span className="text-xl font-medium">{config.unit}</span>

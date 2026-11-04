@@ -33,7 +33,7 @@ import {
 } from 'recharts';
 
 const css = (name: string) => `var(${name})`;
-const AXIS = { fontSize: 12, fill: css('--text-muted') };
+const AXIS = { fontSize: 13, fill: css('--text-muted') };
 const pct = (value: number, decimals = 1) => `${formatNumber(value * 100, decimals)} %`;
 const shortDate = (timestamp: number) => formatDate(timestamp).slice(0, 5);
 
@@ -108,7 +108,7 @@ function DailyChart({
             axisLine={false}
             width={44}
             tickFormatter={(value) => formatNumber(value, decimals === 0 ? 0 : 1)}
-            label={{ value: unit, angle: -90, position: 'insideLeft', fill: css('--text-muted'), fontSize: 11 }}
+            label={{ value: unit, angle: -90, position: 'insideLeft', fill: css('--text-muted'), fontSize: 13 }}
           />
           <ReferenceArea y1={warning} y2={critical} fill={css('--status-warning-bg')} fillOpacity={0.75} ifOverflow="hidden" />
           <ReferenceArea
@@ -117,9 +117,9 @@ function DailyChart({
             fill={css('--status-critical-bg')}
             fillOpacity={0.8}
             ifOverflow="hidden"
-            label={{ value: 'Crítico', position: 'insideTopRight', fill: css('--status-critical-text'), fontSize: 10 }}
+            label={{ value: 'Crítico', position: 'insideTopRight', fill: css('--status-critical-text'), fontSize: 13 }}
           />
-          <ReferenceLine y={warning} stroke={css('--status-warning')} strokeDasharray="4 4" strokeWidth={1} label={{ value: 'Alerta', position: 'insideTopRight', fill: css('--status-warning-text'), fontSize: 10 }} />
+          <ReferenceLine y={warning} stroke={css('--status-warning')} strokeDasharray="4 4" strokeWidth={1} label={{ value: 'Alerta', position: 'insideTopRight', fill: css('--status-warning-text'), fontSize: 13 }} />
           <ReferenceLine y={critical} stroke={css('--status-critical')} strokeDasharray="4 4" strokeWidth={1} />
           <Line dataKey="v" stroke={css('--brand-blue')} strokeWidth={2.25} dot={false} isAnimationActive={false} />
           <Tooltip
@@ -247,20 +247,20 @@ export function MaintenanceView({ now }: { now: number }) {
               <span className="absolute -inset-y-1 w-0.5 bg-st-warning" style={{ left: `${ML_MODEL.warnProbability * 100}%` }} />
               <span className="absolute -inset-y-1 w-0.5 bg-st-critical" style={{ left: `${ML_MODEL.critProbability * 100}%` }} />
             </div>
-            <div className="mt-0.5 flex justify-between text-[10px] leading-3 text-ink-muted num">
+            <div className="mt-0.5 flex justify-between text-[13px] leading-4 text-ink-muted num">
               <span>0 %</span><span>25 % · alerta</span><span>50 % · crítico</span><span>100 %</span>
             </div>
           </div>
           <ul className="flex min-h-0 flex-1 flex-col justify-around gap-1">
             {[...ML_INSIGHTS.factors].sort((a, b) => b.contribution - a.contribution).map((factor) => (
               <li key={factor.name} className="grid grid-cols-[minmax(0,1fr)_4.5rem_2.5rem] items-center gap-2 text-[13px]" title={factor.detail}>
-                <span className="truncate text-ink" title={factor.detail}>{factor.name}</span>
+                <span className="text-ink" title={factor.detail}>{factor.name}</span>
                 <span className="h-1.5 rounded-sm bg-sunken"><span className="block h-full rounded-sm bg-line-strong" style={{ width: `${factor.contribution * 100}%` }} /></span>
                 <span className="text-right text-ink-muted num">{pct(factor.contribution, 0)}</span>
               </li>
             ))}
           </ul>
-          <p className="border-t border-line pt-1 text-[11px] leading-4 text-ink-muted num">
+          <p className="border-t border-line pt-1 text-[13px] leading-4 text-ink-muted num">
             {ML_MODEL.name} v{ML_MODEL.version} · treino {formatDate(parseLocalDate(ML_MODEL.trainedAt))} · confiança {pct(ML_MODEL.confidence, 0)} · valores ilustrativos
           </p>
         </Panel>

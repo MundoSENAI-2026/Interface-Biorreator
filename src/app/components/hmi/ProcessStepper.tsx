@@ -60,7 +60,7 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
               </span>
             </div>
             <span
-              className={cn('truncate whitespace-nowrap text-[13px] num', current ? 'font-medium text-st-info' : 'text-ink-muted')}
+              className={cn('whitespace-nowrap text-[13px] num', current ? 'font-medium text-st-info' : 'text-ink-muted')}
               title={current ? `${formatDuration(elapsedS)} de ${formatDuration(nominalS)}` : completion?.title}
             >
               {done && <><span className="hidden 2xl:inline">Concluída · </span>{completion ? completion.text : formatDurationShort(durationsS[i] ?? nominalS)}</>}

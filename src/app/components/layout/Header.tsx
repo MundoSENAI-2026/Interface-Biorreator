@@ -75,8 +75,8 @@ export function Header({ plant }: { plant: PlantState }) {
       <div className="flex items-center gap-4 border-b border-line px-6 py-1.5">
         <BrandLogo />
         <div className="min-w-0">
-          <h1 className="truncate text-xl font-semibold text-brand">{PLANT.systemName}</h1>
-          <p className="truncate text-sm text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · {PROJECT.event}</p>
+          <h1 className="text-xl font-semibold text-brand">{PLANT.systemName}</h1>
+          <p className="text-sm text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · {PROJECT.event}</p>
         </div>
         <div className="ml-auto flex items-center gap-6">
           {source && (

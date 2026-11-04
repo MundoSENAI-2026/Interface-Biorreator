@@ -147,7 +147,7 @@ export function AboutProject() {
         <BrandLogo className="h-14" />
         <div className="min-w-0 flex-1">
           <h1 className="text-3xl font-semibold text-brand-strong">{PROJECT.title}</h1>
-          <p className="truncate text-lg text-ink-default">{PROJECT.subtitle}</p>
+          <p className="text-lg text-ink-default">{PROJECT.subtitle}</p>
         </div>
         <span className="shrink-0 rounded-full bg-brand px-4 py-1.5 text-[15px] font-semibold text-white">{PROJECT.event}</span>
         {PROJECT.qrLink && (
@@ -203,8 +203,8 @@ export function AboutProject() {
                 {initials(PROJECT.advisor.name)}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-[15px] font-semibold text-ink">{PROJECT.advisor.name}</p>
-                <p className="truncate text-[13px] text-brand-strong">{PROJECT.advisor.role}</p>
+                <p className="text-[15px] font-semibold text-ink">{PROJECT.advisor.name}</p>
+                <p className="text-[13px] text-brand-strong">{PROJECT.advisor.role}</p>
               </div>
             </li>
             {PROJECT.team.map((m) => (
@@ -213,9 +213,9 @@ export function AboutProject() {
                   {initials(m.name)}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[15px] font-medium text-ink">{m.name}</p>
-                  <p className="truncate text-[13px] text-ink-default">{m.role}</p>
-                  <p className="truncate text-[13px] text-ink-muted">{m.course}</p>
+                  <p className="text-[15px] font-medium text-ink">{m.name}</p>
+                  <p className="text-[13px] text-ink-default">{m.role}</p>
+                  <p className="text-[13px] text-ink-muted">{m.course}</p>
                 </div>
               </li>
             ))}

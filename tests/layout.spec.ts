@@ -145,7 +145,20 @@ async function audit(page: Page) {
       return [];
     }).slice(0, 25);
 
+    // Texto menor que 13 px (HTML e SVG dos gráficos): cada elemento com texto próprio
+    const small = [...(header?.querySelectorAll<Element>('*') ?? []), ...(main?.querySelectorAll<Element>('*') ?? [])].filter((element) => {
+      if (!visible(element) || element.closest('.sr-only, [role="tooltip"]')) return false;
+      const ownText = [...element.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+      return ownText && parseFloat(getComputedStyle(element).fontSize) < 12.9;
+    }).slice(0, 25).map((element) => ({
+      tag: element.tagName,
+      text: (element.textContent ?? '').trim().replace(/s+/g, ' ').slice(0, 60),
+      fontSize: getComputedStyle(element).fontSize,
+      className: typeof (element as HTMLElement).className === 'string' ? (element as HTMLElement).className.slice(0, 100) : '',
+    }));
+
     return {
+      small,
       documentHeight: document.documentElement.scrollHeight,
       documentWidth: document.documentElement.scrollWidth,
       viewportHeight: window.innerHeight,
@@ -174,15 +187,15 @@ for (const mode of MODES) {
       }
 
       // LAYOUT_TABS=F4,F3 restringe as telas (útil durante o ajuste de uma tela)
-      const only = process.env.LAYOUT_TABS?.split(',').map((t) => t.trim().toUpperCase());
+      const only = process.env.LAYOUT_TABS ? process.env.LAYOUT_TABS.split(',').map((t) => t.trim().toUpperCase()) : undefined;
       for (const key of TABS.filter((t) => !only || only.includes(t))) {
         await page.getByRole('tab', { name: new RegExp(`^${key}`) }).click();
         await page.waitForTimeout(300);
         const result = await audit(page);
         const where = `${name} · ${key}`;
-        console.log(`[layout] ${where}: ${result.truncated.length} corte(s), ${result.overflows.length} vazamento(s), ${result.internalScroll.length} rolagem(ns) interna(s)`);
+        console.log(`[layout] ${where}: ${result.truncated.length} corte(s), ${result.overflows.length} vazamento(s), ${result.internalScroll.length} rolagem(ns) interna(s), ${result.small.length} texto(s) < 13 px`);
         if (process.env.LAYOUT_SHOTS) await page.screenshot({ path: `${process.env.LAYOUT_SHOTS}/${mode}-${viewport.width}-${key}.png` });
-        if (process.env.LAYOUT_DUMP) console.log(JSON.stringify({ where, truncated: result.truncated, overflows: result.overflows, internalScroll: result.internalScroll }));
+        if (process.env.LAYOUT_DUMP) console.log(JSON.stringify({ where, truncated: result.truncated, overflows: result.overflows, small: result.small, internalScroll: result.internalScroll }));
 
         expect.soft(result.documentWidth, `${where}: rolagem horizontal da página`).toBeLessThanOrEqual(result.viewportWidth);
         if (viewport.fits || FIT_ON_LAPTOP.includes(key)) {
@@ -192,6 +205,7 @@ for (const mode of MODES) {
         expect.soft(result.internalScroll, `${where}: rolagem interna em card`).toEqual([]);
         expect.soft(result.overflows, `${where}: conteúdo fora do card`).toEqual([]);
         expect.soft(result.truncated, `${where}: texto cortado`).toEqual([]);
+        expect.soft(result.small, `${where}: texto menor que 13 px`).toEqual([]);
       }
       stopBroker();
     });

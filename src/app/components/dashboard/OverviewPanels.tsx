@@ -4,7 +4,7 @@ import { PHASES, TAGS, TAG_ORDER, getLimits } from '../../config/plant';
 import { alarmStats } from '../../data/alarmStats';
 import { BATCH_NOMINAL_S, batchTiming, phaseConformity, phaseTrendRows } from '../../data/batchStats';
 import { goldenValue } from '../../data/goldenBatch';
-import { simulation } from '../../data/source';
+import { plantStore, simulation } from '../../data/source';
 import { freshness, tagStatus, type PlantState } from '../../data/store';
 import { uiStore } from '../../data/ui';
 import { formatDateTime, formatDuration, formatNumber, formatTime } from '../../lib/format';
@@ -35,7 +35,7 @@ export function PhaseTrendGrid({ plant }: { plant: PlantState }) {
       bodyClassName="grid min-h-0 grid-cols-4 gap-3 p-4"
       actions={<div className="flex items-center gap-3 text-xs text-ink-muted">
         <LegendSwatch className="h-0.5 bg-brand" label="Lote atual" />
-        <LegendSwatch className="border-t-2 border-dashed border-ink-muted" label="Lote de ouro" />
+        <LegendSwatch className="border-t-2 border-dashed border-ink-muted" label={plantStore.source.kind === 'equipamento' ? 'Lote de ouro (referência)' : 'Lote de ouro'} />
         <LegendSwatch className="h-2.5 bg-line" label="Tolerância" />
         <LegendSwatch className="h-2.5 bg-st-warning-bg" label="Faixa de alerta" />
         <LegendSwatch className="h-2.5 bg-st-critical-bg" label="Faixa crítica" />
@@ -106,23 +106,25 @@ export function BatchSummary({ plant }: { plant: PlantState }) {
       <TimeValue label="Tempo total previsto" value={formatDuration(BATCH_NOMINAL_S)} />
       <TimeValue label="Restante no lote" value={formatDuration(remainingS)} />
       <TimeValue label="Restante na etapa" value={formatDuration(timing.phaseRemainingS)} />
+      {simulation && <TimeValue label={`Término previsto (×${formatNumber(processRate(), 0)})`} value={formatTime(timing.predictedEnd).slice(0, 5)} />}
     </dl>
-    {simulation && <p className="text-[11px] leading-4 text-ink-muted">Término real estimado (×{formatNumber(processRate(), 0)}): {formatTime(timing.predictedEnd).slice(0, 5)}</p>}
-    <div className="mt-auto grid grid-cols-3 gap-1.5 border-t border-line pt-1">
-      <MiniMetric label="Conformidade" value={conformity === null ? '—' : `${formatNumber(conformity * 100, 0)}%`} detail="etapa" />
-      <MiniMetric label="Desvio médio" value={meanTempDeviation === null ? '—' : `${formatNumber(meanTempDeviation, 1)} °C`} detail="temperatura" />
-      <MiniMetric label="Alarmes" value={String(lotAlarms)} detail="no lote" />
-    </div>
+    {/* Indicadores do lote em 13 px (antes 9–10 px) */}
+    <dl className="mt-auto grid grid-cols-3 gap-1.5 border-t border-line pt-1.5">
+      <MiniMetric label="Conformidade da etapa" value={conformity === null ? 'Sem dados' : `${formatNumber(conformity * 100, 0)} %`} />
+      <MiniMetric label="Desvio de temperatura" value={meanTempDeviation === null ? 'Sem dados' : `${formatNumber(meanTempDeviation, 1)} °C`} />
+      <MiniMetric label="Alarmes no lote" value={String(lotAlarms)} />
+    </dl>
   </Panel>;
 }
 
 function TimeValue({ label, value }: { label: string; value: string }) {
-  return <div className="flex min-w-0 items-center justify-between gap-1"><dt className="truncate text-ink-muted">{label}</dt><dd className="shrink-0 text-right font-medium text-ink">{value}</dd></div>;
+  return <div className="flex min-w-0 items-center justify-between gap-1"><dt className="text-ink-muted">{label}</dt><dd className="shrink-0 text-right font-medium text-ink">{value}</dd></div>;
 }
 
-function MiniMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <div className="min-w-0 rounded bg-sunken px-1.5 py-0.5 text-center">
-    <div className="truncate text-[10px] leading-3 text-ink-muted">{label}</div><div className="truncate text-xs font-semibold leading-4 text-ink num">{value}</div><div className="truncate text-[9px] leading-3 text-ink-muted">{detail}</div>
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return <div className="flex min-w-0 flex-col justify-center rounded bg-sunken px-1.5 py-1 text-center">
+    <dt className="text-[13px] leading-4 text-ink-muted">{label}</dt>
+    <dd className="text-[15px] font-semibold leading-5 text-ink num">{value}</dd>
   </div>;
 }
 
@@ -133,7 +135,8 @@ export function RecentEvents({ plant }: { plant: PlantState }) {
   useLayoutEffect(() => {
     const list = listRef.current;
     if (!list) return;
-    const updateRows = () => setVisibleRows(Math.max(6, Math.min(8, Math.floor(list.clientHeight / 22))));
+    // Linhas de ~36 px (mensagem em até 2 linhas)
+    const updateRows = () => setVisibleRows(Math.max(3, Math.min(8, Math.floor(list.clientHeight / 36))));
     updateRows();
     const observer = new ResizeObserver(updateRows);
     observer.observe(list);
@@ -142,11 +145,12 @@ export function RecentEvents({ plant }: { plant: PlantState }) {
   const events = plant.events.slice(0, visibleRows);
   return <Panel title="Últimos eventos" className="min-h-0" bodyClassName="flex min-h-0 flex-col p-4" actions={<button onClick={() => uiStore.navigate('alarms')} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">ver todos (F4) <ArrowRight className="size-4" aria-hidden /></button>}>
     <ul ref={listRef} className="grid min-h-0 flex-1 divide-y divide-line" style={{ gridTemplateRows: `repeat(${Math.max(events.length, 1)}, minmax(0, 1fr))` }}>
-      {events.map((event) => <li key={event.seq} className="grid min-h-0 grid-cols-[3.7rem_5.5rem_minmax(0,1fr)_5.5rem] items-center gap-2 py-0.5 text-xs">
+      {events.map((event) => <li key={event.seq} className="grid min-h-0 grid-cols-[2.75rem_6.5rem_minmax(0,1fr)] items-center gap-2 py-0.5 text-[13px] 2xl:grid-cols-[2.75rem_6.5rem_minmax(0,1fr)_5.5rem]">
         <span className="text-ink-muted num">{formatTime(event.time).slice(0, 5)}</span>
         <EventTypeBadge event={event} />
-        <span className="min-w-0 truncate text-ink" title={event.message}>{event.message}</span>
-        <span className="truncate text-right text-ink-muted" title={event.user ?? 'Sistema (CLP)'}>{event.category === 'operator' ? (event.user ?? 'Operador 01') : 'Sistema (CLP)'}</span>
+        <span className="line-clamp-2 min-w-0 leading-4 text-ink">{event.message}</span>
+        {/* Usuário só na tela larga: no notebook a mensagem precisa da largura */}
+        <span className={cn('hidden text-right 2xl:inline', event.category === 'operator' ? 'font-medium text-st-info' : 'text-ink-muted')}>{event.user}</span>
       </li>)}
     </ul>
   </Panel>;

@@ -101,29 +101,29 @@ export function SimulationPanel() {
           {realSource && (
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[13px]">
               <dt className="text-ink-muted">Broker</dt>
-              <dd className="truncate font-mono text-ink">{MQTT.host}:{MQTT.port}</dd>
+              <dd className="break-all font-mono text-ink">{MQTT.host}:{MQTT.port}</dd>
               <dt className="text-ink-muted">Leituras</dt>
-              <dd className="truncate font-mono text-ink" title={realSource.topic}>{realSource.topic}</dd>
+              <dd className="break-all font-mono text-ink" title={realSource.topic}>{realSource.topic}</dd>
               <dt className="text-ink-muted">Analógicas</dt>
-              <dd className="truncate font-mono text-ink" title={realSource.analogTopic}>{realSource.analogTopic}</dd>
+              <dd className="break-all font-mono text-ink" title={realSource.analogTopic}>{realSource.analogTopic}</dd>
               <dt className="text-ink-muted">Comandos</dt>
               <dd className="text-ink">Somente leitura: nada é publicado</dd>
               <dt className="text-ink-muted">Chaves</dt>
               <dd className="text-ink">{realSource.received.size} recebidas</dd>
               <dt className="text-ink-muted">clientId</dt>
-              <dd className="truncate font-mono text-ink">{realSource.clientId}</dd>
+              <dd className="break-all font-mono text-ink">{realSource.clientId}</dd>
             </dl>
           )}
           {mqttSource && (
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[13px]">
               <dt className="text-ink-muted">Broker</dt>
-              <dd className="truncate font-mono text-ink">{MQTT.host}:{MQTT.port}</dd>
+              <dd className="break-all font-mono text-ink">{MQTT.host}:{MQTT.port}</dd>
               <dt className="text-ink-muted">Leituras</dt>
-              <dd className="truncate font-mono text-ink" title={mqttSource.dataTopic}>{mqttSource.dataTopic}</dd>
+              <dd className="break-all font-mono text-ink" title={mqttSource.dataTopic}>{mqttSource.dataTopic}</dd>
               <dt className="text-ink-muted">Comandos</dt>
-              <dd className="truncate font-mono text-ink">{MQTT.topicPrefix}cmd/&lt;TAG&gt;/&lt;ação&gt;</dd>
+              <dd className="break-all font-mono text-ink">{MQTT.topicPrefix}cmd/&lt;TAG&gt;/&lt;ação&gt;</dd>
               <dt className="text-ink-muted">clientId</dt>
-              <dd className="truncate font-mono text-ink">{mqttSource.clientId}</dd>
+              <dd className="break-all font-mono text-ink">{mqttSource.clientId}</dd>
             </dl>
           )}
           <p className="text-[13px] text-ink-muted">A troca recarrega a página e recomeça histórico e alarmes.</p>

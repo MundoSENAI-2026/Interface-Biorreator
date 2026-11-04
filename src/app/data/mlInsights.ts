@@ -97,10 +97,10 @@ export const ASSETS: AssetHealth[] = [
   valve('08', 79, 2310, '2026-04-28'),
   valve('09', 94, 240, '2026-06-02'),
   valve('10', 90, 330, '2026-07-14'),
-  { id: 'TIT_100_01', name: 'TIT 100-01', type: 'Sensor', health: 92, usage: '48 dias s/ calibração', lastMaintenance: '2026-09-12' },
-  { id: 'PIT_100_01', name: 'PIT 100-01', type: 'Sensor', health: 90, usage: '48 dias s/ calibração', lastMaintenance: '2026-09-12' },
-  { id: 'LIT_100_01', name: 'LIT 100-01', type: 'Sensor', health: 88, usage: '81 dias s/ calibração', lastMaintenance: '2026-08-10' },
-  { id: 'AIT_100_01', name: 'AIT 100-01', type: 'Sensor', health: 61, usage: '81 dias s/ calibração', lastMaintenance: '2026-08-10' },
+  { id: 'TIT_100_01', name: 'TIT 100-01', type: 'Sensor', health: 92, usage: '48 dias sem calibração', lastMaintenance: '2026-09-12' },
+  { id: 'PIT_100_01', name: 'PIT 100-01', type: 'Sensor', health: 90, usage: '48 dias sem calibração', lastMaintenance: '2026-09-12' },
+  { id: 'LIT_100_01', name: 'LIT 100-01', type: 'Sensor', health: 88, usage: '81 dias sem calibração', lastMaintenance: '2026-08-10' },
+  { id: 'AIT_100_01', name: 'AIT 100-01', type: 'Sensor', health: 61, usage: '81 dias sem calibração', lastMaintenance: '2026-08-10' },
 ];
 
 /** Índice de saúde: ≥ 75 bom, 50–74 atenção, < 50 crítico. */

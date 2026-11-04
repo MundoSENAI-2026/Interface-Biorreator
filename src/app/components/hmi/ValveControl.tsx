@@ -49,7 +49,7 @@ export function ValveControl({ valve, state, noData = false }: { valve: ValveCon
       <div className="min-w-0">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-mono text-[15px] font-medium text-ink">{valve.short}</span>
-          <span className="truncate text-sm text-ink-default">{valve.function}</span>
+          <span className="text-sm text-ink-default">{valve.function}</span>
         </div>
         {noData
           ? <StatusBadge status="bad" label="Sem dado" className="mt-1" />

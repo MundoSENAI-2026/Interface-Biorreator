@@ -249,7 +249,7 @@ export function Synoptic({ plant, compact = false }: { plant: PlantState; compac
               <circle cx={650} cy={y} r={26} className="fill-surface stroke-ink-default" strokeWidth={1.75} />
               <line x1={624} x2={676} y1={y} y2={y} className="stroke-ink-default" strokeWidth={1.2} />
               <text x={650} y={y - 7} textAnchor="middle" className="fill-ink font-semibold" style={{ fontSize: 14 }}>{letters}</text>
-              <text x={650} y={y + 17} textAnchor="middle" className="fill-ink num" style={{ fontSize: 11 }}>{loop}</text>
+              <text x={650} y={y + 17} textAnchor="middle" className="fill-ink num" style={{ fontSize: 13 }}>{loop}</text>
               <rect x={690} y={y - 20} width={220} height={40} rx={4} className={cn(style.box, fill)} strokeWidth={1.5} />
               <text x={702} y={y + 8} className={cn(style.text, 'font-semibold num')} style={{ fontSize: fs.value }}>
                 {formatNumber(s.tags[tag], cfg.decimals)}

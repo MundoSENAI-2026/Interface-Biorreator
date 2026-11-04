@@ -16,14 +16,14 @@ function SectionTitle({ children, className }: { children: React.ReactNode; clas
 function EquipmentRow({ name, tag, badge, reason, children, dense }: { name: string; tag: string; badge: React.ReactNode; reason?: string; children: React.ReactNode; dense?: boolean }) {
   if (dense) {
     return (
-      <div className="grid h-14 grid-cols-[minmax(0,1fr)_7rem_auto_6.5rem] grid-rows-[1fr_1rem] items-center gap-x-2 rounded border border-line px-2">
-        <span className="truncate text-sm font-medium text-ink" title={name}>{name}</span>
+      <div className="grid min-h-14 grid-cols-[minmax(0,1fr)_5.5rem_auto_6.5rem] grid-rows-[1fr_auto] items-center gap-x-2 rounded border border-line px-2 py-1">
+        <span className="text-sm font-medium leading-4 text-ink">{name}</span>
         <span className="font-mono text-xs text-ink-muted">{tag}</span>
         <div className="min-w-0">{badge}</div>
         {children}
-        <span className={cn('col-span-4 row-start-2 flex min-w-0 items-center gap-1 truncate text-[11px] leading-4 text-st-warning-text', !reason && 'invisible')} title={reason ? `Bloqueado: ${reason}` : undefined}>
-          <Lock className="size-3 shrink-0" aria-hidden />
-          <span className="truncate">{reason ? `Bloqueado: ${reason}` : ' '}</span>
+        <span className={cn('col-span-4 row-start-2 flex min-w-0 items-start gap-1 text-[13px] leading-4 text-st-warning-text', !reason && 'invisible')}>
+          <Lock className="mt-0.5 size-3 shrink-0" aria-hidden />
+          <span>{reason ? `Bloqueado: ${reason}` : ' '}</span>
         </span>
       </div>
     );
@@ -101,7 +101,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
       {shared && (
         <div className={cn('flex items-start gap-2 rounded border border-line bg-sunken text-ink-default', dense ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm')} role="status">
           {status === 'running' ? <Info className="mt-0.5 size-4 shrink-0 text-st-info" aria-hidden /> : <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />}
-          <span className="min-w-0 truncate" title={shared}>
+          <span className="min-w-0">
             <strong className="font-semibold">{dense ? 'Manual bloqueado:' : 'Comandos manuais bloqueados.'}</strong> {shared}.
           </span>
         </div>
@@ -201,10 +201,10 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
               const st = s?.valves[v.id] ?? 'closed';
               const unknown = noData(v.id);
               return (
-                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-0.5" title={`${v.short} — ${v.function}: ${v.description}${unknown ? ' · aguardando dados do equipamento' : ''}`}>
+                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-0.5" title={`${v.id} — ${v.function}: ${v.description}${unknown ? ' · aguardando dados do equipamento' : ''}`}>
                   <ValveGlyph state={st} className="h-3 w-4 shrink-0" />
-                  <span className="truncate font-mono text-[11px] font-medium text-ink" title={v.id}>{v.id}</span>
-                  <span className={cn('col-start-2 truncate text-[10px]', unknown ? 'text-ink-muted' : st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
+                  <span className="font-mono text-[13px] font-medium leading-4 text-ink">{v.short}</span>
+                  <span className={cn('col-span-2 text-[13px] leading-4', unknown ? 'text-ink-muted' : st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
                     {unknown ? 'Sem dado' : VALVE_STATE_LABEL[st]}
                   </span>
                 </li>
