@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowUp, CircleCheck } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, CircleCheck } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   HEALTH_CRIT,
   HEALTH_WARN,
@@ -18,6 +18,7 @@ import { daysUntil, formatDate, formatNumber, parseLocalDate, pluralize } from '
 import { Panel } from '../hmi/Panel';
 import { StatusBadge, type BadgeStatus } from '../hmi/StatusBadge';
 import { Chip, type ChipTone } from '../hmi/Chip';
+import { useRowsThatFit } from '../hmi/AlarmList';
 import { cn } from '../ui/utils';
 import {
   CartesianGrid,
@@ -41,6 +42,8 @@ type DueKind = 'overdue' | 'soon' | 'upcoming';
 function dueStatus(iso: string, today: Date): { kind: DueKind; label: string } {
   const days = daysUntil(parseLocalDate(iso), today);
   if (days < 0) return { kind: 'overdue', label: `Atrasada há ${pluralize(-days, 'dia', 'dias')}` };
+  if (days === 0) return { kind: 'soon', label: 'Hoje' };
+  if (days === 1) return { kind: 'soon', label: 'Amanhã' };
   if (days <= 7) return { kind: 'soon', label: `Em ${pluralize(days, 'dia', 'dias')}` };
   return { kind: 'upcoming', label: `Em ${pluralize(days, 'dia', 'dias')}` };
 }
@@ -149,16 +152,20 @@ function describeAsset(asset: AssetHealth) {
   return tag?.name ?? asset.name;
 }
 
-function canonicalPlanTag(asset: string) {
+/** Ativo do plano: um ativo = tag completa; vários = lista curta ("TIT, PIT, LIT"). */
+function planAssetLabel(asset: string) {
   const mapping: Record<string, string> = {
     'AIT 100-01': 'AIT_100_01',
     'XV-03': 'XV_100_03',
     'M-01': 'M_100_01',
     'P-01': 'P_100_01',
-    'TIT · PIT · LIT': 'TIT_100_01 · PIT_100_01 · LIT_100_01',
   };
+  if (asset.includes('·')) return asset.split('·').map((part) => part.trim()).join(', ');
   return mapping[asset] ?? asset;
 }
+
+/** Altura única das linhas de tabela (~36 px). */
+const ROW_H = 36;
 
 const RECOMMENDATION_TAGS = ['XV_100_03', 'XV_100_07', 'AIT_100_01', 'M_100_01'];
 
@@ -211,8 +218,23 @@ export function MaintenanceView({ now }: { now: number }) {
 
   const upcomingDueCount = tasksIn35Days;
 
+  // Saúde dos ativos: as linhas que cabem na altura do plano ao lado (piores primeiro), com páginas
+  const healthBoxRef = useRef<HTMLDivElement>(null);
+  const healthPageSize = useRowsThatFit(healthBoxRef, ROW_H, 32);
+  const [healthPage, setHealthPage] = useState(0);
+  useEffect(() => setHealthPage(0), [sort]);
+  // Recomendação clicada: vai para a página onde o ativo destacado está
+  useEffect(() => {
+    const index = sortedAssets.findIndex((asset) => asset.id === highlightedAsset);
+    if (index >= 0) setHealthPage(Math.floor(index / healthPageSize));
+  }, [highlightedAsset, healthPageSize, sortedAssets]);
+  const healthPages = Math.max(1, Math.ceil(sortedAssets.length / healthPageSize));
+  const currentHealthPage = Math.min(healthPage, healthPages - 1);
+  const pagedAssets = sortedAssets.slice(currentHealthPage * healthPageSize, (currentHealthPage + 1) * healthPageSize);
+  const pageBtn = 'inline-flex size-8 items-center justify-center rounded border border-line-strong bg-surface text-ink hover:bg-sunken disabled:cursor-not-allowed disabled:text-ink-disabled';
+
   return (
-    <div className="grid h-full min-h-0 grid-rows-[minmax(0,0.35fr)_minmax(0,0.65fr)] gap-3">
+    <div className="grid h-full min-h-0 grid-rows-[minmax(15rem,1fr)_auto] gap-3">
       <div className="grid min-h-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         <Panel title="Probabilidade de falha" subtitle={`próximos ${ML_INSIGHTS.horizonDays} dias`} className="min-h-0" bodyClassName="flex min-h-0 flex-col gap-2 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
@@ -273,51 +295,70 @@ export function MaintenanceView({ now }: { now: number }) {
           <p className="shrink-0 text-[13px] leading-5 text-ink-muted">
             {ASSETS.length} ativos · {healthCounts.good} bons · {healthCounts.attention} em atenção · {healthCounts.critical} críticos
           </p>
-          <table className="w-full table-fixed border-collapse text-sm">
-            <colgroup>
-              <col className="w-[25%]" /><col className="w-[9%]" /><col className="w-[21%]" /><col className="w-[16%]" /><col className="w-[16%]" /><col className="w-[13%]" />
-            </colgroup>
-            <thead className="sticky top-0 z-10 bg-surface">
-              <tr className="h-6 border-b border-line text-left text-[12px] uppercase tracking-wide text-ink-muted">
-                <SortableHeader label="Ativo" column="asset" sort={sort} onSort={toggleSort} />
-                <SortableHeader label="Tipo" column="type" sort={sort} onSort={toggleSort} />
-                <SortableHeader label="Índice de saúde" column="health" sort={sort} onSort={toggleSort} />
-                <SortableHeader label="Uso" column="usage" sort={sort} onSort={toggleSort} alignRight />
-                <SortableHeader label="Últ. manutenção" column="maintenance" sort={sort} onSort={toggleSort} />
-                <SortableHeader label="Status" column="status" sort={sort} onSort={toggleSort} />
-              </tr>
-            </thead>
-            <tbody>
-              {sortedAssets.map((asset) => {
-                const status: BadgeStatus = asset.health < HEALTH_CRIT ? 'critical' : asset.health < HEALTH_WARN ? 'warning' : 'normal';
-                return (
-                  <tr
-                    key={asset.id}
-                    id={`asset-${asset.id}`}
-                    className={cn('h-[26px] border-b border-line/70 text-[13px]', highlightedAsset === asset.id && 'bg-brand-soft')}
-                  >
-                    <td className="truncate pr-1">
-                      <span className="font-mono font-medium text-ink">{asset.id}</span><span className="text-ink-muted"> · {describeAsset(asset)}</span>
-                    </td>
-                    <td className="truncate text-ink-default">{asset.type}</td>
-                    <td className="pr-3">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-full max-w-40 rounded-sm bg-sunken"><span className={cn('block h-full rounded-sm', status === 'critical' ? 'bg-st-critical' : status === 'warning' ? 'bg-st-warning' : 'bg-ink-default/70')} style={{ width: `${asset.health}%` }} /></span>
-                        <span className="w-7 shrink-0 text-right font-medium text-ink num">{asset.health}</span>
-                      </div>
-                    </td>
-                    <td className="truncate border-r border-line/50 pr-2 text-right text-ink-default num">{asset.usage}</td>
-                    <td className="truncate pl-2 text-ink-default num">{formatDate(parseLocalDate(asset.lastMaintenance))}</td>
-                    <td>
-                      {status === 'normal'
-                        ? <span className="inline-flex items-center gap-1 text-[13px] text-ink-muted"><CircleCheck className="size-3.5" aria-hidden />Bom</span>
-                        : <StatusBadge status={status} label={status === 'critical' ? 'Crítico' : 'Atenção'} className="py-0.5" />}
-                    </td>
+          {/* A altura vem do plano ao lado (posição absoluta: a tabela não estica a fileira) */}
+          <div className="relative min-h-0 flex-1">
+            <div ref={healthBoxRef} className="absolute inset-0 overflow-hidden">
+              <table className={cn('w-full table-fixed border-collapse text-[13px]', pagedAssets.length === healthPageSize && 'h-full')}>
+                <colgroup>
+                  <col className="w-[27%]" /><col className="w-[9%]" /><col className="w-[19%]" /><col className="w-[16%]" /><col className="w-[15%]" /><col className="w-[14%]" />
+                </colgroup>
+                <thead className="bg-surface">
+                  <tr className="h-8 border-b border-line text-left text-[13px] uppercase tracking-wide text-ink-muted">
+                    <SortableHeader label="Ativo" column="asset" sort={sort} onSort={toggleSort} />
+                    <SortableHeader label="Tipo" column="type" sort={sort} onSort={toggleSort} />
+                    <SortableHeader label="Saúde" column="health" sort={sort} onSort={toggleSort} />
+                    <SortableHeader label="Uso" column="usage" sort={sort} onSort={toggleSort} alignRight />
+                    <SortableHeader label="Últ. manutenção" column="maintenance" sort={sort} onSort={toggleSort} />
+                    <SortableHeader label="Status" column="status" sort={sort} onSort={toggleSort} />
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {pagedAssets.map((asset) => {
+                    const status: BadgeStatus = asset.health < HEALTH_CRIT ? 'critical' : asset.health < HEALTH_WARN ? 'warning' : 'normal';
+                    return (
+                      <tr
+                        key={asset.id}
+                        id={`asset-${asset.id}`}
+                        className={cn('border-b border-line/70', highlightedAsset === asset.id && 'bg-brand-soft')}
+                        style={{ height: ROW_H }}
+                      >
+                        {/* Até 2 linhas, nunca cortado */}
+                        <td className="px-1 leading-4">
+                          <span className="font-mono font-medium text-ink">{asset.id}</span><span className="text-ink-muted"> · {describeAsset(asset)}</span>
+                        </td>
+                        <td className="px-1 text-ink-default">{asset.type}</td>
+                        <td className="px-1 pr-3">
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-full max-w-40 rounded-sm bg-sunken"><span className={cn('block h-full rounded-sm', status === 'critical' ? 'bg-st-critical' : status === 'warning' ? 'bg-st-warning' : 'bg-ink-default/70')} style={{ width: `${asset.health}%` }} /></span>
+                            <span className="w-7 shrink-0 text-right font-medium text-ink num">{asset.health}</span>
+                          </div>
+                        </td>
+                        <td className="border-r border-line/50 px-1 pr-2 text-right leading-4 text-ink-default num">{asset.usage}</td>
+                        <td className="px-1 pl-2 text-ink-default num">{formatDate(parseLocalDate(asset.lastMaintenance))}</td>
+                        <td className="px-1">
+                          {status === 'normal'
+                            ? <span className="inline-flex items-center gap-1 text-[13px] text-ink-muted"><CircleCheck className="size-3.5" aria-hidden />Bom</span>
+                            : <StatusBadge status={status} label={status === 'critical' ? 'Crítico' : 'Atenção'} />}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center justify-between text-[13px] text-ink-muted num">
+            <span>{currentHealthPage * healthPageSize + 1}–{Math.min(sortedAssets.length, (currentHealthPage + 1) * healthPageSize)} de {sortedAssets.length} ativos{sort.key === 'health' && sort.direction === 'asc' ? ' · piores primeiro' : ''}</span>
+            <div className="flex items-center gap-2">
+              <button className={pageBtn} onClick={() => setHealthPage(currentHealthPage - 1)} disabled={currentHealthPage === 0} aria-label="Página anterior de ativos">
+                <ChevronLeft className="size-4" />
+              </button>
+              <span>Página {currentHealthPage + 1} de {healthPages}</span>
+              <button className={pageBtn} onClick={() => setHealthPage(currentHealthPage + 1)} disabled={currentHealthPage >= healthPages - 1} aria-label="Próxima página de ativos">
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+          </div>
         </Panel>
 
         <Panel
@@ -327,9 +368,9 @@ export function MaintenanceView({ now }: { now: number }) {
           actions={<span className="text-sm text-ink-muted num">{upcomingDueCount} tarefas nos próximos 35 dias</span>}
         >
           <table className="w-full table-fixed border-collapse text-sm">
-            <colgroup><col className="w-[11%]" /><col className="w-[23%]" /><col className="w-[20%]" /><col className="w-[25%]" /><col className="w-[21%]" /></colgroup>
+            <colgroup><col className="w-[11%]" /><col className="w-[21%]" /><col className="w-[20%]" /><col className="w-[25%]" /><col className="w-[23%]" /></colgroup>
             <thead>
-              <tr className="h-6 border-b border-line text-left text-[12px] uppercase tracking-wide text-ink-muted">
+              <tr className="h-8 border-b border-line text-left text-[13px] uppercase tracking-wide text-ink-muted">
                 <th className="font-semibold">Data</th><th className="font-semibold">Ativo</th><th className="font-semibold">Tipo</th><th className="font-semibold">Responsável</th><th className="font-semibold">Prazo</th>
               </tr>
             </thead>
@@ -337,11 +378,11 @@ export function MaintenanceView({ now }: { now: number }) {
               {MAINTENANCE_PLAN.slice(0, 5).map((task) => {
                 const due = dueStatus(task.date, today);
                 return (
-                  <tr key={`${task.date}${task.asset}`} className="h-7 border-b border-line/70" title={task.description}>
+                  <tr key={`${task.date}${task.asset}`} className="border-b border-line/70" style={{ height: ROW_H }} title={task.description}>
                     <td className="text-[13px] text-ink num">{formatDate(parseLocalDate(task.date)).slice(0, 5)}</td>
-                    <td className="truncate pr-1 font-mono text-[11px] text-ink" title={canonicalPlanTag(task.asset)}>{canonicalPlanTag(task.asset)}</td>
+                    <td className="pr-1 font-mono text-[13px] leading-4 text-ink">{planAssetLabel(task.asset)}</td>
                     <td><TaskTypeBadge type={task.type} /></td>
-                    <td className="truncate pr-1 text-[13px] text-ink-default">{task.owner}</td>
+                    <td className="pr-1 text-[13px] leading-4 text-ink-default">{task.owner}</td>
                     <td><DueLabel kind={due.kind}>{due.label}</DueLabel></td>
                   </tr>
                 );
@@ -350,10 +391,10 @@ export function MaintenanceView({ now }: { now: number }) {
           </table>
           <div className="min-h-0 border-t border-line pt-2">
             <h3 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Recomendações do modelo</h3>
-            <ol className="list-decimal space-y-1 pl-5 text-[13px] leading-4 text-ink">
+            <ol className="list-decimal pl-5 text-[13px] leading-4 text-ink">
               {ML_INSIGHTS.recommendations.map((recommendation, index) => {
                 const tag = RECOMMENDATION_TAGS[index];
-                return <li key={recommendation}>
+                return <li key={recommendation} className="min-h-9 border-b border-line/70 py-2.5 last:border-b-0">
                   <button
                     type="button"
                     className="mr-1 font-mono font-medium text-brand underline decoration-brand/40 underline-offset-2 hover:text-brand-strong"

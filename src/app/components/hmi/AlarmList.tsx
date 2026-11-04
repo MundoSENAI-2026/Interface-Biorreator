@@ -99,7 +99,7 @@ function exportCsv(events: PlantEvent[]) {
 }
 
 /** Quantas linhas cabem na altura disponível (paginação em vez de rolagem interna). */
-function useRowsThatFit(ref: React.RefObject<HTMLElement | null>, rowHeight: number, headerHeight: number) {
+export function useRowsThatFit(ref: React.RefObject<HTMLElement | null>, rowHeight: number, headerHeight: number) {
   const [rows, setRows] = useState(10);
   useLayoutEffect(() => {
     const el = ref.current;
