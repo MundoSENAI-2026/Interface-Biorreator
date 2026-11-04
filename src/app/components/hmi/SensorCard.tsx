@@ -38,6 +38,8 @@ const VALUE_STYLE: Record<TagStatus, string> = {
 
 export function SensorCard({ config, value, limits, status, history, windowS, processRate = 1, freshness }: SensorCardProps) {
   const bad = status === 'bad';
+  /** Nunca recebeu valor (fontes MQTT): etiqueta curta + linha "Aguardando dados do equipamento". */
+  const waiting = bad && freshness?.updatedAt === null;
   const slope = slopePerMinute(history, processRate);
   const trend = Math.abs(slope) < config.trendThresholdPerMin ? 0 : Math.sign(slope);
   const TrendIcon = trend > 0 ? ArrowUpRight : trend < 0 ? ArrowDownRight : ArrowRight;
@@ -59,7 +61,7 @@ export function SensorCard({ config, value, limits, status, history, windowS, pr
           <h3 className="text-[17px] font-semibold leading-tight text-ink">{config.name}</h3>
           <span className="font-mono text-[13px] text-ink-muted">{config.id}</span>
         </div>
-        <StatusBadge status={status} size="md" />
+        <StatusBadge status={status} size="md" label={waiting ? 'Aguardando dados' : undefined} />
       </header>
 
       <div className="flex items-end justify-between gap-2">

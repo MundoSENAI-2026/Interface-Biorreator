@@ -30,7 +30,8 @@ export function batchTiming(s: PlcSnapshot, now: number, processRate = 1): Batch
   return {
     startedAt: s.batch.startedAt,
     elapsedS,
-    progress: Math.min(1, elapsedS / BATCH_NOMINAL_S),
+    // Concluído = 100 %, mesmo sem as durações (equipamento real só informa as conclusões)
+    progress: s.batch.status === 'completed' ? 1 : Math.min(1, elapsedS / BATCH_NOMINAL_S),
     phaseRemainingS,
     predictedEnd: now + (remainingS * 1000) / Math.max(processRate, 1e-6),
   };

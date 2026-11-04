@@ -37,12 +37,13 @@ export function ValveGlyph({ state, className }: { state: ValveState; className?
   );
 }
 
-export function ValveControl({ valve, state }: { valve: ValveConfig; state: ValveState }) {
+/** noData = a fonte nunca informou esta válvula (equipamento real): estado "Sem dado" em cinza. */
+export function ValveControl({ valve, state, noData = false }: { valve: ValveConfig; state: ValveState; noData?: boolean }) {
   const opening = state !== 'open';
   return (
     <div
       className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1 rounded border border-line bg-surface px-3 py-2"
-      title={`${valve.short} — ${valve.description}`}
+      title={`${valve.short} — ${valve.description}${noData ? ' · aguardando dados do equipamento' : ''}`}
     >
       <ValveGlyph state={state} />
       <div className="min-w-0">
@@ -50,7 +51,9 @@ export function ValveControl({ valve, state }: { valve: ValveConfig; state: Valv
           <span className="font-mono text-[15px] font-medium text-ink">{valve.short}</span>
           <span className="truncate text-sm text-ink-default">{valve.function}</span>
         </div>
-        <StatusBadge status={VALVE_BADGE[state]} label={VALVE_STATE_LABEL[state]} className="mt-1" />
+        {noData
+          ? <StatusBadge status="bad" label="Sem dado" className="mt-1" />
+          : <StatusBadge status={VALVE_BADGE[state]} label={VALVE_STATE_LABEL[state]} className="mt-1" />}
       </div>
       <CommandButton
         className="contents"

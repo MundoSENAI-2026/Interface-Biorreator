@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { MQTT, SIMULATION, TAGS, TAG_ORDER, VALVES, type SourceKind, type TagId, type ValveId } from '../../config/plant';
 import type { ForceLevel } from '../../data/simulator';
 import { demoScenario } from '../../data/demoScenario';
-import { activeSource, mqttSource, setActiveSource, simulation, usePlant } from '../../data/source';
+import { activeSource, mqttSource, realSource, setActiveSource, simulation, usePlant } from '../../data/source';
 import { useUi } from '../../data/ui';
 import { cn } from '../ui/utils';
 
@@ -88,13 +88,30 @@ export function SimulationPanel() {
         <section className="flex flex-col gap-2">
           <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Fonte de dados</h3>
           <div className="flex items-center justify-between gap-2">
-            <span className="text-ink">{activeSource === 'mqtt' ? 'Ao vivo · MQTT' : 'Simulação'}</span>
             <Segmented<SourceKind>
               value={activeSource}
-              options={[{ id: 'simulacao', label: 'Simulação' }, { id: 'mqtt', label: 'MQTT' }]}
+              options={[
+                { id: 'simulacao', label: 'Simulação' },
+                { id: 'mqtt', label: 'MQTT (equipeDEV)' },
+                { id: 'real', label: 'Biorreator real' },
+              ]}
               onChange={(kind) => kind !== activeSource && setActiveSource(kind)}
             />
           </div>
+          {realSource && (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[13px]">
+              <dt className="text-ink-muted">Broker</dt>
+              <dd className="truncate font-mono text-ink">{MQTT.host}:{MQTT.port}</dd>
+              <dt className="text-ink-muted">Leituras</dt>
+              <dd className="truncate font-mono text-ink" title={realSource.topic}>{realSource.topic}</dd>
+              <dt className="text-ink-muted">Comandos</dt>
+              <dd className="text-ink">Somente leitura: nada é publicado</dd>
+              <dt className="text-ink-muted">Chaves</dt>
+              <dd className="text-ink">{realSource.received.size} recebidas</dd>
+              <dt className="text-ink-muted">clientId</dt>
+              <dd className="truncate font-mono text-ink">{realSource.clientId}</dd>
+            </dl>
+          )}
           {mqttSource && (
             <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[13px]">
               <dt className="text-ink-muted">Broker</dt>

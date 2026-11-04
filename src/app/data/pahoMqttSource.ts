@@ -1,17 +1,8 @@
 import { EQUIPMENT, MQTT, PHASES, PLANT, TAGS, TAG_ORDER, VALVES, VALVE_BY_ID, type TagId, type ValveId } from '../config/plant';
 import { formatNumber } from '../lib/format';
+import { PahoLink } from './pahoLink';
 import { lotCode } from './simulator';
-import type {
-  BatchInfo,
-  BatchStatus,
-  Command,
-  CommandResult,
-  CommStatus,
-  DataSource,
-  PlcSnapshot,
-  SourceHooks,
-  ValveState,
-} from './types';
+import type { BatchInfo, BatchStatus, Command, CommandResult, DataSource, PlcSnapshot, SourceHooks, ValveState } from './types';
 
 /** Tag do processo como um todo, usada nos comandos START/STOP/emergência. */
 const PROCESS_TAG = PLANT.equipmentId.replace('-', '_');
@@ -30,7 +21,6 @@ const OPEN_CLOSED: Record<string, ValveState> = { aberta: 'open', fechada: 'clos
 
 const has = (obj: object, key: string) => Object.prototype.hasOwnProperty.call(obj, key);
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const clip = (text: string, max = 80) => (text.length > max ? `${text.slice(0, max)}…` : text);
 
 /** Parte final do tópico de um comando: <TAG>/<acao>. */
@@ -48,29 +38,24 @@ function commandPath(cmd: Command): string {
 }
 
 /**
- * Fonte de dados MQTT com a biblioteca Paho (public/vendor/mqttws31.js), no mesmo
- * padrão do exemplo do LED: Paho.MQTT.Client(host, porta, clientId) com useSSL.
+ * Fonte de dados MQTT (equipeDEV). A conexão Paho fica em PahoLink.
  *
  * - Leituras: assina <prefixo>dados. Cada mensagem é um JSON com só as tags que
  *   mudaram; o restante mantém o último valor recebido.
  * - Comandos: publica em <prefixo>cmd/<TAG>/<acao>. A tela só muda quando o novo
  *   estado chega em "dados" (quem decide é o CLP/ESP, não a IHM).
- * - Conexão: reconecta sozinha com espera crescente (2, 4, 8, 16, 30 s…).
  */
 export class PahoMqttSource implements DataSource {
   readonly kind = 'mqtt' as const;
   readonly reportsConnection = true;
-  /** Ex.: "BR100-482913" (número somado ANTES de juntar ao texto, ao contrário do exemplo). */
-  readonly clientId = MQTT.clientIdPrefix + (100_000 + Math.floor(Math.random() * 900_000));
   readonly dataTopic = MQTT.topicPrefix + 'dados';
 
-  private client: PahoMQTT.Client | null = null;
-  private status: CommStatus = 'connecting';
-  /** Falhas seguidas de conexão (zera ao conectar). */
-  private failures = 0;
-  /** Incrementa a cada tentativa: callbacks de clientes antigos são ignorados. */
-  private generation = 0;
-  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly link = new PahoLink({
+    topic: this.dataTopic,
+    onMessage: (text) => this.onMessage(text),
+    onStatus: (status) => this.hooks.onConnection?.(status),
+    onEvent: (message) => this.event(message),
+  });
   private listener: ((s: PlcSnapshot) => void) | null = null;
   private hooks: SourceHooks = {};
 
@@ -98,144 +83,38 @@ export class PahoMqttSource implements DataSource {
 
   // ─── DataSource ──────────────────────────────────────────────────────────
 
+  get clientId() {
+    return this.link.clientId;
+  }
+
   start(onSnapshot: (s: PlcSnapshot) => void, hooks: SourceHooks = {}) {
     this.listener = onSnapshot;
     this.hooks = hooks;
-    window.addEventListener('online', this.onBrowserOnline);
-    this.connect();
+    this.link.start();
   }
 
   stop() {
-    this.generation += 1;
-    if (this.retryTimer) clearTimeout(this.retryTimer);
-    window.removeEventListener('online', this.onBrowserOnline);
-    try {
-      this.client?.disconnect();
-    } catch {
-      // já desconectado
-    }
-    this.client = null;
+    this.link.stop();
     this.listener = null;
   }
 
   async send(cmd: Command): Promise<CommandResult> {
-    const paho = window.Paho?.MQTT;
-    if (!paho || !this.client || this.status !== 'online') return { ok: false, reason: 'Sem conexão com o broker MQTT' };
-
     const topic = `${MQTT.topicPrefix}cmd/${commandPath(cmd)}`;
-    const message = new paho.Message(JSON.stringify({ usuario: PLANT.operator, timestamp: new Date().toISOString() }));
-    message.destinationName = topic;
-    try {
-      this.client.send(message);
-    } catch (e) {
-      return { ok: false, reason: `Falha ao publicar no broker: ${errorText(e)}` };
-    }
+    const problem = this.link.publish(topic, JSON.stringify({ usuario: PLANT.operator, timestamp: new Date().toISOString() }));
+    if (problem) return { ok: false, reason: problem };
     this.event(`Comando publicado em ${topic}`);
     return { ok: true };
   }
 
-  // ─── Conexão ─────────────────────────────────────────────────────────────
-
-  private connect() {
-    this.retryTimer = null;
-    const paho = window.Paho?.MQTT;
-    if (!paho) {
-      this.event('Biblioteca Paho MQTT não carregada (public/vendor/mqttws31.js)');
-      this.setStatus('offline');
-      return;
-    }
-
-    const gen = ++this.generation;
-    const current = () => gen === this.generation;
-    let client: PahoMQTT.Client;
-    try {
-      client = new paho.Client(MQTT.host, MQTT.port, this.clientId);
-    } catch (e) {
-      this.event(`Não foi possível criar o cliente MQTT: ${errorText(e)}`);
-      this.setStatus('offline');
-      return;
-    }
-
-    client.onConnectionLost = (err) => {
-      if (!current()) return;
-      this.client = null;
-      this.scheduleReconnect(`Conexão com o broker perdida (${err.errorMessage || 'sem detalhe'})`);
-    };
-    client.onMessageArrived = (msg) => {
-      if (current()) this.onMessage(msg);
-    };
-
-    this.client = client;
-    try {
-      client.connect({
-        useSSL: MQTT.useSSL,
-        timeout: MQTT.timeoutS,
-        keepAliveInterval: MQTT.keepAliveS,
-        cleanSession: true,
-        onSuccess: () => {
-          if (!current()) return;
-          this.failures = 0;
-          client.subscribe(this.dataTopic, {
-            qos: 0,
-            onFailure: (err) => this.event(`Falha ao assinar ${this.dataTopic}: ${err.errorMessage}`),
-          });
-          this.event(`Conectado a ${MQTT.host}:${MQTT.port} como ${this.clientId} · assinando ${this.dataTopic}`);
-          this.setStatus('online');
-        },
-        onFailure: (err) => {
-          if (!current()) return;
-          this.client = null;
-          this.scheduleReconnect(`Falha ao conectar em ${MQTT.host}:${MQTT.port} (${err.errorMessage || 'sem detalhe'})`);
-        },
-      });
-    } catch (e) {
-      this.client = null;
-      this.scheduleReconnect(`Falha ao conectar: ${errorText(e)}`);
-    }
-  }
-
-  /** Espera 2, 4, 8, 16 s… (até o máximo) e tenta de novo. No máximo, passa a "Offline". */
-  private scheduleReconnect(reason: string) {
-    this.failures += 1;
-    const delayS = Math.min(MQTT.reconnectMinS * 2 ** (this.failures - 1), MQTT.reconnectMaxS);
-    const next: CommStatus = delayS >= MQTT.reconnectMaxS ? 'offline' : 'reconnecting';
-
-    // Registra só o início da queda e a passagem para offline (sem repetir a cada tentativa)
-    if (this.failures === 1) this.event(`${reason} · nova tentativa em ${delayS} s`);
-    else if (next === 'offline' && this.status !== 'offline') {
-      this.event(`Sem conexão com o broker após ${this.failures} tentativas · nova tentativa a cada ${MQTT.reconnectMaxS} s`);
-    }
-
-    this.setStatus(next);
-    if (this.retryTimer) clearTimeout(this.retryTimer);
-    this.retryTimer = setTimeout(() => this.connect(), delayS * 1000);
-  }
-
-  /** A rede do computador voltou: a espera recomeça em 2 s e, se havia uma agendada, tenta já. */
-  private onBrowserOnline = () => {
-    if (this.status === 'online') return;
-    this.failures = 0;
-    if (!this.retryTimer) return; // tentativa em andamento: se falhar, a próxima já é em 2 s
-    clearTimeout(this.retryTimer);
-    this.connect();
-  };
-
-  private setStatus(status: CommStatus) {
-    if (status === this.status) return;
-    this.status = status;
-    this.hooks.onConnection?.(status);
-  }
-
   // ─── Leituras ────────────────────────────────────────────────────────────
 
-  private onMessage(msg: PahoMQTT.Message) {
-    let text = '';
+  private onMessage(text: string | null) {
     let data: unknown;
     try {
-      text = msg.payloadString;
+      if (text === null) throw new Error('não é UTF-8');
       data = JSON.parse(text);
     } catch {
-      this.invalid(`JSON inválido (${clip(text) || 'vazio'})`);
+      this.invalid(`JSON inválido (${clip(text ?? '') || 'vazio'})`);
       return;
     }
     if (!isObject(data)) {

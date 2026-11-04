@@ -1,16 +1,17 @@
 # Fonte de dados MQTT (Paho)
 
-A IHM do BR-100 pode receber os dados do biorreator de duas fontes:
+A IHM do BR-100 pode receber os dados do biorreator de três fontes:
 
 | Fonte | O que é | Cabeçalho mostra |
 |---|---|---|
 | **Simulação** (padrão) | Simulador interno, sem internet | `Simulação` |
-| **MQTT** | Mensagens JSON vindas do broker público HiveMQ | `Ao vivo · MQTT` |
+| **MQTT (equipeDEV)** | Mensagens JSON publicadas à mão no broker HiveMQ (seções 1 a 4) | `Ao vivo · MQTT` |
+| **Biorreator real** | Tópico do equipamento real, publicado por um servidor Node-RED. **Somente leitura** (seção 6) | `Ao vivo · Biorreator real` |
 
 **Como trocar:** pressione **Ctrl + Shift + F9** para abrir o painel de simulação. Em
-**Fonte de dados**, escolha *Simulação* ou *MQTT*. A página recarrega, e o histórico
-e os alarmes começam do zero. A escolha fica salva neste navegador. O valor padrão
-fica em `src/app/config/plant.ts` → `DATA_SOURCE.active`.
+**Fonte de dados**, escolha a fonte. A página recarrega, e o histórico e os alarmes
+começam do zero. A escolha fica salva neste navegador. O valor padrão fica em
+`src/app/config/plant.ts` → `DATA_SOURCE.active` (`'simulacao' | 'mqtt' | 'real'`).
 
 ---
 
@@ -40,8 +41,9 @@ seguro** (`wss://broker.hivemq.com:8884/mqtt`). É isso que o Paho faz por baixo
 ficar minutos sem receber nada, e a comunicação continua *Online*. O que muda é a
 **idade** de cada valor: passe o mouse sobre um valor para ver "atualizado há X".
 Acima de **10 min** (`MQTT.staleAfterMin`), o valor fica **cinza**, marcado como
-"Dado antigo". Um valor que nunca chegou aparece como "—", com o aviso "aguardando
-a primeira mensagem".
+"Dado antigo". Um valor que nunca chegou aparece como "—", com a etiqueta "Aguardando
+dados" e o aviso "Aguardando dados do equipamento". Válvulas, motor, bomba e porta que
+nunca chegaram aparecem como "Sem dado".
 
 ### Configuração (`src/app/config/plant.ts`)
 
@@ -210,6 +212,99 @@ Para normalizar, publique `{"TIT_100_01": 37.2}` e reconheça o alarme na IHM.
 | `public/vendor/mqttws31.js` | Biblioteca Paho MQTT, cópia do repositório do professor |
 | `index.html` | Carrega a biblioteca antes do app |
 | `src/types/paho.d.ts` | Diz ao TypeScript o formato de `window.Paho.MQTT` |
-| `src/app/data/pahoMqttSource.ts` | Conexão, reconexão, leitura do JSON e publicação dos comandos |
-| `src/app/data/source.ts` | Escolhe a fonte (simulação ou MQTT) e faz a troca |
-| `src/app/config/plant.ts` | `DATA_SOURCE` e `MQTT`: broker, porta, prefixo, tempos |
+| `src/app/data/pahoLink.ts` | Conexão com o broker: conectar, reconectar e assinar um tópico (usada pelas duas fontes MQTT) |
+| `src/app/data/pahoMqttSource.ts` | Fonte equipeDEV: leitura do JSON e publicação dos comandos |
+| `src/app/data/realBioreactorSource.ts` | Fonte biorreator real: leitura do tópico appiot, somente leitura |
+| `src/app/data/source.ts` | Escolhe a fonte e faz a troca |
+| `src/app/config/plant.ts` | `DATA_SOURCE`, `MQTT` e `REAL_EQUIPMENT`: broker, porta, tópicos, tempos |
+
+---
+
+## 6. Biorreator real (`senai661/appiot/biorreator`)
+
+Um servidor com Node-RED publica o estado do equipamento real neste tópico. Mesmo
+broker e mesma porta (`broker.hivemq.com:8884`, `useSSL`). A conexão é a mesma
+`PahoLink` das outras fontes MQTT.
+
+### Formato observado
+
+Uma chave por mensagem, em JSON. Em 04/11/2026, o servidor mandava as 12 chaves em
+sequência **a cada ~1 s** (cerca de 12 mensagens por segundo), sem *retain*:
+
+```json
+{"Produção":true}
+{"1_Abastecimento_ok":true}
+{"2_Agitação_ok":true}
+{"3_Check_Pressão_ok":false}
+{"4_Alivio_Pressão_ok":false}
+{"5_Esterilização_ok":false}
+{"6_Resfriamento_ok":false}
+{"7_Adição_Cultura_ok":false}
+{"8_Mistura_Calda_ok":false}
+{"9_Adição_Micro_ok":false}
+{"10_Fermentação_Temp":false}
+{"11_Fim_Produção":false}
+```
+
+### Como a IHM interpreta
+
+- **Acumula** o estado: cada mensagem atualiza só a sua chave, e as outras continuam valendo.
+- **Etapas pelo número** no início da chave (`^(\d{1,2})_`), não pelo texto. Assim,
+  acentos e nomes diferentes (`Alivio`/`Alívio`, `Fermentação_Temp`) não atrapalham.
+  `true` = etapa concluída.
+- **Etapa atual** = a primeira etapa `false` depois da última concluída. Uma etapa que
+  ainda não chegou não segura a sequência. Se a última etapa (11) for `true`, a tela mostra **Lote concluído**.
+- **`Produção`**: `true` = *Automático · em execução*; `false` = *Parado*. A comparação
+  ignora acento e maiúsculas (`"Producao"` também vale).
+- **Horário das etapas** (barra de etapas da Visão Geral):
+  - `Concluída · 09:55:59` quando a IHM viu a etapa passar de `false` para `true`;
+  - `Concluída · até 09:52` quando a etapa já estava concluída ao conectar (a hora exata é desconhecida; o tooltip explica).
+- **Aquecimento**: ao conectar, a tela espera um ciclo completo de chaves (a primeira
+  chave repetida, cerca de 1 s) antes de mostrar o estado. Isso evita registrar no
+  histórico mudanças de etapa que não aconteceram.
+
+### Histórico sem repetição
+
+O servidor repete tudo a cada segundo, mas o histórico só registra **mudanças**:
+
+- `Estado inicial do equipamento: produção em execução · etapas concluídas: 1, 2 · etapa atual 3 · Check Pressão` (uma vez, ao conectar);
+- `Etapa 3 · Check Pressão concluída`, `Produção iniciada`, `Produção parada`;
+- `Campo novo recebido: <nome>`: chave desconhecida, uma única vez por chave. O valor é guardado e a tela não quebra;
+- `Valor inesperado em "<chave>"…` e `Mensagem inválida do equipamento…`: uma única vez.
+
+### Variáveis analógicas
+
+Temperatura, pressão, nível e pH **não vêm** desse tópico. Os cards mostram "—" em
+cinza, com a etiqueta *Aguardando dados* e o aviso *Aguardando dados do equipamento*,
+sem gráfico e sem alarmes. Quando o servidor passar a publicar esses valores, basta
+mapear o nome da chave em `REAL_EQUIPMENT.tagKeys` (`config/plant.ts`):
+
+```ts
+tagKeys: {
+  'Temperatura': 'TIT_100_01',
+  'Pressão': 'PIT_100_01',
+},
+```
+
+O valor precisa ser um número dentro da escala da tag (ex.: 0 a 150 °C). Fora disso, ele
+é ignorado e registrado uma vez no histórico.
+
+### Segurança: somente leitura
+
+- A IHM **nunca publica** no tópico appiot. A fonte não tem comando de envio, e a conexão
+  é criada em modo somente leitura. No teste, a IHM enviou ao broker apenas a conexão
+  e a assinatura do tópico: **nenhum PUBLISH**.
+- Todos os comandos ficam desabilitados com o aviso **"Supervisão do equipamento real ·
+  somente leitura"**: START/STOP, motor, bomba, válvulas, porta e também a **parada de
+  emergência** (o tooltip orienta usar a parada de emergência física do equipamento).
+
+### Comunicação
+
+| Situação | Cabeçalho |
+|---|---|
+| Mensagens chegando | `Online · equipamento real` |
+| Broker conectado, mas **mais de 10 s sem nenhuma mensagem** (`REAL_EQUIPMENT.silenceTimeoutS`) | `Sem dados do equipamento` + alarme crítico "Falha de comunicação" |
+| Conexão com o broker caiu | `Reconectando…` / `Offline` (igual às outras fontes) |
+
+Aqui o "watchdog" faz sentido porque o servidor publica a cada segundo. Na fonte
+equipeDEV não existe esse limite, porque lá os valores são publicados à mão.

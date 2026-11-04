@@ -324,7 +324,7 @@ export const SIMULATION = {
 
 // ─── Fonte de dados e MQTT ─────────────────────────────────────────────────
 
-export type SourceKind = 'simulacao' | 'mqtt';
+export type SourceKind = 'simulacao' | 'mqtt' | 'real';
 
 export const DATA_SOURCE = {
   /**
@@ -355,4 +355,37 @@ export const MQTT = {
   staleAfterMin: 10,
   /** Escala aceita para a rotação do agitador (rpm). */
   rpmMax: 300,
+};
+
+/**
+ * Biorreator REAL: um servidor Node-RED publica no tópico abaixo, uma chave por
+ * mensagem (~1 s), ex.: {"Produção":true}, {"3_Check_Pressão_ok":false}.
+ * A IHM só LÊ este tópico: nunca publica nada nele.
+ */
+export const REAL_EQUIPMENT = {
+  topic: 'senai661/appiot/biorreator',
+  /** Chave do estado de produção (true = em execução). Comparada sem acento e sem maiúsculas. */
+  productionKey: 'Produção',
+  /** Etapas: o NÚMERO no início da chave (1 a 11) identifica a etapa; true = concluída. */
+  phaseKeyPattern: /^(\d{1,2})_/,
+  /**
+   * Chaves de variáveis analógicas → tag da IHM. Hoje o servidor não publica
+   * nenhuma; quando publicar, basta mapear aqui. Comparadas sem acento e sem maiúsculas.
+   */
+  tagKeys: {
+    // 'Temperatura': 'TIT_100_01',
+    // 'Pressão': 'PIT_100_01',
+    // 'Nível': 'LIT_100_01',
+    // 'pH': 'AIT_100_01',
+  } as Partial<Record<string, TagId>>,
+  /** Sem nenhuma mensagem por mais que isso, a comunicação mostra "Sem dados do equipamento" (s). */
+  silenceTimeoutS: 10,
+  /**
+   * Ao conectar, as chaves chegam uma a uma: a tela espera um ciclo completo (uma
+   * chave repetida) ou este tempo antes de mostrar o estado, para não registrar
+   * no histórico mudanças de etapa que não aconteceram (s).
+   */
+  warmupS: 15,
+  /** Aviso mostrado no lugar dos comandos. */
+  readOnlyReason: 'Supervisão do equipamento real · somente leitura',
 };

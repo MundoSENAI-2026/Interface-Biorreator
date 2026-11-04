@@ -163,11 +163,13 @@ export class PlantStore {
   // ─── Comandos ────────────────────────────────────────────────────────────
 
   blockReason(cmd: Command): Block | null {
+    // Fonte somente leitura (equipamento real): nenhum comando, nem a emergência
+    if (this.source.readOnlyReason) return { message: this.source.readOnlyReason, kind: 'shared' };
     return blockReason(cmd, this.state.snapshot, this.state.comm === 'online');
   }
 
   manualBlockReason(): string | null {
-    return manualBlockReason(this.state.snapshot, this.state.comm === 'online');
+    return this.source.readOnlyReason ?? manualBlockReason(this.state.snapshot, this.state.comm === 'online');
   }
 
   async send(cmd: Command): Promise<CommandResult> {
@@ -260,10 +262,10 @@ export class PlantStore {
     this.emit();
   }
 
-  /** Estado da conexão informado pela fonte (MQTT); a falha só vira alarme em "offline". */
+  /** Estado da conexão informado pela fonte (MQTT); a falha só vira alarme em "offline" ou "silent". */
   private onConnection(comm: CommStatus) {
     this.state = { ...this.state, now: Date.now(), comm };
-    this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', comm === 'offline');
+    this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', comm === 'offline' || comm === 'silent');
     this.emit();
   }
 
@@ -402,7 +404,7 @@ export class PlantStore {
 
 /** Status geral derivado dos alarmes ativos e da comunicação. */
 export function overallStatus(state: PlantState): OverallStatus {
-  if (state.comm === 'offline') return 'critical';
+  if (state.comm === 'offline' || state.comm === 'silent') return 'critical';
   const active = state.alarms.filter((a) => a.state !== 'normalized');
   if (active.some((a) => a.priority === 'critical')) return 'critical';
   if (active.some((a) => a.priority === 'warning')) return 'warning';
@@ -426,7 +428,7 @@ export function freshness(state: PlantState, key: string): Freshness | undefined
   const updated = state.snapshot?.updatedAt;
   if (!updated) return undefined;
   const at = updated[key];
-  if (at === undefined) return { updatedAt: null, stale: true, title: 'Sem dado · aguardando a primeira mensagem MQTT' };
+  if (at === undefined) return { updatedAt: null, stale: true, title: 'Aguardando dados do equipamento' };
   const ageS = Math.max(0, (state.now - at) / 1000);
   const stale = ageS > MQTT.staleAfterMin * 60;
   return { updatedAt: at, stale, title: `${stale ? 'Dado antigo · ' : ''}atualizado há ${formatDuration(ageS)}` };

@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import type { PhaseConfig } from '../../config/plant';
-import type { BatchStatus } from '../../data/types';
-import { formatDuration, formatDurationShort, formatProgressShort } from '../../lib/format';
+import type { BatchStatus, PhaseCompletion } from '../../data/types';
+import { formatDuration, formatDurationShort, formatProgressShort, formatTime } from '../../lib/format';
 import { cn } from '../ui/utils';
 
 interface ProcessStepperProps {
@@ -10,10 +10,22 @@ interface ProcessStepperProps {
   status: BatchStatus;
   elapsedS: number;
   durationsS: (number | null)[];
+  /** Horário de conclusão de cada etapa (equipamento real): substitui a duração nas concluídas. */
+  completedAt?: (PhaseCompletion | null)[];
+}
+
+/** Texto e tooltip de uma etapa concluída quando a fonte informa o horário. */
+function completionText(c: PhaseCompletion | null | undefined): { text: string; title: string } {
+  if (!c) return { text: 'sem registro', title: 'O equipamento não informou a conclusão desta etapa' };
+  if (c.observed) return { text: formatTime(c.at), title: `Concluída às ${formatTime(c.at)}` };
+  return {
+    text: `até ${formatTime(c.at).slice(0, 5)}`,
+    title: `Já estava concluída quando a IHM conectou, às ${formatTime(c.at)} (horário exato desconhecido)`,
+  };
 }
 
 /** Barra de etapas: concluídas (com tempo real), atual (decorrido/nominal) e pendentes (nominal). */
-export function ProcessStepper({ phases, currentIndex, status, elapsedS, durationsS }: ProcessStepperProps) {
+export function ProcessStepper({ phases, currentIndex, status, elapsedS, durationsS, completedAt }: ProcessStepperProps) {
   const finished = status === 'completed';
 
   return (
@@ -23,6 +35,7 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
         const current = i === currentIndex && !finished;
         const nominalS = phase.durationMin * 60;
         const progress = current ? Math.min(1, elapsedS / nominalS) : 0;
+        const completion = done && completedAt ? completionText(completedAt[i]) : null;
 
         return (
           <li
@@ -48,9 +61,9 @@ export function ProcessStepper({ phases, currentIndex, status, elapsedS, duratio
             </div>
             <span
               className={cn('truncate whitespace-nowrap text-[13px] num', current ? 'font-medium text-st-info' : 'text-ink-muted')}
-              title={current ? `${formatDuration(elapsedS)} de ${formatDuration(nominalS)}` : undefined}
+              title={current ? `${formatDuration(elapsedS)} de ${formatDuration(nominalS)}` : completion?.title}
             >
-              {done && <><span className="hidden 2xl:inline">Concluída · </span>{formatDurationShort(durationsS[i] ?? nominalS)}</>}
+              {done && <><span className="hidden 2xl:inline">Concluída · </span>{completion ? completion.text : formatDurationShort(durationsS[i] ?? nominalS)}</>}
               {current && (
                 <>
                   <span className="hidden 2xl:inline">{status === 'running' ? 'Em curso' : status === 'emergency' ? 'Interrompida' : 'Pausada'} · </span>{formatProgressShort(elapsedS, nominalS)}

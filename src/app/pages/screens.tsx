@@ -35,6 +35,7 @@ function Stepper({ plant }: { plant: PlantState }) {
           status={s.batch.status}
           elapsedS={s.batch.phaseElapsedS}
           durationsS={s.batch.phaseDurationsS}
+          completedAt={s.batch.phaseCompletedAt}
         />
       ) : (
         <div className="h-20" />

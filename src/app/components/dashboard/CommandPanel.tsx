@@ -2,7 +2,7 @@ import { ArrowRight, DoorClosed, DoorOpen, Info, Lock, Play, Power, PowerOff, Sq
 import { EQUIPMENT, PHASES, VALVES } from '../../config/plant';
 import { plantStore } from '../../data/source';
 import { formatNumber } from '../../lib/format';
-import type { PlantState } from '../../data/store';
+import { freshness, type PlantState } from '../../data/store';
 import { CommandButton } from '../hmi/CommandButton';
 import { StatusBadge } from '../hmi/StatusBadge';
 import { VALVE_STATE_LABEL, ValveControl, ValveGlyph } from '../hmi/ValveControl';
@@ -51,6 +51,9 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
   const phaseName = s ? PHASES[s.batch.phaseIndex].name : '';
   const dense = valves === 'summary';
   const btn = dense ? 'sm' : 'md';
+  /** Equipamento que a fonte nunca informou (biorreator real): mostra "Sem dado" em vez de um estado inventado. */
+  const noData = (id: string) => freshness(plant, id)?.updatedAt === null;
+  const noDataBadge = <StatusBadge status="bad" label="Sem dado" />;
   const equipmentBlock = (command: Parameters<typeof plantStore.blockReason>[0]) => {
     const block = plantStore.blockReason(command);
     return dense && block?.kind === 'interlock' ? block.message : undefined;
@@ -112,7 +115,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             name={dense ? 'Motor' : EQUIPMENT.motor.name}
             tag={EQUIPMENT.motor.id}
             reason={equipmentBlock({ type: 'motor', on: !s?.motorOn })}
-            badge={<StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={dense ? (s?.motorOn ? 'Ligado' : 'Desligado') : `${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
+            badge={noData(EQUIPMENT.motor.id) ? noDataBadge : <StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={dense ? (s?.motorOn ? 'Ligado' : 'Desligado') : `${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
           >
             <CommandButton
               className={dense ? 'w-full' : 'contents'}
@@ -130,7 +133,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             name={dense ? 'Bomba' : EQUIPMENT.pump.name}
             tag={EQUIPMENT.pump.id}
             reason={equipmentBlock({ type: 'pump', on: !s?.pumpOn })}
-            badge={<StatusBadge status={s?.pumpOn ? 'running' : 'stopped'} label={s?.pumpOn ? 'Ligada' : 'Desligada'} />}
+            badge={noData(EQUIPMENT.pump.id) ? noDataBadge : <StatusBadge status={s?.pumpOn ? 'running' : 'stopped'} label={s?.pumpOn ? 'Ligada' : 'Desligada'} />}
           >
             <CommandButton
               className={dense ? 'w-full' : 'contents'}
@@ -158,7 +161,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
             tag={EQUIPMENT.manway.id}
             reason={equipmentBlock({ type: 'manway', open: !s?.manwayOpen })}
             badge={
-              s?.manwayOpen
+              noData(EQUIPMENT.manway.id) ? noDataBadge : s?.manwayOpen
                 ? <StatusBadge status="warning" icon={DoorOpen} label="Aberta" />
                 : <StatusBadge status="stopped" icon={DoorClosed} label="Fechada" />
             }
@@ -196,12 +199,13 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
           <ul className="grid grid-cols-5 gap-x-2 gap-y-1">
             {VALVES.map((v) => {
               const st = s?.valves[v.id] ?? 'closed';
+              const unknown = noData(v.id);
               return (
-                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-0.5" title={`${v.short} — ${v.function}: ${v.description}`}>
+                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-0.5" title={`${v.short} — ${v.function}: ${v.description}${unknown ? ' · aguardando dados do equipamento' : ''}`}>
                   <ValveGlyph state={st} className="h-3 w-4 shrink-0" />
                   <span className="truncate font-mono text-[11px] font-medium text-ink" title={v.id}>{v.id}</span>
-                  <span className={cn('col-start-2 truncate text-[10px]', st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
-                    {VALVE_STATE_LABEL[st]}
+                  <span className={cn('col-start-2 truncate text-[10px]', unknown ? 'text-ink-muted' : st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
+                    {unknown ? 'Sem dado' : VALVE_STATE_LABEL[st]}
                   </span>
                 </li>
               );
@@ -215,7 +219,7 @@ export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState
           <SectionTitle>Válvulas</SectionTitle>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {VALVES.map((v) => (
-              <ValveControl key={v.id} valve={v} state={s?.valves[v.id] ?? 'closed'} />
+              <ValveControl key={v.id} valve={v} state={s?.valves[v.id] ?? 'closed'} noData={noData(v.id)} />
             ))}
           </div>
         </section>

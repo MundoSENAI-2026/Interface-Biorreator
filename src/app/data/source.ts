@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { DATA_SOURCE, type SourceKind } from '../config/plant';
 import { PahoMqttSource } from './pahoMqttSource';
+import { RealBioreactorSource } from './realBioreactorSource';
 import { Simulator, type SimulationControls } from './simulator';
 import { PlantStore, type PlantState } from './store';
 import type { DataSource } from './types';
@@ -12,7 +13,7 @@ const STORAGE_KEY = 'br100.fonteDeDados';
 function readActiveSource(): SourceKind {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'simulacao' || saved === 'mqtt') return saved;
+    if (saved === 'simulacao' || saved === 'mqtt' || saved === 'real') return saved;
   } catch {
     // navegador sem armazenamento: usa o config
   }
@@ -33,12 +34,15 @@ export function setActiveSource(kind: SourceKind) {
 }
 
 /**
- * Ponto único de troca da fonte de dados (simulador ou MQTT; ver config/plant.ts).
- * Para o CLP via OPC UA, crie p.ex. `OpcUaSource implements DataSource` (via gateway
- * WebSocket/REST, já que o navegador não fala OPC UA diretamente) e retorne-o aqui.
+ * Ponto único de troca da fonte de dados (simulador, MQTT equipeDEV ou biorreator
+ * real; ver config/plant.ts). Para o CLP via OPC UA, crie p.ex. `OpcUaSource implements
+ * DataSource` (via gateway WebSocket/REST, já que o navegador não fala OPC UA
+ * diretamente) e retorne-o aqui.
  */
 function createDataSource(kind: SourceKind): DataSource {
-  return kind === 'mqtt' ? new PahoMqttSource() : new Simulator();
+  if (kind === 'mqtt') return new PahoMqttSource();
+  if (kind === 'real') return new RealBioreactorSource();
+  return new Simulator();
 }
 
 export const activeSource = readActiveSource();
@@ -52,6 +56,10 @@ export const simulation: SimulationControls | null =
 /** Detalhes da conexão MQTT, disponíveis apenas quando a fonte é o MQTT. */
 export const mqttSource: PahoMqttSource | null =
   dataSource instanceof PahoMqttSource ? dataSource : null;
+
+/** Detalhes do biorreator real (somente leitura), disponíveis apenas com essa fonte. */
+export const realSource: RealBioreactorSource | null =
+  dataSource instanceof RealBioreactorSource ? dataSource : null;
 
 export function usePlant(): PlantState {
   return useSyncExternalStore(plantStore.subscribe, plantStore.getState);

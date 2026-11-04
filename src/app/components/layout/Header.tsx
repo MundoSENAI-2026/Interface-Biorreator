@@ -2,7 +2,7 @@ import { MonitorPlay, Radio, User, Wifi, WifiOff } from 'lucide-react';
 import { MQTT, PHASES, PLANT } from '../../config/plant';
 import { PROJECT } from '../../config/project';
 import { overallStatus, type PlantState } from '../../data/store';
-import { mqttSource, simulation } from '../../data/source';
+import { mqttSource, realSource, simulation } from '../../data/source';
 import type { BatchStatus } from '../../data/types';
 import { formatDate, formatDuration, formatTime, pluralize } from '../../lib/format';
 import { EmergencyButton } from '../dashboard/EmergencyButton';
@@ -18,6 +18,14 @@ const BATCH_STATUS: Record<BatchStatus, { label: string; badge: BadgeStatus }> =
   completed: { label: 'Lote concluído', badge: 'stopped' },
 };
 
+/** Selo da fonte de dados no cabeçalho (texto + tooltip). */
+function sourceBadge(): { label: string; detail: string } | null {
+  if (simulation) return { label: 'Simulação', detail: `Dados simulados · velocidade ×${simulation.acceleration}` };
+  if (mqttSource) return { label: 'Ao vivo · MQTT', detail: `${MQTT.host}:${MQTT.port} · ${mqttSource.dataTopic}` };
+  if (realSource) return { label: 'Ao vivo · Biorreator real', detail: `${MQTT.host}:${MQTT.port} · ${realSource.topic} · somente leitura` };
+  return null;
+}
+
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn('flex shrink-0 flex-col justify-center gap-0.5', className)}>
@@ -29,6 +37,7 @@ function Field({ label, children, className }: { label: string; children: React.
 
 export function Header({ plant }: { plant: PlantState }) {
   const s = plant.snapshot;
+  const source = sourceBadge();
   const status = overallStatus(plant);
   const activeAlarms = plant.alarms.filter((a) => a.state !== 'normalized');
   const unacknowledged = plant.alarms.filter((a) => a.state !== 'acknowledged').length;
@@ -59,17 +68,15 @@ export function Header({ plant }: { plant: PlantState }) {
           <p className="truncate text-sm text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · {PROJECT.event}</p>
         </div>
         <div className="ml-auto flex items-center gap-6">
-          {(simulation || mqttSource) && (
+          {source && (
             <span className={cn('group relative inline-flex items-center gap-1.5 rounded border border-line-strong px-2 py-1 text-sm text-ink-muted', simulation && 'border-dashed')}>
               {simulation ? <MonitorPlay className="size-4" aria-hidden /> : <Radio className="size-4" aria-hidden />}
-              {simulation ? 'Simulação' : 'Ao vivo · MQTT'}
+              {source.label}
               <span
                 role="tooltip"
                 className="pointer-events-none absolute right-0 top-full z-50 mt-1 whitespace-nowrap rounded border border-line bg-surface px-2 py-1 text-[13px] text-ink-default opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 num"
               >
-                {simulation
-                  ? `Dados simulados · velocidade ×${simulation.acceleration}`
-                  : `${MQTT.host}:${MQTT.port} · ${mqttSource?.dataTopic}`}
+                {source.detail}
               </span>
             </span>
           )}
@@ -104,18 +111,20 @@ export function Header({ plant }: { plant: PlantState }) {
         <Field label="Comunicação CLP">
           <div className="flex items-center gap-2">
             {plant.comm === 'online' ? (
-              <StatusBadge status="normal" icon={Wifi} label={mqttSource ? 'Online · MQTT' : 'Online'} />
+              <StatusBadge status="normal" icon={Wifi} label={mqttSource ? 'Online · MQTT' : realSource ? 'Online · equipamento real' : 'Online'} />
             ) : plant.comm === 'offline' ? (
               <StatusBadge status="critical" icon={WifiOff} label="Offline" />
+            ) : plant.comm === 'silent' ? (
+              <StatusBadge status="critical" icon={WifiOff} label="Sem dados do equipamento" />
             ) : plant.comm === 'reconnecting' ? (
               <StatusBadge status="transition" label="Reconectando…" />
             ) : (
               <StatusBadge status="transition" label="Conectando" />
             )}
-            <span className={cn('text-sm num', plant.comm === 'offline' ? 'font-semibold text-st-critical-text' : 'text-ink-muted')}>
-              {ageS === null ? (mqttSource ? 'sem mensagem' : 'sem leitura') : (
+            <span className={cn('text-sm num', plant.comm === 'offline' || plant.comm === 'silent' ? 'font-semibold text-st-critical-text' : 'text-ink-muted')}>
+              {ageS === null ? (simulation ? 'sem leitura' : 'sem mensagem') : (
                 <>
-                  <span className="hidden 2xl:inline">{mqttSource ? 'última mensagem' : 'última leitura'} </span>há {formatDuration(ageS)}
+                  <span className="hidden 2xl:inline">{simulation ? 'última leitura' : 'última mensagem'} </span>há {formatDuration(ageS)}
                 </>
               )}
             </span>

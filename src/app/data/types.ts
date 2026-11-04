@@ -15,6 +15,15 @@ export interface BatchInfo {
   phaseDurationsS: (number | null)[];
   /** Início do lote (relógio real, ms). */
   startedAt: number;
+  /** Quando cada etapa foi concluída, se a fonte informa (equipamento real); null = não concluída. */
+  phaseCompletedAt?: (PhaseCompletion | null)[];
+}
+
+export interface PhaseCompletion {
+  /** Hora (ms) da conclusão; se observed = false, hora em que a IHM a viu já concluída. */
+  at: number;
+  /** true = a IHM viu a etapa passar de false para true; false = já estava concluída ao conectar. */
+  observed: boolean;
 }
 
 /** Leitura completa do CLP em um ciclo de varredura. */
@@ -56,7 +65,9 @@ export interface CommandResult {
  * basta implementar esta interface e trocá-la em data/source.ts.
  */
 export interface DataSource {
-  readonly kind: 'simulador' | 'opcua' | 'mqtt' | 'api';
+  readonly kind: 'simulador' | 'opcua' | 'mqtt' | 'equipamento' | 'api';
+  /** Preenchido = fonte somente leitura: todos os comandos ficam bloqueados com este aviso. */
+  readonly readOnlyReason?: string;
   /**
    * true = a própria fonte informa o estado da conexão (hooks.onConnection) e pode
    * passar muito tempo sem enviar leituras sem que isso seja falha (MQTT com valores
@@ -140,8 +151,11 @@ export interface TrendPoint {
 /** Ponto da curva da etapa atual (minutos de processo + valores das tags). */
 export type PhaseTracePoint = { tMin: number } & Record<TagId, number>;
 
-/** 'reconnecting' = conexão caiu e há nova tentativa agendada (fontes com reportsConnection). */
-export type CommStatus = 'connecting' | 'online' | 'reconnecting' | 'offline';
+/**
+ * Fontes com reportsConnection: 'reconnecting' = conexão caiu e há nova tentativa agendada;
+ * 'silent' = broker conectado, mas o equipamento parou de publicar (equipamento real).
+ */
+export type CommStatus = 'connecting' | 'online' | 'reconnecting' | 'offline' | 'silent';
 
 export type OverallStatus = 'normal' | 'warning' | 'critical';
 

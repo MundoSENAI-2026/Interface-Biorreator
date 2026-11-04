@@ -32,13 +32,17 @@ export function EmergencyButton({ status }: { status: BatchStatus | null }) {
     const result = await plantStore.send({ type: 'emergency' });
     setError(result.ok ? null : result.reason ?? 'Comando não confirmado pelo CLP');
   };
+  // Equipamento real (somente leitura): a IHM não aciona a emergência, então o botão não pode parecer ativo
+  const readOnly = plantStore.source.readOnlyReason;
 
   return (
     <div className="flex flex-col items-end gap-1">
       <button
         type="button"
         onClick={trigger}
-        className="inline-flex h-12 items-center gap-2 rounded-md bg-st-critical px-5 text-base font-bold uppercase tracking-wide text-white transition-colors duration-150 hover:bg-st-critical-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-st-critical"
+        disabled={!!readOnly}
+        title={readOnly ? `${readOnly}: use a parada de emergência física do equipamento` : undefined}
+        className="inline-flex h-12 items-center gap-2 rounded-md bg-st-critical px-5 text-base font-bold uppercase tracking-wide text-white transition-colors duration-150 hover:bg-st-critical-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-st-critical disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-st-critical"
       >
         <OctagonX className="size-6" aria-hidden />
         Parada de emergência
