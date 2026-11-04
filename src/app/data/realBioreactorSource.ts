@@ -1,4 +1,4 @@
-import { PHASES, REAL_EQUIPMENT, TAGS, TAG_ORDER, VALVES, type TagId, type ValveId } from '../config/plant';
+import { PHASES, REAL_EQUIPMENT, phaseLabel, TAGS, TAG_ORDER, VALVES, type TagId, type ValveId } from '../config/plant';
 import { formatNumber } from '../lib/format';
 import { PahoLink } from './pahoLink';
 import type {
@@ -25,6 +25,9 @@ const PRODUCTION_KEY = normalize(REAL_EQUIPMENT.productionKey);
 const TAG_KEYS = new Map(
   Object.entries(REAL_EQUIPMENT.tagKeys).flatMap(([key, tag]) => (tag ? [[normalize(cleanKey(key)), tag] as const] : [])),
 );
+
+/** Nome curto do tópico nas mensagens do histórico. */
+const topicName = (topic: string) => (topic === REAL_EQUIPMENT.analogTopic ? 'analógico' : 'de etapas');
 
 /**
  * Payload como objeto ou lista de objetos (juntados num só). JSON que chega como
@@ -156,7 +159,7 @@ export class RealBioreactorSource implements DataSource {
     if (next === 'silent') {
       this.event(this.lastMessageAt
         ? `Sem mensagens do equipamento há mais de ${REAL_EQUIPMENT.silenceTimeoutS} s`
-        : `Nenhuma mensagem do equipamento em ${REAL_EQUIPMENT.silenceTimeoutS} s após conectar (o servidor Node-RED está publicando?)`);
+        : `Nenhuma mensagem do equipamento nos primeiros ${REAL_EQUIPMENT.silenceTimeoutS} s após conectar`);
     } else if (next === 'online' && this.status === 'silent') {
       this.event('Mensagens do equipamento retomadas');
     }
@@ -176,10 +179,10 @@ export class RealBioreactorSource implements DataSource {
     this.analogSilent = silent;
     if (silent) {
       this.event(this.lastAnalogAt
-        ? `Sem mensagens das variáveis analógicas (${this.analogTopic}) há mais de ${REAL_EQUIPMENT.analogSilenceTimeoutS} s · valores marcados como dado antigo`
-        : `Nenhuma mensagem em ${this.analogTopic} em ${REAL_EQUIPMENT.analogSilenceTimeoutS} s após conectar`);
+        ? `Sem leituras analógicas há mais de ${REAL_EQUIPMENT.analogSilenceTimeoutS} s · valores marcados como dado antigo`
+        : `Nenhuma leitura analógica nos primeiros ${REAL_EQUIPMENT.analogSilenceTimeoutS} s após conectar`);
     } else if (this.lastAnalogAt) {
-      this.event('Mensagens das variáveis analógicas retomadas');
+      this.event('Leituras analógicas retomadas');
     }
   }
 
@@ -190,7 +193,7 @@ export class RealBioreactorSource implements DataSource {
     if (retained) {
       // O servidor do equipamento não retém mensagens: a retida é um valor antigo que alguém
       // guardou no broker (ex.: {"TIT_100_01": 58}) e daria alarme falso ao conectar
-      this.once(`retida:${topic}`, `Mensagem retida ignorada em ${topic} (valor antigo guardado no broker): ${clip(text ?? '')}`);
+      this.once(`retida:${topic}`, `Mensagem retida ignorada no tópico ${topicName(topic)}: valor antigo guardado no broker`);
       return;
     }
     const analog = topic === this.analogTopic;
@@ -203,11 +206,11 @@ export class RealBioreactorSource implements DataSource {
       if (text === null) throw new Error('não é UTF-8');
       data = parsePayload(text);
     } catch {
-      this.once(`json:${topic}`, `Mensagem inválida em ${topic}: JSON inválido (${clip(text ?? '') || 'vazio'})`);
+      this.once(`json:${topic}`, `Mensagem inválida no tópico ${topicName(topic)}: não é JSON`);
       return;
     }
     if (!data) {
-      this.once(`objeto:${topic}`, `Mensagem inválida em ${topic}: esperado um objeto ou uma lista de objetos JSON, recebido ${clip(String(text))}`);
+      this.once(`objeto:${topic}`, `Mensagem inválida no tópico ${topicName(topic)}: esperado objeto ou lista JSON`);
       return;
     }
 
@@ -243,7 +246,7 @@ export class RealBioreactorSource implements DataSource {
     const phase = match ? Number(match[1]) : NaN;
     if (phase >= 1 && phase <= PHASES.length) {
       if (typeof value !== 'boolean') {
-        this.once(`tipo:${key}`, `Valor inesperado em "${key}": ${clip(JSON.stringify(value))} (esperado true ou false)`);
+        this.once(`tipo:${key}`, `Valor inesperado em "${key}": ${clip(JSON.stringify(value), 20)} (esperado true ou false)`);
         return;
       }
       this.applyPhase(phase - 1, value, now);
@@ -253,7 +256,7 @@ export class RealBioreactorSource implements DataSource {
     const name = normalize(key);
     if (name === PRODUCTION_KEY) {
       if (typeof value !== 'boolean') {
-        this.once(`tipo:${key}`, `Valor inesperado em "${key}": ${clip(JSON.stringify(value))} (esperado true ou false)`);
+        this.once(`tipo:${key}`, `Valor inesperado em "${key}": ${clip(JSON.stringify(value), 20)} (esperado true ou false)`);
         return;
       }
       if (this.production !== undefined && this.production !== value) {
@@ -268,11 +271,11 @@ export class RealBioreactorSource implements DataSource {
     if (tag) {
       const cfg = TAGS[tag];
       if (typeof value !== 'number' || !Number.isFinite(value)) {
-        this.once(`tipo:${key}`, `Valor inesperado em "${key}": ${clip(JSON.stringify(value))} (esperado um número)`);
+        this.once(`tipo:${key}`, `Valor inesperado em "${key}": ${clip(JSON.stringify(value), 20)} (esperado número)`);
         return;
       }
       if (value < cfg.rangeMin || value > cfg.rangeMax) {
-        this.once(`escala:${key}`, `Valor de "${key}" fora da escala (${formatNumber(cfg.rangeMin, 0)} a ${formatNumber(cfg.rangeMax, 0)} ${cfg.unit}): ${clip(String(value))} ignorado`);
+        this.once(`escala:${key}`, `${tag} fora da escala: ${formatNumber(value, cfg.decimals)} ${cfg.unit} (escala ${formatNumber(cfg.rangeMin, 0)}–${formatNumber(cfg.rangeMax, 0)}) · leitura ignorada`);
         // O card não pode dizer "aguardando dados" se o equipamento está mandando
         this.rejected[tag] = `Fora da escala: ${formatNumber(value, cfg.decimals)} ${cfg.unit} recebido (escala ${formatNumber(cfg.rangeMin, 0)}–${formatNumber(cfg.rangeMax, 0)}) · leitura ignorada`;
         return;
@@ -291,7 +294,7 @@ export class RealBioreactorSource implements DataSource {
     const prev = this.phaseDone[index];
     this.phaseDone[index] = done;
     if (prev === done) return;
-    const label = `Etapa ${index + 1} · ${PHASES[index].name}`;
+    const label = `E${phaseLabel(index).slice(1)}`;
     if (done) {
       // Primeira vez já em true: a IHM não sabe a hora exata (observed = false)
       this.completion[index] = { at: now, observed: prev === false };
@@ -307,10 +310,10 @@ export class RealBioreactorSource implements DataSource {
     this.ready = true;
     if (this.warmupTimer) clearTimeout(this.warmupTimer);
     const batch = this.batchInfo(Date.now());
-    const done = this.phaseDone.flatMap((d, i) => (d ? [i + 1] : []));
+    // As etapas concluídas ficam implícitas: a atual é a primeira não concluída
     const production = this.production === undefined ? 'não informada' : this.production ? 'em execução' : 'parada';
-    const phase = batch.status === 'completed' ? 'lote concluído' : `etapa atual ${batch.phaseIndex + 1} · ${PHASES[batch.phaseIndex].name}`;
-    this.event(`Estado inicial do equipamento: produção ${production} · etapas concluídas: ${done.length ? done.join(', ') : 'nenhuma'} · ${phase}`);
+    const phase = batch.status === 'completed' ? 'lote concluído' : `${phaseLabel(batch.phaseIndex)} em curso`;
+    this.event(`Estado inicial: produção ${production} · ${phase}`);
     this.publish();
   }
 

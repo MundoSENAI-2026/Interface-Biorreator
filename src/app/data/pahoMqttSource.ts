@@ -114,16 +114,16 @@ export class PahoMqttSource implements DataSource {
       if (text === null) throw new Error('não é UTF-8');
       data = JSON.parse(text);
     } catch {
-      this.invalid(`JSON inválido (${clip(text ?? '') || 'vazio'})`);
+      this.invalid(text ? 'não é JSON' : 'mensagem vazia');
       return;
     }
     if (!isObject(data)) {
-      this.invalid('esperado um objeto JSON, ex.: {"TIT_100_01": 37.5}');
+      this.invalid('esperado um objeto, ex.: {"TIT_100_01": 37.5}');
       return;
     }
     const entries = Object.entries(data);
     if (!entries.length) {
-      this.invalid('objeto vazio, nenhuma tag');
+      this.invalid('objeto vazio');
       return;
     }
 
@@ -135,7 +135,8 @@ export class PahoMqttSource implements DataSource {
       if (problem) problems.push(`${clip(key, 30)}: ${problem}`);
       else changed = true;
     }
-    if (problems.length) this.invalid(problems.join(' · '));
+    // Primeiro problema + quantos mais (a mensagem completa caberia mal no histórico)
+    if (problems.length) this.invalid(problems[0] + (problems.length > 1 ? ` (+${problems.length - 1} campo${problems.length > 2 ? 's' : ''})` : ''));
     if (changed) this.publish();
   }
 
@@ -145,7 +146,7 @@ export class PahoMqttSource implements DataSource {
       const cfg = TAGS[key as TagId];
       if (typeof value !== 'number' || !Number.isFinite(value)) return 'esperado um número';
       if (value < cfg.rangeMin || value > cfg.rangeMax) {
-        return `fora da escala (${formatNumber(cfg.rangeMin, 0)} a ${formatNumber(cfg.rangeMax, 0)} ${cfg.unit})`;
+        return `fora da escala: ${formatNumber(value, cfg.decimals)} ${cfg.unit} (escala ${formatNumber(cfg.rangeMin, 0)}–${formatNumber(cfg.rangeMax, 0)})`;
       }
       this.tags[key as TagId] = value;
     } else if (has(VALVE_BY_ID, key) || key === EQUIPMENT.manway.id) {
@@ -224,7 +225,7 @@ export class PahoMqttSource implements DataSource {
   // ─── Histórico ───────────────────────────────────────────────────────────
 
   private invalid(detail: string) {
-    this.event(`Mensagem MQTT inválida: ${clip(detail, 200)}`);
+    this.event(`Mensagem MQTT inválida: ${clip(detail, 70)}`);
   }
 
   private event(message: string) {

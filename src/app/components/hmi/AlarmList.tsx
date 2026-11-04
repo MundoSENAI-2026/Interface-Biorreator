@@ -2,7 +2,7 @@ import { Activity, Bell, ChevronLeft, ChevronRight, Download, Search, UserRound,
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PLANT } from '../../config/plant';
 import { LEVEL_LABEL, LEVELS } from '../../data/alarmStats';
-import type { Alarm, AlarmState, EventCategory, IsaPriority, PlantEvent } from '../../data/types';
+import type { Alarm, AlarmState, EventAction, EventCategory, IsaPriority, PlantEvent } from '../../data/types';
 import { formatDate, formatTime } from '../../lib/format';
 import { cn } from '../ui/utils';
 import { Chip, type ChipTone } from './Chip';
@@ -16,20 +16,48 @@ export const CATEGORY: Record<EventCategory, { label: string; icon: LucideIcon }
   operator: { label: 'Ação do operador', icon: UserRound },
 };
 
-/**
- * Tipo do evento com ícone e cor próprios: alarme na cor da severidade (com a
- * prioridade ISA), evento de processo em neutro, ação do operador em azul.
- */
-export function EventTypeBadge({ event }: { event: PlantEvent }) {
-  const c = CATEGORY[event.category];
-  const tone: ChipTone = event.category === 'alarm' ? event.priority === 'critical' ? 'critical' : 'warning' : event.category === 'operator' ? 'info' : 'neutral';
-  return <Chip tone={tone} icon={c.icon} label={event.category === 'process' ? 'Processo' : event.category === 'operator' ? 'Operador' : 'Alarme'} className="w-full" title={c.label} />;
+/** Ação em texto curto para a coluna AÇÃO (o tipo interno continua o mesmo). */
+export const ACTION_LABEL: Record<EventAction, string> = {
+  Ativado: 'Ativado',
+  Normalizado: 'Normalizado',
+  Reconhecimento: 'Reconhecido',
+  Comando: 'Comando',
+  Bloqueado: 'Bloqueado',
+  'Mudança de etapa': 'Etapa',
+  'Estado do processo': 'Estado',
+  Válvula: 'Válvula',
+  Equipamento: 'Equipamento',
+  Comunicação: 'Comunicação',
+};
+
+/** Cor da prioridade ISA: crítica vermelha, alta âmbar cheio, média âmbar claro, baixa cinza. */
+export const LEVEL_TONE: Record<IsaPriority, ChipTone> = { critica: 'critical', alta: 'high', media: 'warning', baixa: 'normal' };
+
+/** Largura única dos selos de tipo/prioridade: cabe "Processo" e "Operador" com ícone. */
+export const TYPE_CHIP_WIDTH = 'w-[6.5rem]';
+
+/** Prioridade do alarme por extenso, com sino, na cor da prioridade. */
+export function PriorityChip({ level, className }: { level: IsaPriority; className?: string }) {
+  return <Chip tone={LEVEL_TONE[level]} icon={Bell} label={LEVEL_LABEL[level]} className={cn(TYPE_CHIP_WIDTH, className)} />;
 }
 
-function PriorityChip({ event }: { event: PlantEvent }) {
-  if (event.category !== 'alarm' || !event.level) return <Chip label="—" tone="neutral" className="w-full" />;
-  const tone: ChipTone = event.level === 'critica' ? 'critical' : event.level === 'alta' ? 'warning' : event.level === 'media' ? 'info' : 'neutral';
-  return <Chip label={LEVEL_LABEL[event.level]} tone={tone} className="w-full" />;
+const levelOf = (event: PlantEvent): IsaPriority => event.level ?? (event.priority === 'critical' ? 'critica' : 'alta');
+
+/**
+ * Coluna TIPO: alarme = prioridade por extenso (sino, cor da prioridade);
+ * evento de processo = ícone cinza + "Processo"; ação do operador = ícone azul + "Operador".
+ */
+export function EventTypeBadge({ event, className }: { event: PlantEvent; className?: string }) {
+  if (event.category === 'alarm') return <PriorityChip level={levelOf(event)} className={className} />;
+  const operator = event.category === 'operator';
+  return (
+    <Chip
+      tone={operator ? 'info' : 'neutral'}
+      icon={CATEGORY[event.category].icon}
+      label={operator ? 'Operador' : 'Processo'}
+      className={cn(TYPE_CHIP_WIDTH, className)}
+    />
+  );
 }
 
 /** Ordenação ISA-18.2: prioridade, depois não reconhecidos, depois mais recentes. */
@@ -39,9 +67,10 @@ export function sortAlarms(alarms: Alarm[]) {
   );
 }
 
-const th = 'bg-sunken px-3 py-2 text-left text-[13px] font-semibold uppercase tracking-wide text-ink-muted';
+const th = 'h-9 bg-sunken px-3 text-left text-[13px] font-semibold uppercase tracking-wide text-ink-muted';
 const td = 'px-3 align-middle';
-const ROW_H = 44;
+/** Altura única das linhas de tabela (~36 px). */
+const ROW_H = 36;
 
 const csvCell = (v: string) => (/[;"\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
 
@@ -53,9 +82,9 @@ function exportCsv(events: PlantEvent[]) {
       formatDate(e.time),
       formatTime(e.time),
       CATEGORY[e.category].label,
-      e.category === 'alarm' && e.level ? LEVEL_LABEL[e.level] : '',
+      e.category === 'alarm' ? LEVEL_LABEL[levelOf(e)] : '',
       e.source,
-      e.action,
+      ACTION_LABEL[e.action],
       e.message,
       e.user ?? '',
     ].map(csvCell).join(';'),
@@ -97,7 +126,7 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
   const boxRef = useRef<HTMLDivElement>(null);
-  const pageSize = useRowsThatFit(boxRef, ROW_H, 38);
+  const pageSize = useRowsThatFit(boxRef, ROW_H, 36);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -140,7 +169,7 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filtrar por tag, mensagem ou usuário"
+            placeholder="Buscar tag, mensagem ou usuário"
             className="h-9 w-full rounded border border-line-strong bg-surface pl-8 pr-2 text-sm text-ink placeholder:text-ink-muted"
           />
         </div>
@@ -155,23 +184,21 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
       </div>
 
       <div ref={boxRef} className="min-h-0 flex-1 overflow-hidden rounded border border-line">
-        <table className="w-full table-fixed border-collapse text-[15px]">
+        <table className="w-full table-fixed border-collapse text-sm">
           <colgroup>
-            <col className="w-24" />
-            <col className="w-24" />
-            <col className="w-28" />
-            <col className="w-28" />
-            <col className="hidden w-24 2xl:table-column" />
+            <col className="w-[5.5rem]" />
+            <col className="w-[7.5rem]" />
+            <col className="w-[7rem]" />
+            <col className="w-[7.5rem]" />
             <col />
-            <col className="w-32" />
+            <col className="w-[7rem]" />
           </colgroup>
           <thead>
             <tr>
               <th className={th}>Hora</th>
               <th className={th}>Tipo</th>
-              <th className={th}>Prioridade</th>
               <th className={th}>Origem</th>
-              <th className={cn(th, 'hidden 2xl:table-cell')}>Ação</th>
+              <th className={th}>Ação</th>
               <th className={th}>Mensagem</th>
               <th className={th}>Usuário</th>
             </tr>
@@ -179,7 +206,7 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-ink-muted">Nenhum evento para os filtros escolhidos</td>
+                <td colSpan={6} className="px-3 py-8 text-center text-ink-muted">Nenhum evento para os filtros escolhidos</td>
               </tr>
             ) : (
               rows.map((e) => (
@@ -188,11 +215,11 @@ export function HistoryTable({ events }: { events: PlantEvent[] }) {
                   <td className={cn(td, 'whitespace-nowrap')}>
                     <EventTypeBadge event={e} />
                   </td>
-                  <td><PriorityChip event={e} /></td>
-                  <td className={cn(td, 'truncate font-mono text-[13px] text-ink-default')}>{e.source}</td>
-                  <td title={e.action} className={cn(td, 'hidden truncate text-ink-default 2xl:table-cell')}>{e.action}</td>
-                  <td className={cn(td, 'whitespace-normal text-ink')} title={e.message}><span className="line-clamp-2 leading-4">{e.message}</span></td>
-                  <td title={e.user ?? ''} className={cn(td, 'truncate whitespace-nowrap', e.category === 'operator' ? 'font-medium text-st-info' : 'text-ink-muted')}>{e.user}</td>
+                  <td className={cn(td, 'whitespace-nowrap font-mono text-[13px] text-ink-default')}>{e.source}</td>
+                  <td className={cn(td, 'whitespace-nowrap text-ink-default')}>{ACTION_LABEL[e.action]}</td>
+                  {/* Até 2 linhas: as mensagens são escritas curtas para caber */}
+                  <td className={cn(td, 'whitespace-normal text-ink')}><span className="line-clamp-2 leading-4">{e.message}</span></td>
+                  <td className={cn(td, 'whitespace-nowrap', e.category === 'operator' ? 'font-medium text-st-info' : 'text-ink-muted')}>{e.user}</td>
                 </tr>
               ))
             )}

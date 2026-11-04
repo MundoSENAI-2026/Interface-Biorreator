@@ -225,6 +225,11 @@ export const PHASES: PhaseConfig[] = [
   },
 ];
 
+/** Etapa nas mensagens: "etapa 3 (Check Pressão)" (minúscula; quem começa a frase capitaliza). */
+export function phaseLabel(phaseIndex: number): string {
+  return `etapa ${phaseIndex + 1} (${PHASES[phaseIndex].name})`;
+}
+
 export function getLimits(tag: TagId, phaseIndex: number): TagLimits {
   const phase = PHASES[phaseIndex];
   return { ...DEFAULT_LIMITS[tag], ...(phase?.limits[tag] ?? {}) };

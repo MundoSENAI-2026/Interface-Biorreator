@@ -82,7 +82,7 @@ export class PahoLink {
     this.retryTimer = null;
     const paho = window.Paho?.MQTT;
     if (!paho) {
-      this.options.onEvent('Biblioteca Paho MQTT não carregada (public/vendor/mqttws31.js)');
+      this.options.onEvent('Biblioteca Paho MQTT não carregada: verifique public/vendor/mqttws31.js');
       this.setStatus('offline');
       return;
     }
@@ -93,7 +93,8 @@ export class PahoLink {
     try {
       client = new paho.Client(MQTT.host, MQTT.port, this.clientId);
     } catch (e) {
-      this.options.onEvent(`Não foi possível criar o cliente MQTT: ${errorText(e)}`);
+      console.warn('[MQTT] cliente não criado:', errorText(e));
+      this.options.onEvent('Não foi possível criar o cliente MQTT');
       this.setStatus('offline');
       return;
     }
@@ -101,7 +102,8 @@ export class PahoLink {
     client.onConnectionLost = (err) => {
       if (!current()) return;
       this.client = null;
-      this.scheduleReconnect(`Conexão com o broker perdida (${err.errorMessage || 'sem detalhe'})`);
+      console.warn('[MQTT] conexão perdida:', err.errorMessage);
+      this.scheduleReconnect('Conexão com o broker perdida');
     };
     client.onMessageArrived = (msg) => {
       if (!current()) return;
@@ -127,21 +129,26 @@ export class PahoLink {
           for (const topic of this.topics) {
             client.subscribe(topic, {
               qos: 0,
-              onFailure: (err) => this.options.onEvent(`Falha ao assinar ${topic}: ${err.errorMessage}`),
+              onFailure: (err) => {
+                console.warn('[MQTT] falha ao assinar', topic, err.errorMessage);
+                this.options.onEvent(`Falha ao assinar o tópico ${topic}`);
+              },
             });
           }
-          this.options.onEvent(`Conectado a ${MQTT.host}:${MQTT.port} como ${this.clientId} · assinando ${this.topics.join(' e ')}`);
+          this.options.onEvent(`Conectado ao broker ${MQTT.host} como ${this.clientId}`);
           this.setStatus('online');
         },
         onFailure: (err) => {
           if (!current()) return;
           this.client = null;
-          this.scheduleReconnect(`Falha ao conectar em ${MQTT.host}:${MQTT.port} (${err.errorMessage || 'sem detalhe'})`);
+          console.warn('[MQTT] falha ao conectar:', err.errorMessage);
+          this.scheduleReconnect('Falha ao conectar ao broker');
         },
       });
     } catch (e) {
       this.client = null;
-      this.scheduleReconnect(`Falha ao conectar: ${errorText(e)}`);
+      console.warn('[MQTT] falha ao conectar:', errorText(e));
+      this.scheduleReconnect('Falha ao conectar ao broker');
     }
   }
 

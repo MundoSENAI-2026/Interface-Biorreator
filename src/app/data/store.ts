@@ -10,6 +10,7 @@ import {
   VALVES,
   VALVE_BY_ID,
   getLimits,
+  phaseLabel,
   type TagId,
 } from '../config/plant';
 import { formatDuration, formatWithUnit } from '../lib/format';
@@ -82,12 +83,23 @@ const ISA_LEVEL: Record<AlarmKind, IsaPriority> = {
   FAULT: 'media',
 };
 
-/** Quem registrou o evento quando não é uma ação do operador. */
+/**
+ * Quem registrou o evento (coluna USUÁRIO, rótulos curtos): o CLP informa o processo,
+ * o supervisório ("Sistema") gera alarmes e eventos de comunicação, o operador age.
+ */
 export const SYSTEM_USER: Record<EventCategory, string> = {
-  process: 'Sistema (CLP)',
-  alarm: 'Sistema (alarme)',
+  process: 'CLP',
+  alarm: 'Sistema',
   operator: PLANT.operator,
 };
+/** Usuário dos eventos de comunicação, detectados pelo próprio supervisório. */
+const COMM_USER = 'Sistema';
+/** Origem única dos eventos de comunicação (nunca "Equipamento" ou "MQTT"). */
+const COMM_SOURCE = 'CLP';
+
+/** Tags de nome feminino (Temperatura, Pressão); as outras concordam no masculino. */
+const FEMININE_TAGS = new Set<TagId>(['TIT_100_01', 'PIT_100_01']);
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 const emptyByTag = <T,>(make: () => T) =>
   Object.fromEntries(TAG_ORDER.map((t) => [t, make()])) as Record<TagId, T>;
@@ -130,8 +142,8 @@ export class PlantStore {
     }
     this.source.start((s) => this.onSnapshot(s), {
       onConnection: (c) => this.onConnection(c),
-      onEvent: (source, message) => {
-        this.log('process', 'Comunicação', source, message);
+      onEvent: (_source, message) => {
+        this.logComm(message);
         this.emit();
       },
     });
@@ -257,9 +269,9 @@ export class PlantStore {
       lowArmed,
     };
 
-    if (prev.comm === 'offline') this.log('process', 'Comunicação', 'CLP', 'Comunicação com o CLP restabelecida');
+    if (prev.comm === 'offline') this.logComm('Comunicação com o equipamento restabelecida');
     if (prev.snapshot) this.logChanges(prev.snapshot, s);
-    else this.log('process', 'Comunicação', 'CLP', `Conexão com o CLP estabelecida · lote ${s.batch.lot}, etapa ${PHASES[s.batch.phaseIndex].name}`);
+    else this.logComm(`Conexão com o equipamento estabelecida · ${phaseLabel(s.batch.phaseIndex)}`);
 
     // Fonte que informa a conexão: o alarme segue onConnection (leitura analógica não prova que as etapas chegam)
     const commLost = !!this.source.reportsConnection && (this.state.comm === 'offline' || this.state.comm === 'silent');
@@ -287,7 +299,7 @@ export class PlantStore {
     const lost = now - ref > COMM_TIMEOUT_MS;
     const comm: CommStatus = lost ? 'offline' : this.state.lastReadAt ? 'online' : 'connecting';
     if (lost && this.state.comm !== 'offline') {
-      this.log('process', 'Comunicação', 'CLP', `Comunicação com o CLP perdida (sem leitura há mais de ${COMM_TIMEOUT_MS / 1000} s)`);
+      this.logComm(`Comunicação com o equipamento perdida: sem leitura há mais de ${COMM_TIMEOUT_MS / 1000} s`);
     }
     this.state = { ...this.state, now, comm };
     if (lost) this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', true);
@@ -318,10 +330,12 @@ export class PlantStore {
           `${cfg.name} ${label} (limite ${fmt(limit ?? 0)})`, on);
       };
 
-      check('HH', lim.critHi, true, 'critical', 'muito alta');
-      check('H', lim.warnHi, true, 'warning', 'alta');
-      check('L', lim.warnLo, false, 'warning', 'baixa');
-      check('LL', lim.critLo, false, 'critical', 'muito baixa');
+      // Concordância: "Pressão alta", mas "Nível alto" e "pH baixo"
+      const [hi, lo] = FEMININE_TAGS.has(tag) ? ['alta', 'baixa'] : ['alto', 'baixo'];
+      check('HH', lim.critHi, true, 'critical', `muito ${hi}`);
+      check('H', lim.warnHi, true, 'warning', hi);
+      check('L', lim.warnLo, false, 'warning', lo);
+      check('LL', lim.critLo, false, 'critical', `muito ${lo}`);
     }
 
     for (const v of VALVES) {
@@ -362,8 +376,7 @@ export class PlantStore {
       this.log('process', 'Estado do processo', 'Sequência', `Novo lote ${s.batch.lot} iniciado`);
     }
     if (s.batch.phaseIndex !== prev.batch.phaseIndex) {
-      const p = PHASES[s.batch.phaseIndex];
-      this.log('process', 'Mudança de etapa', 'Sequência', `Etapa ${s.batch.phaseIndex + 1}/${PHASES.length} · ${p.name} iniciada`);
+      this.log('process', 'Mudança de etapa', 'Sequência', `${capitalize(phaseLabel(s.batch.phaseIndex))} iniciada`);
     }
     if (s.batch.status !== prev.batch.status) {
       this.log('process', 'Estado do processo', 'Sequência', BATCH_STATUS_TEXT[s.batch.status]);
@@ -384,6 +397,11 @@ export class PlantStore {
     if (s.manwayOpen !== prev.manwayOpen) {
       this.log('process', 'Equipamento', EQUIPMENT.manway.id, `${EQUIPMENT.manway.name} ${s.manwayOpen ? 'aberta' : 'fechada'}`);
     }
+  }
+
+  /** Evento de comunicação: origem sempre "CLP", registrado pelo supervisório. */
+  private logComm(message: string) {
+    this.log('process', 'Comunicação', COMM_SOURCE, message, { user: COMM_USER });
   }
 
   private logOperator(action: EventAction, source: string, message: string) {

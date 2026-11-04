@@ -1,4 +1,4 @@
-import { EQUIPMENT, PHASES, PLANT, VALVES } from '../config/plant';
+import { EQUIPMENT, PHASES, PLANT, VALVES, phaseLabel } from '../config/plant';
 import type { AlarmKind, AlarmPriority, HistoryRecord, IsaPriority } from './types';
 
 /**
@@ -7,8 +7,10 @@ import type { AlarmKind, AlarmPriority, HistoryRecord, IsaPriority } from './typ
  * comandos e alguns alarmes já reconhecidos e normalizados).
  */
 
-const SYSTEM_PROCESS = 'Sistema (CLP)';
-const SYSTEM_ALARM = 'Sistema (alarme)';
+// Mesmos rótulos curtos do store (coluna USUÁRIO)
+const SYSTEM_PROCESS = 'CLP';
+const SYSTEM_ALARM = 'Sistema';
+const SYSTEM_COMM = 'Sistema';
 
 interface SeedAlarm {
   phase: number;
@@ -40,7 +42,7 @@ const SEED_ALARMS: SeedAlarm[] = [
   {
     phase: 3, minute: 1, source: 'CLP', kind: 'COMM', priority: 'critical', level: 'critica',
     message: 'Falha de comunicação com o CLP', ackAfterS: 25, normalizeAfterS: 12,
-    process: [[-5, 'Comunicação com o CLP perdida (sem leitura há mais de 5 s)'], [12, 'Comunicação com o CLP restabelecida']],
+    process: [[-5, 'Comunicação com o equipamento perdida: sem leitura há mais de 5 s'], [12, 'Comunicação com o equipamento restabelecida']],
   },
 ];
 
@@ -65,7 +67,7 @@ export function seedHistory(startedAt: number, phaseIndex: number, phaseElapsedS
   for (let p = 0; p <= phaseIndex; p++) {
     const ph = PHASES[p];
     const t0 = phaseStartS(p) + 2;
-    push(t0, { category: 'process', action: 'Mudança de etapa', source: 'Sequência', message: `Etapa ${p + 1}/${PHASES.length} · ${ph.name} iniciada`, user: SYSTEM_PROCESS });
+    push(t0, { category: 'process', action: 'Mudança de etapa', source: 'Sequência', message: `E${phaseLabel(p).slice(1)} iniciada`, user: SYSTEM_PROCESS });
     const open = new Set<string>(ph.valvesOpen);
     for (const v of VALVES) {
       if (open.has(v.id) !== prevOpen.has(v.id)) {
@@ -94,7 +96,7 @@ export function seedHistory(startedAt: number, phaseIndex: number, phaseElapsedS
     const alarmId = `${a.source}:${a.kind}`;
     const base = { source: a.source, priority: a.priority, level: a.level, alarmId };
     for (const [offset, message] of a.process ?? []) {
-      push(t + offset, { category: 'process', action: 'Comunicação', source: 'CLP', message, user: SYSTEM_PROCESS });
+      push(t + offset, { category: 'process', action: 'Comunicação', source: 'CLP', message, user: SYSTEM_COMM });
     }
     push(t, { ...base, category: 'alarm', action: 'Ativado', message: a.message, user: SYSTEM_ALARM });
     push(t + a.ackAfterS, { ...base, category: 'operator', action: 'Reconhecimento', message: `Reconheceu alarme: ${a.message}`, user: PLANT.operator });

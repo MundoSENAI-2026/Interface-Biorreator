@@ -114,28 +114,14 @@ export function TrendsScreen({ plant }: { plant: PlantState }) {
 
 export function AlarmsScreen({ plant }: { plant: PlantState }) {
   const stats = alarmStats(plant.events, plant.snapshot?.batch.startedAt ?? plant.now, plant.now);
-  const pending = plant.alarms.some((a) => a.state !== 'acknowledged');
   return (
     <div className={`${SCREEN} grid-rows-[auto_minmax(0,1fr)]`}>
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <AlarmBanner alarms={plant.alarms} lastNormalizedAt={stats.lastNormalizedAt} maxRows={4} linkToAlarms={false} />
-        </div>
-        {plant.alarms.length > 0 && (
-          <button
-            onClick={() => plantStore.acknowledgeAll()}
-            disabled={!pending}
-            className="h-11 shrink-0 rounded-md border border-line-strong bg-surface px-4 text-[15px] text-ink hover:bg-sunken disabled:cursor-not-allowed disabled:text-ink-disabled"
-          >
-            Reconhecer todos
-          </button>
-        )}
-      </div>
+      <AlarmBanner alarms={plant.alarms} lastNormalizedAt={stats.lastNormalizedAt} maxRows={4} linkToAlarms={false} showAcknowledgeAll />
       <div className="grid min-h-0 grid-cols-12 gap-3 xl:grid-rows-1">
-        <div className="col-span-12 grid min-h-0 xl:col-span-5">
+        <div className="col-span-12 grid min-h-0 xl:col-span-4 2xl:col-span-5">
           <AlarmIndicators stats={stats} unacknowledged={plant.alarms.filter((alarm) => alarm.state !== 'acknowledged').length} />
         </div>
-        <Panel title="Histórico de alarmes e eventos" subtitle="Trilha de auditoria completa" className="col-span-12 min-h-0 xl:col-span-7" bodyClassName="flex min-h-0 flex-col">
+        <Panel title="Histórico de alarmes e eventos" subtitle="Trilha de auditoria completa" className="col-span-12 min-h-0 xl:col-span-8 2xl:col-span-7" bodyClassName="flex min-h-0 flex-col">
           <HistoryTable events={plant.events} />
         </Panel>
       </div>

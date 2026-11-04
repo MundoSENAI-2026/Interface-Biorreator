@@ -268,11 +268,13 @@ sequência **a cada ~1 s** (cerca de 12 mensagens por segundo), sem *retain*:
 
 O servidor repete tudo a cada segundo, mas o histórico só registra **mudanças**:
 
-- `Estado inicial do equipamento: produção em execução · etapas concluídas: 1, 2 · etapa atual 3 · Check Pressão` (uma vez, ao conectar);
-- `Etapa 3 · Check Pressão concluída`, `Produção iniciada`, `Produção parada`;
+- `Estado inicial: produção em execução · etapa 3 (Check Pressão) em curso` (uma vez, ao conectar);
+- `Etapa 3 (Check Pressão) concluída`, `Produção iniciada`, `Produção parada`;
 - `Campo novo recebido: <nome>`: chave desconhecida, uma única vez por chave. O valor é guardado e a tela não quebra;
-- `Valor inesperado em "<chave>"…`, `Mensagem inválida em <tópico>…`, `Chave "…" chegou com hífen`,
-  `Valor de "…" fora da escala…` e `Mensagem retida ignorada…`: uma única vez cada.
+- `Valor inesperado em <chave>…`, `Mensagem inválida no tópico…`, `Chave "…" chegou com hífen`,
+  `PIT_100_01 fora da escala: 3,00 kgf/cm² (escala 0–2) · leitura ignorada` e `Mensagem retida ignorada…`: uma única vez cada.
+
+No histórico (F4), todos os eventos de comunicação têm origem **CLP** e usuário **Sistema**.
 
 ### Variáveis analógicas (`senai661/appiot/biorreator/a`)
 
