@@ -51,7 +51,7 @@ export class PahoMqttSource implements DataSource {
   readonly dataTopic = MQTT.topicPrefix + 'dados';
 
   private readonly link = new PahoLink({
-    topic: this.dataTopic,
+    topics: [this.dataTopic],
     onMessage: (text) => this.onMessage(text),
     onStatus: (status) => this.hooks.onConnection?.(status),
     onEvent: (message) => this.event(message),

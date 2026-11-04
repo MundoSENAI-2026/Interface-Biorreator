@@ -22,7 +22,7 @@ const BATCH_STATUS: Record<BatchStatus, { label: string; badge: BadgeStatus }> =
 function sourceBadge(): { label: string; detail: string } | null {
   if (simulation) return { label: 'Simulação', detail: `Dados simulados · velocidade ×${simulation.acceleration}` };
   if (mqttSource) return { label: 'Ao vivo · MQTT', detail: `${MQTT.host}:${MQTT.port} · ${mqttSource.dataTopic}` };
-  if (realSource) return { label: 'Ao vivo · Biorreator real', detail: `${MQTT.host}:${MQTT.port} · ${realSource.topic} · somente leitura` };
+  if (realSource) return { label: 'Ao vivo · Biorreator real', detail: `${MQTT.host}:${MQTT.port} · ${realSource.topic} e /a · somente leitura` };
   return null;
 }
 
@@ -45,7 +45,9 @@ export function Header({ plant }: { plant: PlantState }) {
     critical: activeAlarms.filter((a) => a.priority === 'critical').length,
     warning: activeAlarms.filter((a) => a.priority === 'warning').length,
   };
-  const ageS = plant.lastReadAt ? Math.max(0, Math.round((plant.now - plant.lastReadAt) / 1000)) : null;
+  // Biorreator real: idade das mensagens de etapas (as analógicas têm watchdog próprio, nos cards)
+  const lastAt = realSource ? realSource.lastPhaseMessageAt : plant.lastReadAt;
+  const ageS = lastAt ? Math.max(0, Math.round((plant.now - lastAt) / 1000)) : null;
   const batchStatus = s ? BATCH_STATUS[s.batch.status] : null;
   const batchElapsedS = s
     ? s.batch.phaseDurationsS.reduce<number>((acc, d) => acc + (d ?? 0), 0) + (s.batch.status === 'completed' ? 0 : s.batch.phaseElapsedS)

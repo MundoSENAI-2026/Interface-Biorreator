@@ -219,8 +219,10 @@ export class PlantStore {
     const cutoff = now - HISTORY_WINDOW_S * 1000;
     for (const tag of TAG_ORDER) {
       const points = prev.history[tag].filter((p) => p.t >= cutoff);
-      // NaN = sensor ainda sem dado (MQTT): não entra no histórico
-      if (Number.isFinite(s.tags[tag])) points.push({ t: now, v: s.tags[tag] });
+      // NaN = sensor ainda sem dado (MQTT): não entra no histórico. Fontes com
+      // updatedAt: só entra quando a tag foi atualizada (não repete o último valor).
+      const updated = !s.updatedAt || (s.updatedAt[tag] !== undefined && s.updatedAt[tag] !== prev.snapshot?.updatedAt?.[tag]);
+      if (Number.isFinite(s.tags[tag]) && updated) points.push({ t: now, v: s.tags[tag] });
       history[tag] = points;
     }
 
@@ -246,7 +248,9 @@ export class PlantStore {
       snapshot: s,
       lastReadAt: now,
       now,
-      comm: 'online',
+      // Fonte que informa a conexão (MQTT) decide o estado; o biorreator real pode estar
+      // 'silent' (sem etapas) e ainda receber analógicas
+      comm: this.source.reportsConnection ? prev.comm : 'online',
       history,
       phaseTrace,
       tracePhaseIndex: s.batch.phaseIndex,
@@ -257,7 +261,9 @@ export class PlantStore {
     if (prev.snapshot) this.logChanges(prev.snapshot, s);
     else this.log('process', 'Comunicação', 'CLP', `Conexão com o CLP estabelecida · lote ${s.batch.lot}, etapa ${PHASES[s.batch.phaseIndex].name}`);
 
-    this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', false);
+    // Fonte que informa a conexão: o alarme segue onConnection (leitura analógica não prova que as etapas chegam)
+    const commLost = !!this.source.reportsConnection && (this.state.comm === 'offline' || this.state.comm === 'silent');
+    this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', commLost);
     this.evaluateProcessAlarms(s);
     this.emit();
   }
@@ -414,10 +420,12 @@ export function overallStatus(state: PlantState): OverallStatus {
 export interface Freshness {
   /** Hora da última atualização; null = ainda sem dado. */
   updatedAt: number | null;
-  /** Sem dado, ou sem atualização há mais de MQTT.staleAfterMin. */
+  /** Sem dado, ou sem atualização há mais de staleAfterS do snapshot (padrão MQTT.staleAfterMin). */
   stale: boolean;
   /** Texto do tooltip: "atualizado há 3 min", "Dado antigo · atualizado há 12 min"… */
   title: string;
+  /** A última leitura chegou mas foi descartada (ex.: "Fora da escala: 3,00 kgf/cm²…"). */
+  rejected?: string;
 }
 
 /**
@@ -428,16 +436,21 @@ export function freshness(state: PlantState, key: string): Freshness | undefined
   const updated = state.snapshot?.updatedAt;
   if (!updated) return undefined;
   const at = updated[key];
-  if (at === undefined) return { updatedAt: null, stale: true, title: 'Aguardando dados do equipamento' };
+  const rejected = state.snapshot?.rejected?.[key];
+  if (at === undefined) return { updatedAt: null, stale: true, title: rejected ?? 'Aguardando dados do equipamento', rejected };
   const ageS = Math.max(0, (state.now - at) / 1000);
-  const stale = ageS > MQTT.staleAfterMin * 60;
-  return { updatedAt: at, stale, title: `${stale ? 'Dado antigo · ' : ''}atualizado há ${formatDuration(ageS)}` };
+  const stale = ageS > (state.snapshot?.staleAfterS ?? MQTT.staleAfterMin * 60);
+  const age = `${stale ? 'Dado antigo · ' : ''}atualizado há ${formatDuration(ageS)}`;
+  return { updatedAt: at, stale, title: rejected ? `${rejected} · ${age}` : age, rejected };
 }
 
 export type TagStatus = 'normal' | 'warning' | 'critical' | 'bad';
 
 export function tagStatus(state: PlantState, tag: TagId): TagStatus {
-  if (state.comm !== 'online' || freshness(state, tag)?.stale) return 'bad';
+  const fresh = freshness(state, tag);
+  // 'silent' = sem mensagens de etapas (biorreator real): as analógicas seguem pelo próprio watchdog (freshness)
+  const linkOk = state.comm === 'online' || (state.comm === 'silent' && fresh !== undefined);
+  if (!linkOk || fresh?.stale || fresh?.rejected) return 'bad';
   const active = state.alarms.filter((a) => a.source === tag && a.state !== 'normalized');
   if (active.some((a) => a.priority === 'critical')) return 'critical';
   if (active.length) return 'warning';

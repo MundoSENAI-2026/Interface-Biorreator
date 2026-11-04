@@ -104,6 +104,8 @@ export function SimulationPanel() {
               <dd className="truncate font-mono text-ink">{MQTT.host}:{MQTT.port}</dd>
               <dt className="text-ink-muted">Leituras</dt>
               <dd className="truncate font-mono text-ink" title={realSource.topic}>{realSource.topic}</dd>
+              <dt className="text-ink-muted">Analógicas</dt>
+              <dd className="truncate font-mono text-ink" title={realSource.analogTopic}>{realSource.analogTopic}</dd>
               <dt className="text-ink-muted">Comandos</dt>
               <dd className="text-ink">Somente leitura: nada é publicado</dd>
               <dt className="text-ink-muted">Chaves</dt>

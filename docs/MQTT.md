@@ -212,9 +212,9 @@ Para normalizar, publique `{"TIT_100_01": 37.2}` e reconheça o alarme na IHM.
 | `public/vendor/mqttws31.js` | Biblioteca Paho MQTT, cópia do repositório do professor |
 | `index.html` | Carrega a biblioteca antes do app |
 | `src/types/paho.d.ts` | Diz ao TypeScript o formato de `window.Paho.MQTT` |
-| `src/app/data/pahoLink.ts` | Conexão com o broker: conectar, reconectar e assinar um tópico (usada pelas duas fontes MQTT) |
+| `src/app/data/pahoLink.ts` | Conexão com o broker: conectar, reconectar e assinar os tópicos (usada pelas duas fontes MQTT) |
 | `src/app/data/pahoMqttSource.ts` | Fonte equipeDEV: leitura do JSON e publicação dos comandos |
-| `src/app/data/realBioreactorSource.ts` | Fonte biorreator real: leitura do tópico appiot, somente leitura |
+| `src/app/data/realBioreactorSource.ts` | Fonte biorreator real: etapas e variáveis analógicas dos tópicos appiot, somente leitura |
 | `src/app/data/source.ts` | Escolhe a fonte e faz a troca |
 | `src/app/config/plant.ts` | `DATA_SOURCE`, `MQTT` e `REAL_EQUIPMENT`: broker, porta, tópicos, tempos |
 
@@ -261,7 +261,8 @@ sequência **a cada ~1 s** (cerca de 12 mensagens por segundo), sem *retain*:
   - `Concluída · até 09:52` quando a etapa já estava concluída ao conectar (a hora exata é desconhecida; o tooltip explica).
 - **Aquecimento**: ao conectar, a tela espera um ciclo completo de chaves (a primeira
   chave repetida, cerca de 1 s) antes de mostrar o estado. Isso evita registrar no
-  histórico mudanças de etapa que não aconteceram.
+  histórico mudanças de etapa que não aconteceram. Se o tópico das etapas estiver
+  mudo, a espera vai até `warmupS` (15 s), e então a tela mostra só as analógicas.
 
 ### Histórico sem repetição
 
@@ -270,30 +271,49 @@ O servidor repete tudo a cada segundo, mas o histórico só registra **mudanças
 - `Estado inicial do equipamento: produção em execução · etapas concluídas: 1, 2 · etapa atual 3 · Check Pressão` (uma vez, ao conectar);
 - `Etapa 3 · Check Pressão concluída`, `Produção iniciada`, `Produção parada`;
 - `Campo novo recebido: <nome>`: chave desconhecida, uma única vez por chave. O valor é guardado e a tela não quebra;
-- `Valor inesperado em "<chave>"…` e `Mensagem inválida do equipamento…`: uma única vez.
+- `Valor inesperado em "<chave>"…`, `Mensagem inválida em <tópico>…`, `Chave "…" chegou com hífen`,
+  `Valor de "…" fora da escala…` e `Mensagem retida ignorada…`: uma única vez cada.
 
-### Variáveis analógicas
+### Variáveis analógicas (`senai661/appiot/biorreator/a`)
 
-Temperatura, pressão, nível e pH **não vêm** desse tópico. Os cards mostram "—" em
-cinza, com a etiqueta *Aguardando dados* e o aviso *Aguardando dados do equipamento*,
-sem gráfico e sem alarmes. Quando o servidor passar a publicar esses valores, basta
-mapear o nome da chave em `REAL_EQUIPMENT.tagKeys` (`config/plant.ts`):
+Temperatura, pressão, nível e pH chegam em outro tópico (`REAL_EQUIPMENT.analogTopic`),
+cerca de 1 vez por segundo, como **lista com um objeto**:
 
-```ts
-tagKeys: {
-  'Temperatura': 'TIT_100_01',
-  'Pressão': 'PIT_100_01',
-},
+```json
+[{"PIT_100_01":0,"LIT_100_01":0,"TIT_100_01":27.000144958496094,"AIT_100-01":7.595485687255859}]
 ```
 
-O valor precisa ser um número dentro da escala da tag (ex.: 0 a 150 °C). Fora disso, ele
-é ignorado e registrado uma vez no histórico.
+- **Lista ou objeto**: se vier lista, a IHM junta todos os objetos dela. Se o JSON vier
+  dentro de um texto (`"[{\"PIT_100_01\":0}]"`), ele é lido de novo.
+- **Nomes das chaves**: `-` vira `_` e os espaços saem, então `AIT_100-01` vira
+  `AIT_100_01`. A IHM registra uma vez no histórico: *Chave "AIT_100-01" chegou com hífen*.
+- **Mapeamento** em `REAL_EQUIPMENT.tagKeys`: as quatro chaves já têm o nome da tag
+  (`TIT_100_01` → `TIT_100_01`…). Um nome diferente no futuro é só mais uma linha.
+- **Valor completo**: a IHM guarda `27.000144958496094` e a tela arredonda pelas casas
+  decimais da tag (27,0 °C). **0 é um valor válido.**
+- **Fora da escala** (ex.: pressão 3,0 com escala 0 a 2 kgf/cm²): a leitura é ignorada e
+  registrada uma vez no histórico. O card fica cinza com a etiqueta *Fora da escala* e
+  mostra o valor recebido.
+- Os cards funcionam como no simulador: valor, mini gráfico, tendência e alarmes pelos
+  limites da etapa atual.
+- **Watchdog próprio**: mais de 10 s sem mensagens no `/a` (`analogSilenceTimeoutS`)
+  deixa **só os cards analógicos** em cinza, com *Dado antigo · atualizado há 14 s*. As
+  etapas seguem o watchdog delas, e um não derruba o outro.
+
+### Mensagens retidas
+
+Em 04/11/2026 havia uma mensagem **retida** `{"TIT_100_01": 58}` nos dois tópicos appiot.
+Ela não veio do servidor do equipamento, que não usa *retain*: alguém a publicou à mão.
+O broker a entrega a cada conexão, e ela daria um alarme falso de temperatura. Por isso
+a IHM **ignora mensagens retidas** nesta fonte e registra o aviso uma vez no histórico.
+Para apagá-la do broker, publique uma mensagem **vazia com retain** no mesmo tópico
+(MQTT Explorer → payload vazio + "retain" → Publish).
 
 ### Segurança: somente leitura
 
 - A IHM **nunca publica** no tópico appiot. A fonte não tem comando de envio, e a conexão
   é criada em modo somente leitura. No teste, a IHM enviou ao broker apenas a conexão
-  e a assinatura do tópico: **nenhum PUBLISH**.
+  e as assinaturas dos dois tópicos: **nenhum PUBLISH**.
 - Todos os comandos ficam desabilitados com o aviso **"Supervisão do equipamento real ·
   somente leitura"**: START/STOP, motor, bomba, válvulas, porta e também a **parada de
   emergência** (o tooltip orienta usar a parada de emergência física do equipamento).
@@ -302,8 +322,9 @@ O valor precisa ser um número dentro da escala da tag (ex.: 0 a 150 °C). Fora 
 
 | Situação | Cabeçalho |
 |---|---|
-| Mensagens chegando | `Online · equipamento real` |
-| Broker conectado, mas **mais de 10 s sem nenhuma mensagem** (`REAL_EQUIPMENT.silenceTimeoutS`) | `Sem dados do equipamento` + alarme crítico "Falha de comunicação" |
+| Mensagens de etapas chegando | `Online · equipamento real` |
+| Broker conectado, mas **mais de 10 s sem mensagens de etapas** (`REAL_EQUIPMENT.silenceTimeoutS`) | `Sem dados do equipamento` + alarme crítico "Falha de comunicação". Os cards analógicos continuam funcionando enquanto o `/a` chegar |
+| **Mais de 10 s sem mensagens no `/a`** (`analogSilenceTimeoutS`) | Cabeçalho inalterado; só os cards analógicos ficam cinza com *Dado antigo* |
 | Conexão com o broker caiu | `Reconectando…` / `Offline` (igual às outras fontes) |
 
 Aqui o "watchdog" faz sentido porque o servidor publica a cada segundo. Na fonte

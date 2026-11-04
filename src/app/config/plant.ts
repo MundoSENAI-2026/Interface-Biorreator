@@ -358,28 +358,33 @@ export const MQTT = {
 };
 
 /**
- * Biorreator REAL: um servidor Node-RED publica no tópico abaixo, uma chave por
- * mensagem (~1 s), ex.: {"Produção":true}, {"3_Check_Pressão_ok":false}.
- * A IHM só LÊ este tópico: nunca publica nada nele.
+ * Biorreator REAL: um servidor Node-RED publica (~1 s)
+ * - etapas e produção em `topic`, uma chave por mensagem: {"Produção":true}, {"3_Check_Pressão_ok":false};
+ * - variáveis analógicas em `analogTopic`, lista com um objeto:
+ *   [{"PIT_100_01":0,"LIT_100_01":0,"TIT_100_01":27.0001,"AIT_100-01":7.5954}].
+ * A IHM só LÊ estes tópicos: nunca publica nada neles.
  */
 export const REAL_EQUIPMENT = {
   topic: 'senai661/appiot/biorreator',
+  analogTopic: 'senai661/appiot/biorreator/a',
   /** Chave do estado de produção (true = em execução). Comparada sem acento e sem maiúsculas. */
   productionKey: 'Produção',
   /** Etapas: o NÚMERO no início da chave (1 a 11) identifica a etapa; true = concluída. */
   phaseKeyPattern: /^(\d{1,2})_/,
   /**
-   * Chaves de variáveis analógicas → tag da IHM. Hoje o servidor não publica
-   * nenhuma; quando publicar, basta mapear aqui. Comparadas sem acento e sem maiúsculas.
+   * Chaves de variáveis analógicas → tag da IHM. Comparadas sem acento e sem
+   * maiúsculas, depois de trocar "-" por "_" e tirar espaços ("AIT_100-01" = AIT_100_01).
    */
   tagKeys: {
-    // 'Temperatura': 'TIT_100_01',
-    // 'Pressão': 'PIT_100_01',
-    // 'Nível': 'LIT_100_01',
-    // 'pH': 'AIT_100_01',
+    TIT_100_01: 'TIT_100_01',
+    PIT_100_01: 'PIT_100_01',
+    LIT_100_01: 'LIT_100_01',
+    AIT_100_01: 'AIT_100_01',
   } as Partial<Record<string, TagId>>,
-  /** Sem nenhuma mensagem por mais que isso, a comunicação mostra "Sem dados do equipamento" (s). */
+  /** Sem mensagens de etapas por mais que isso, a comunicação mostra "Sem dados do equipamento" (s). */
   silenceTimeoutS: 10,
+  /** Sem mensagens em analogTopic por mais que isso, os cards analógicos ficam cinza com "dado antigo" (s). */
+  analogSilenceTimeoutS: 10,
   /**
    * Ao conectar, as chaves chegam uma a uma: a tela espera um ciclo completo (uma
    * chave repetida) ou este tempo antes de mostrar o estado, para não registrar

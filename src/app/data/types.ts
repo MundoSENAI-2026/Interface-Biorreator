@@ -43,6 +43,10 @@ export interface PlcSnapshot {
    * sem dado, e sensor ainda sem dado vale NaN.
    */
   updatedAt?: Partial<Record<string, number>>;
+  /** Idade (s) a partir da qual um valor de updatedAt vira "dado antigo"; padrão MQTT.staleAfterMin. */
+  staleAfterS?: number;
+  /** Por tag: motivo de a última leitura recebida ter sido descartada (ex.: fora da escala). */
+  rejected?: Partial<Record<string, string>>;
 }
 
 export type Command =

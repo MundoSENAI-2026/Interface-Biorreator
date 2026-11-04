@@ -4,12 +4,15 @@ import type { CommStatus } from './types';
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export interface PahoLinkOptions {
-  /** Tópico assinado ao conectar. */
-  topic: string;
+  /** Tópicos assinados ao conectar. */
+  topics: string[];
   /** true = publish() sempre recusa (equipamento real: somente leitura). */
   readOnly?: boolean;
-  /** Conteúdo da mensagem como texto; null se não for UTF-8 válido. */
-  onMessage(text: string | null): void;
+  /**
+   * Conteúdo da mensagem como texto (null se não for UTF-8 válido), o tópico em que
+   * chegou e se é uma mensagem retida (guardada no broker, de idade desconhecida).
+   */
+  onMessage(text: string | null, topic: string, retained: boolean): void;
   onStatus(status: CommStatus): void;
   /** Evento de comunicação para o histórico. */
   onEvent(message: string): void;
@@ -17,8 +20,8 @@ export interface PahoLinkOptions {
 
 /**
  * Conexão com o broker via Paho MQTT (public/vendor/mqttws31.js), no mesmo padrão
- * do exemplo do LED: Paho.MQTT.Client(host, porta, clientId) com useSSL. Assina um
- * tópico e reconecta sozinha com espera crescente (2, 4, 8, 16, 30 s…).
+ * do exemplo do LED: Paho.MQTT.Client(host, porta, clientId) com useSSL. Assina os
+ * tópicos e reconecta sozinha com espera crescente (2, 4, 8, 16, 30 s…).
  * Usada pelas fontes MQTT (equipeDEV) e biorreator real.
  */
 export class PahoLink {
@@ -35,8 +38,8 @@ export class PahoLink {
 
   constructor(private readonly options: PahoLinkOptions) {}
 
-  get topic() {
-    return this.options.topic;
+  get topics() {
+    return this.options.topics;
   }
 
   get online() {
@@ -108,7 +111,7 @@ export class PahoLink {
       } catch {
         text = null;
       }
-      this.options.onMessage(text);
+      this.options.onMessage(text, msg.destinationName, msg.retained);
     };
 
     this.client = client;
@@ -121,11 +124,13 @@ export class PahoLink {
         onSuccess: () => {
           if (!current()) return;
           this.failures = 0;
-          client.subscribe(this.topic, {
-            qos: 0,
-            onFailure: (err) => this.options.onEvent(`Falha ao assinar ${this.topic}: ${err.errorMessage}`),
-          });
-          this.options.onEvent(`Conectado a ${MQTT.host}:${MQTT.port} como ${this.clientId} · assinando ${this.topic}`);
+          for (const topic of this.topics) {
+            client.subscribe(topic, {
+              qos: 0,
+              onFailure: (err) => this.options.onEvent(`Falha ao assinar ${topic}: ${err.errorMessage}`),
+            });
+          }
+          this.options.onEvent(`Conectado a ${MQTT.host}:${MQTT.port} como ${this.clientId} · assinando ${this.topics.join(' e ')}`);
           this.setStatus('online');
         },
         onFailure: (err) => {

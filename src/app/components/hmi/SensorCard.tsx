@@ -61,7 +61,7 @@ export function SensorCard({ config, value, limits, status, history, windowS, pr
           <h3 className="text-[17px] font-semibold leading-tight text-ink">{config.name}</h3>
           <span className="font-mono text-[13px] text-ink-muted">{config.id}</span>
         </div>
-        <StatusBadge status={status} size="md" label={waiting ? 'Aguardando dados' : undefined} />
+        <StatusBadge status={status} size="md" label={bad && freshness?.rejected ? 'Fora da escala' : waiting ? 'Aguardando dados' : undefined} />
       </header>
 
       <div className="flex items-end justify-between gap-2">
@@ -83,7 +83,7 @@ export function SensorCard({ config, value, limits, status, history, windowS, pr
       </div>
       {bad && (
         <p className="-mt-1 text-sm font-medium text-ink-muted">
-          {freshness?.stale ? freshness.title : 'Dado não confiável — última leitura válida'}
+          {freshness?.stale || freshness?.rejected ? freshness.title : 'Dado não confiável — última leitura válida'}
         </p>
       )}
 
