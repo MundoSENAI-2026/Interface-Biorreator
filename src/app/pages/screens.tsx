@@ -103,8 +103,9 @@ export function SynopticScreen({ plant }: { plant: PlantState }) {
 }
 
 export function TrendsScreen({ plant }: { plant: PlantState }) {
+  // Sem altura mínima: gráfico e indicadores cabem inteiros também em 1366×768
   return (
-    <div className={SCREEN}>
+    <div className={OVERVIEW_SCREEN}>
       <Panel title="Tendências" subtitle="Lote atual × lote de ouro, ou janela de tempo real" className="min-h-0" bodyClassName="min-h-0">
         <TrendsView plant={plant} />
       </Panel>

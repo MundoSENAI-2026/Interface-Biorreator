@@ -16,6 +16,8 @@ const VIEWPORTS = [
   { width: 1366, height: 768, fits: false },
 ];
 const MODES = ['simulacao', 'real'] as const;
+/** Telas que cabem sem rolagem mesmo no notebook (indicadores sem corte no rodapé). */
+const FIT_ON_LAPTOP = ['F3'];
 
 // ─── Broker MQTT falso (biorreator real) ──────────────────────────────────
 
@@ -183,7 +185,7 @@ for (const mode of MODES) {
         if (process.env.LAYOUT_DUMP) console.log(JSON.stringify({ where, truncated: result.truncated, overflows: result.overflows, internalScroll: result.internalScroll }));
 
         expect.soft(result.documentWidth, `${where}: rolagem horizontal da página`).toBeLessThanOrEqual(result.viewportWidth);
-        if (viewport.fits) {
+        if (viewport.fits || FIT_ON_LAPTOP.includes(key)) {
           expect.soft(result.documentHeight, `${where}: rolagem vertical da página`).toBeLessThanOrEqual(result.viewportHeight);
           expect.soft(result.mainScrollHeight, `${where}: rolagem vertical na área da tela`).toBeLessThanOrEqual(result.mainHeight + 1);
         }

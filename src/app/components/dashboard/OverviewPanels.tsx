@@ -64,7 +64,7 @@ export function PhaseTrendGrid({ plant }: { plant: PlantState }) {
               formatXLong={(x) => `${formatNumber(x, 1)} min de etapa`}
               marker={now}
               limits={getLimits(tag, phaseIndex)}
-              minY={tag === 'PIT_100_01' ? 0 : undefined}
+              range={[TAGS[tag].rangeMin, TAGS[tag].rangeMax]}
             />
           </div>
         </div>;

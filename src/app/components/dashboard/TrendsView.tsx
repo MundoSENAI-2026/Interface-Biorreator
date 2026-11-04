@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { PHASES, TAGS, TAG_ORDER, TREND_PERIODS, getLimits, type TagId } from '../../config/plant';
 import { phaseTrendRows } from '../../data/batchStats';
-import type { PlantState } from '../../data/store';
+import { plantStore } from '../../data/source';
+import { freshness, type PlantState } from '../../data/store';
 import { formatDuration, formatNumber, formatTime } from '../../lib/format';
 import { TrendChart, niceScale } from '../hmi/TrendChart';
 import { cn } from '../ui/utils';
@@ -72,6 +73,10 @@ export function TrendsView({ plant }: { plant: PlantState }) {
   const signed = (v: number) => `${v >= 0 ? '+' : '−'}${fmt(Math.abs(v))} ${cfg.unit}`;
 
   const phaseMode = period === 'phase';
+  /** Equipamento real: o lote de ouro não vem do equipamento, é a referência simulada da receita. */
+  const realEquipment = plantStore.source.kind === 'equipamento';
+  /** Regra única para leitura fora da escala: ignorada em todo lugar (não entra no gráfico). */
+  const rejected = freshness(plant, tag)?.rejected;
   const elapsedS = s?.batch.phaseElapsedS ?? 0;
 
   const chart = useMemo(() => {
@@ -136,12 +141,13 @@ export function TrendsView({ plant }: { plant: PlantState }) {
             { swatch: <span className="inline-block h-0.5 w-6 bg-brand" />, label: phaseMode ? 'Lote atual' : `${cfg.name} (${cfg.id})` },
             ...(phaseMode
               ? [
-                  { swatch: <span className="inline-block w-6 border-t-2 border-dashed border-ink-muted" />, label: 'Lote de ouro' },
+                  { swatch: <span className="inline-block w-6 border-t-2 border-dashed border-ink-muted" />, label: realEquipment ? 'Lote de ouro (referência)' : 'Lote de ouro' },
                   { swatch: <span className="inline-block h-3 w-6 bg-line" />, label: `Tolerância ±${fmt(limits.tolerance)} ${cfg.unit}` },
                 ]
               : []),
             { swatch: <span className="inline-block w-6 border-t-2 border-dashed border-st-warning" />, label: `Alerta ${limitText(limits.warnLo, limits.warnHi)}` },
             { swatch: <span className="inline-block w-6 border-t-2 border-dashed border-st-critical" />, label: `Crítico ${limitText(limits.critLo, limits.critHi)}` },
+            ...(rejected ? [{ swatch: <span className="inline-block size-3 rounded-full border-2 border-st-offline" />, label: 'Última leitura fora da escala: ignorada, não aparece no gráfico' }] : []),
           ]}
         />
         <p className="text-[13px] text-ink-muted">
@@ -151,7 +157,7 @@ export function TrendsView({ plant }: { plant: PlantState }) {
         </p>
       </div>
 
-      <div className="min-h-[240px] flex-1">
+      <div className="min-h-[200px] flex-1">
         <TrendChart
           rows={chart.rows}
           unit={cfg.unit}
@@ -162,6 +168,7 @@ export function TrendsView({ plant }: { plant: PlantState }) {
           formatXLong={chart.formatXLong}
           marker={chart.marker}
           limits={limits}
+          range={[cfg.rangeMin, cfg.rangeMax]}
         />
       </div>
 

@@ -101,6 +101,20 @@ const COMM_SOURCE = 'CLP';
 const FEMININE_TAGS = new Set<TagId>(['TIT_100_01', 'PIT_100_01']);
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
+/**
+ * Valores que entram no traço da etapa (gráfico F3). Regra única para leitura fora da
+ * escala ou dado antigo: não aparece no gráfico (NaN), como no histórico de tendência.
+ */
+function tracedTags(s: PlcSnapshot, now: number): Record<TagId, number> {
+  if (!s.updatedAt) return { ...s.tags };
+  const maxAgeMs = (s.staleAfterS ?? MQTT.staleAfterMin * 60) * 1000;
+  return Object.fromEntries(TAG_ORDER.map((tag) => {
+    const at = s.updatedAt?.[tag];
+    const valid = at !== undefined && now - at <= maxAgeMs && !s.rejected?.[tag];
+    return [tag, valid ? s.tags[tag] : NaN];
+  })) as Record<TagId, number>;
+}
+
 const emptyByTag = <T,>(make: () => T) =>
   Object.fromEntries(TAG_ORDER.map((t) => [t, make()])) as Record<TagId, T>;
 
@@ -243,7 +257,7 @@ export class PlantStore {
     const minStep = PHASES[s.batch.phaseIndex].durationMin / TRACE_POINTS_PER_PHASE;
     const lastPoint = phaseTrace[phaseTrace.length - 1];
     if (!lastPoint || tMin - lastPoint.tMin >= minStep) {
-      phaseTrace = [...phaseTrace, { tMin, ...s.tags }];
+      phaseTrace = [...phaseTrace, { tMin, ...tracedTags(s, now) }];
     }
 
     const lowArmed = phaseChanged ? emptyByTag(() => false) : { ...prev.lowArmed };

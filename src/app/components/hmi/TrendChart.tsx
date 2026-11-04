@@ -39,7 +39,8 @@ interface TrendChartProps {
   className?: string;
   /** Mini gráfico: eixos menores e menos marcações. */
   compact?: boolean;
-  minY?: number;
+  /** Escala de engenharia da tag: o eixo Y nunca sai dela (ex.: pressão 0–2, nível 0–100). */
+  range?: [number, number];
 }
 
 const css = (name: string) => `var(${name})`;
@@ -63,20 +64,23 @@ export function niceScale(values: number[], targetTicks = 5): { domain: [number,
  * Tendência da variável: lote atual, lote de ouro com faixa de tolerância
  * (quando houver), linhas de alerta/crítico e tooltip com real × referência.
  */
-export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, formatXLong, marker, limits, className, compact, minY }: TrendChartProps) {
-  const axis = compact ? { ...AXIS, fontSize: 10 } : AXIS;
+export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, formatXLong, marker, limits, className, compact, range }: TrendChartProps) {
+  const axis = compact ? { ...AXIS, fontSize: 13 } : AXIS;
   const fmt = (v: number) => formatNumber(v, decimals);
   const values = rows.flatMap((r) => [r.actual, r.reference, r.band?.[0], r.band?.[1]].filter((v): v is number => v !== undefined));
   for (const l of [limits.warnLo, limits.warnHi, limits.critLo, limits.critHi]) if (l !== undefined) values.push(l);
-  if (minY !== undefined) values.push(minY);
   const rawScale = niceScale(values.length ? values : [0, 1], compact ? 3 : 5);
-  const scale = minY !== undefined && rawScale.domain[0] < minY
-    ? { ...rawScale, domain: [minY, rawScale.domain[1]] as [number, number], ticks: rawScale.ticks.filter((tick) => tick >= minY) }
-    : rawScale;
+  // Recorta na escala da tag (a faixa de tolerância do lote de ouro pode passar de 0 para baixo)
+  const domain: [number, number] = range
+    ? [Math.max(rawScale.domain[0], range[0]), Math.min(rawScale.domain[1], range[1])]
+    : rawScale.domain;
+  const scale = { domain, ticks: rawScale.ticks.filter((tick) => tick >= domain[0] - 1e-9 && tick <= domain[1] + 1e-9) };
   const tickDecimals = scale.ticks.length > 1 && scale.ticks[1] - scale.ticks[0] < 1 ? decimals : 0;
   const hasReference = rows.some((r) => r.reference !== undefined);
 
   const [yMin, yMax] = scale.domain;
+  // "agora" do lado que tem espaço: à direita da linha no início do eixo (longe dos rótulos do eixo Y)
+  const markerOnLeft = marker !== undefined && marker - xDomain[0] < (xDomain[1] - xDomain[0]) * 0.75;
 
   const renderTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (!active || !payload?.length) return null;
@@ -108,9 +112,12 @@ export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, for
   };
 
   return (
-    <div className={cn('h-full min-h-0 w-full', className)}>
+    <div className={cn('flex h-full min-h-0 w-full flex-col', className)}>
+      {/* Unidade numa linha própria, acima do eixo Y (não sobrepõe o primeiro rótulo) */}
+      {!compact && <div className="h-5 shrink-0 pl-1 text-[13px] font-semibold text-ink-muted">{unit}</div>}
+      <div className="min-h-0 flex-1">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={rows} margin={compact ? { top: 6, right: 8, bottom: 0, left: 0 } : { top: 20, right: 20, bottom: 4, left: 4 }}>
+        <ComposedChart data={rows} margin={compact ? { top: 6, right: 8, bottom: 0, left: 0 } : { top: 10, right: 20, bottom: 4, left: 4 }}>
           <CartesianGrid stroke={css('--line-subtle')} strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="x"
@@ -133,7 +140,7 @@ export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, for
             axisLine={false}
             width={compact ? 44 : 64}
             tickFormatter={(v) => formatNumber(v, tickDecimals)}
-            label={compact ? undefined : { value: unit, position: 'insideTopLeft', offset: 0, dy: -14, style: { ...AXIS, fontWeight: 600 } }}
+            allowDataOverflow
           />
           {hasReference && (
             <Area dataKey="band" stroke="none" fill={css('--line-subtle')} fillOpacity={0.8} isAnimationActive={false} activeDot={false} />
@@ -143,7 +150,7 @@ export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, for
           {limits.critHi !== undefined && <ReferenceArea y1={Math.max(yMin, limits.critHi)} y2={yMax} fill={css('--status-critical-bg')} fillOpacity={0.9} ifOverflow="hidden" />}
           {limits.critLo !== undefined && <ReferenceArea y1={yMin} y2={Math.min(yMax, limits.critLo)} fill={css('--status-critical-bg')} fillOpacity={0.9} ifOverflow="hidden" />}
           {limits.warnLo !== undefined && limits.critLo !== undefined && <ReferenceArea y1={Math.max(yMin, limits.critLo)} y2={Math.min(yMax, limits.warnLo)} fill={css('--status-warning-bg')} fillOpacity={0.85} ifOverflow="hidden" />}
-          {marker !== undefined && <ReferenceLine x={marker} stroke={css('--line-strong')} strokeWidth={1} label={{ value: 'agora', position: 'insideTopRight', fill: css('--text-muted'), fontSize: 10 }} />}
+          {marker !== undefined && <ReferenceLine x={marker} stroke={css('--line-strong')} strokeWidth={1} label={{ value: 'agora', position: markerOnLeft ? 'insideTopLeft' : 'insideTopRight', fill: css('--text-muted'), fontSize: 13 }} />}
           {hasReference && (
             <Line dataKey="reference" stroke={css('--text-muted')} strokeWidth={2} strokeDasharray="6 4" dot={false} isAnimationActive={false} />
           )}
@@ -159,6 +166,7 @@ export function TrendChart({ rows, unit, decimals, xDomain, xTicks, formatX, for
           <Tooltip content={renderTooltip} cursor={{ stroke: css('--line-strong'), strokeWidth: 1 }} isAnimationActive={false} />
         </ComposedChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
