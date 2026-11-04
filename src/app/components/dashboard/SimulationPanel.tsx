@@ -1,9 +1,9 @@
 import { FlaskConical, Play, SkipForward, Square, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { SIMULATION, TAGS, TAG_ORDER, VALVES, type TagId, type ValveId } from '../../config/plant';
+import { MQTT, SIMULATION, TAGS, TAG_ORDER, VALVES, type SourceKind, type TagId, type ValveId } from '../../config/plant';
 import type { ForceLevel } from '../../data/simulator';
 import { demoScenario } from '../../data/demoScenario';
-import { simulation, usePlant } from '../../data/source';
+import { activeSource, mqttSource, setActiveSource, simulation, usePlant } from '../../data/source';
 import { useUi } from '../../data/ui';
 import { cn } from '../ui/utils';
 
@@ -39,8 +39,8 @@ function Segmented<T extends string | number>({
 }
 
 /**
- * Painel de testes (somente com o simulador). Oculto por padrão; abre com
- * Ctrl + Shift + SIMULATION.panelShortcutKey e fecha com Esc.
+ * Painel de testes. Oculto por padrão; abre com Ctrl + Shift + SIMULATION.panelShortcutKey
+ * e fecha com Esc. Troca a fonte de dados; os demais testes só existem no simulador.
  */
 export function SimulationPanel() {
   usePlant(); // atualiza junto com as leituras
@@ -62,7 +62,7 @@ export function SimulationPanel() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  if (!simulation || !open) return null;
+  if (!open) return null;
   const sim = simulation;
   const act = (fn: () => void) => {
     fn();
@@ -86,6 +86,32 @@ export function SimulationPanel() {
 
       <div className="flex flex-col gap-4 p-4 text-sm">
         <section className="flex flex-col gap-2">
+          <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Fonte de dados</h3>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-ink">{activeSource === 'mqtt' ? 'Ao vivo · MQTT' : 'Simulação'}</span>
+            <Segmented<SourceKind>
+              value={activeSource}
+              options={[{ id: 'simulacao', label: 'Simulação' }, { id: 'mqtt', label: 'MQTT' }]}
+              onChange={(kind) => kind !== activeSource && setActiveSource(kind)}
+            />
+          </div>
+          {mqttSource && (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[13px]">
+              <dt className="text-ink-muted">Broker</dt>
+              <dd className="truncate font-mono text-ink">{MQTT.host}:{MQTT.port}</dd>
+              <dt className="text-ink-muted">Leituras</dt>
+              <dd className="truncate font-mono text-ink" title={mqttSource.dataTopic}>{mqttSource.dataTopic}</dd>
+              <dt className="text-ink-muted">Comandos</dt>
+              <dd className="truncate font-mono text-ink">{MQTT.topicPrefix}cmd/&lt;TAG&gt;/&lt;ação&gt;</dd>
+              <dt className="text-ink-muted">clientId</dt>
+              <dd className="truncate font-mono text-ink">{mqttSource.clientId}</dd>
+            </dl>
+          )}
+          <p className="text-[13px] text-ink-muted">A troca recarrega a página e recomeça histórico e alarmes.</p>
+        </section>
+
+        {sim && <>
+        <section className="flex flex-col gap-2 border-t border-line pt-3">
           <h3 className="text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Cenário de demonstração (~2 min)</h3>
           <p className="text-[13px] text-ink-muted">Normal → alerta → crítico → reconhecimento → intertravamento → normalização.</p>
           {caption ? (
@@ -166,9 +192,10 @@ export function SimulationPanel() {
             Avançar para a próxima etapa
           </button>
         </section>
+        </>}
 
         <p className="text-xs text-ink-muted">
-          Atalho: Ctrl + Shift + {SIMULATION.panelShortcutKey} · Esc fecha. Visível apenas com a fonte de dados simulada.
+          Atalho: Ctrl + Shift + {SIMULATION.panelShortcutKey} · Esc fecha. Os testes aparecem apenas com a fonte simulada.
         </p>
       </div>
     </aside>

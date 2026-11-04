@@ -9,6 +9,8 @@
 
   <body>
     <div id="root"></div>
+    <!-- Paho MQTT (WebSockets), cópia local: funciona sem CDN. Define window.Paho antes do app. -->
+    <script src="%BASE_URL%vendor/mqttws31.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

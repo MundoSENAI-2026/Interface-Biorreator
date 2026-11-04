@@ -44,11 +44,12 @@ export function phaseConformity(trace: PhaseTracePoint[], phaseIndex: number): n
   for (const tag of TAG_ORDER) {
     const tol = getLimits(tag, phaseIndex).tolerance;
     for (const p of trace) {
+      if (!Number.isFinite(p[tag])) continue; // sensor ainda sem dado (MQTT)
       total += 1;
       if (Math.abs(p[tag] - goldenValue(tag, phaseIndex, p.tMin)) <= tol) inside += 1;
     }
   }
-  return inside / total;
+  return total ? inside / total : null;
 }
 
 /** Linhas do gráfico "etapa atual × lote de ouro" (curva de referência + medições). */
@@ -58,7 +59,7 @@ export function phaseTrendRows(plant: PlantState, tag: TagId, phaseIndex: number
   const golden: TrendRow[] = goldenCurve(tag, phaseIndex).map(({ tMin, v }) => ({ x: tMin, reference: v, band: band(v) }));
   const actual: TrendRow[] = plant.phaseTrace.map((p) => {
     const ref = goldenValue(tag, phaseIndex, p.tMin);
-    return { x: p.tMin, reference: ref, band: band(ref), actual: p[tag] };
+    return { x: p.tMin, reference: ref, band: band(ref), actual: Number.isFinite(p[tag]) ? p[tag] : undefined };
   });
   return [...golden, ...actual].sort((a, b) => a.x - b.x);
 }

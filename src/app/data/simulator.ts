@@ -56,7 +56,7 @@ function elapsedBefore(phase: number, minute: number): number {
   return PHASES.slice(0, phase).reduce((acc, p) => acc + p.durationMin * 60, 0) + minute * 60;
 }
 
-function lotCode(date: Date): string {
+export function lotCode(date: Date): string {
   const ymd = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
   return `${PLANT.batchPrefix}-${ymd}-01`;
 }

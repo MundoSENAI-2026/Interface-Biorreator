@@ -1,6 +1,6 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react';
 import type { TagConfig, TagLimits } from '../../config/plant';
-import type { TagStatus } from '../../data/store';
+import type { Freshness, TagStatus } from '../../data/store';
 import type { TrendPoint } from '../../data/types';
 import { formatNumber } from '../../lib/format';
 import { slopePerMinute } from '../../lib/trend';
@@ -18,6 +18,8 @@ interface SensorCardProps {
   windowS: number;
   /** Segundos de processo por segundo real (aceleração da simulação; 1 no CLP real). */
   processRate?: number;
+  /** Idade do valor (só fontes MQTT): tooltip "atualizado há X" e aviso de dado antigo. */
+  freshness?: Freshness;
 }
 
 const ACCENT: Record<TagStatus, string> = {
@@ -34,7 +36,7 @@ const VALUE_STYLE: Record<TagStatus, string> = {
   bad: 'text-ink-muted',
 };
 
-export function SensorCard({ config, value, limits, status, history, windowS, processRate = 1 }: SensorCardProps) {
+export function SensorCard({ config, value, limits, status, history, windowS, processRate = 1, freshness }: SensorCardProps) {
   const bad = status === 'bad';
   const slope = slopePerMinute(history, processRate);
   const trend = Math.abs(slope) < config.trendThresholdPerMin ? 0 : Math.sign(slope);
@@ -61,7 +63,7 @@ export function SensorCard({ config, value, limits, status, history, windowS, pr
       </header>
 
       <div className="flex items-end justify-between gap-2">
-        <div className={cn('-mx-1.5 flex items-baseline gap-2 rounded px-1.5 transition-colors duration-200 num', VALUE_STYLE[status])}>
+        <div title={freshness?.title} className={cn('-mx-1.5 flex items-baseline gap-2 rounded px-1.5 transition-colors duration-200 num', VALUE_STYLE[status])}>
           <span className="text-4xl font-semibold leading-none tracking-tight 2xl:text-5xl">{value === null ? '—' : formatNumber(value, config.decimals)}</span>
           <span className="text-xl font-medium">{config.unit}</span>
         </div>
@@ -77,7 +79,11 @@ export function SensorCard({ config, value, limits, status, history, windowS, pr
           )}
         </div>
       </div>
-      {bad && <p className="-mt-1 text-sm font-medium text-ink-muted">Dado não confiável — última leitura válida</p>}
+      {bad && (
+        <p className="-mt-1 text-sm font-medium text-ink-muted">
+          {freshness?.stale ? freshness.title : 'Dado não confiável — última leitura válida'}
+        </p>
+      )}
 
       <div className="grid grid-cols-[auto_1fr] items-center gap-2">
         <span className="text-[13px] text-ink-muted">{Math.round(windowS / 60)} min</span>

@@ -1,6 +1,6 @@
 import { WifiOff } from 'lucide-react';
 import { EQUIPMENT, TAGS, VALVE_BY_ID, type TagId, type ValveId } from '../../config/plant';
-import { tagStatus, type PlantState, type TagStatus } from '../../data/store';
+import { freshness, tagStatus, type Freshness, type PlantState, type TagStatus } from '../../data/store';
 import type { ValveState } from '../../data/types';
 import { formatNumber } from '../../lib/format';
 import { cn } from '../ui/utils';
@@ -104,12 +104,13 @@ function ValveSymbol({ x, y, state }: { x: number; y: number; state: ValveState 
   );
 }
 
-function RunIndicator({ x, y, on, text, size }: { x: number; y: number; on: boolean; text: string; size: number }) {
+function RunIndicator({ x, y, on, text, size, fresh }: { x: number; y: number; on: boolean; text: string; size: number; fresh?: Freshness }) {
   return (
     <g transform={`translate(${x} ${y})`}>
+      {fresh && <title>{fresh.title}</title>}
       {/* Verde só no indicador */}
       <circle r={5.5} cx={5.5} cy={-size / 3} className={cn(on ? 'fill-st-running' : 'fill-surface stroke-ink-muted', fill)} strokeWidth={1.4} />
-      <text x={16} y={0} className="fill-ink-default num" style={{ fontSize: size }}>{text}</text>
+      <text x={16} y={0} className={cn(fresh?.stale ? 'fill-ink-muted' : 'fill-ink-default', 'num')} style={{ fontSize: size }}>{text}</text>
     </g>
   );
 }
@@ -125,7 +126,10 @@ export function Synoptic({ plant, compact = false }: { plant: PlantState; compac
   const fs = compact ? { tag: 17, label: 16, value: 25, unit: 16, small: 16 } : { tag: 16, label: 15, value: 23, unit: 15, small: 15 };
 
   const level = s.tags.LIT_100_01;
-  const levelY = LEVEL_BOTTOM - ((LEVEL_BOTTOM - LEVEL_TOP) * Math.min(100, Math.max(0, level))) / 100;
+  // Nível ainda sem dado (NaN, fonte MQTT): desenha o tanque vazio
+  const levelY = LEVEL_BOTTOM - ((LEVEL_BOTTOM - LEVEL_TOP) * (Number.isFinite(level) ? Math.min(100, Math.max(0, level)) : 0)) / 100;
+  const fresh = (key: string) => freshness(plant, key);
+  const manwayFresh = fresh(EQUIPMENT.manway.id);
   const isFlowing = (line: Line) => !!line.valve && s.valves[line.valve] === 'open' && (!line.needsPump || s.pumpOn);
   const jacketActive = s.valves.XV_100_06 === 'open' || s.valves.XV_100_07 === 'open';
   const rpm = formatNumber(s.motorRpm, 0);
@@ -181,11 +185,12 @@ export function Synoptic({ plant, compact = false }: { plant: PlantState; compac
         <circle cx={490} cy={48} r={18} className="fill-surface stroke-vessel" strokeWidth={2.5} />
         <text x={490} y={54} textAnchor="middle" className="fill-ink font-semibold" style={{ fontSize: 17 }}>M</text>
         <text x={462} y={40} textAnchor="end" className="fill-ink font-mono font-medium" style={{ fontSize: fs.tag }}>{EQUIPMENT.motor.short}</text>
-        <RunIndicator x={compact ? 300 : 330} y={66} on={s.motorOn} size={fs.small} text={`${s.motorOn ? 'Ligado' : 'Desligado'} · ${rpm} rpm`} />
+        <RunIndicator x={compact ? 300 : 330} y={66} on={s.motorOn} size={fs.small} text={`${s.motorOn ? 'Ligado' : 'Desligado'} · ${rpm} rpm`} fresh={fresh(EQUIPMENT.motor.id)} />
 
         {/* Porta de visita */}
         <rect x={416} y={88} width={30} height={10} className={cn(s.manwayOpen ? 'fill-st-warning-bg stroke-st-warning-text' : 'fill-surface stroke-vessel', fill)} strokeWidth={1.75} />
-        <text x={406} y={92} textAnchor="end" className={s.manwayOpen ? 'fill-st-warning-text font-semibold' : 'fill-ink-default'} style={{ fontSize: fs.small }}>
+        <text x={406} y={92} textAnchor="end" className={s.manwayOpen ? 'fill-st-warning-text font-semibold' : manwayFresh?.stale ? 'fill-ink-muted' : 'fill-ink-default'} style={{ fontSize: fs.small }}>
+          {manwayFresh && <title>{manwayFresh.title}</title>}
           {compact ? 'Porta' : EQUIPMENT.manway.name}: {s.manwayOpen ? 'Aberta' : 'Fechada'}
         </text>
 
@@ -195,15 +200,17 @@ export function Synoptic({ plant, compact = false }: { plant: PlantState; compac
           <path d="M-9,-11 L13,0 L-9,11" fill="none" className="stroke-vessel" strokeWidth={2.5} />
         </g>
         <text x={858} y={410} textAnchor="end" className="fill-ink font-mono font-medium" style={{ fontSize: fs.tag }}>{EQUIPMENT.pump.short}</text>
-        <RunIndicator x={868} y={410} on={s.pumpOn} size={fs.small} text={s.pumpOn ? 'Ligada' : 'Desligada'} />
+        <RunIndicator x={868} y={410} on={s.pumpOn} size={fs.small} text={s.pumpOn ? 'Ligada' : 'Desligada'} fresh={fresh(EQUIPMENT.pump.id)} />
 
         {/* Válvulas + rótulos */}
         {LINES.map((line) => {
           if (!line.valve || !line.at) return null;
           const state = s.valves[line.valve];
+          const valveFresh = fresh(line.valve);
           const [x, y] = line.at;
           return (
             <g key={line.valve}>
+              {valveFresh && <title>{valveFresh.title}</title>}
               <ValveSymbol x={x} y={y} state={state} />
               {!compact && (
                 <text x={line.labelAt[0]} y={line.labelAt[1]} textAnchor={line.labelAnchor ?? 'start'} className="fill-ink-muted" style={{ fontSize: fs.label }}>
@@ -214,7 +221,7 @@ export function Synoptic({ plant, compact = false }: { plant: PlantState; compac
                 <tspan className="fill-ink font-mono font-medium">{VALVE_BY_ID[line.valve].short}</tspan>
                 <tspan
                   dx={6}
-                  className={state === 'fault' ? 'fill-st-warning-text font-semibold' : state === 'open' ? 'fill-st-info font-medium' : 'fill-ink-muted'}
+                  className={state === 'fault' ? 'fill-st-warning-text font-semibold' : valveFresh?.stale ? 'fill-ink-muted' : state === 'open' ? 'fill-st-info font-medium' : 'fill-ink-muted'}
                 >
                   {VALVE_STATE_LABEL[state]}
                 </tspan>
@@ -234,8 +241,10 @@ export function Synoptic({ plant, compact = false }: { plant: PlantState; compac
           const status = tagStatus(plant, tag);
           const style = VALUE_BOX[status];
           const [letters, loop] = cfg.isa.split(' ');
+          const tagFresh = fresh(tag);
           return (
             <g key={tag}>
+              {tagFresh && <title>{tagFresh.title}</title>}
               <polyline points={`${tap[0]},${tap[1]} 610,${tap[1]} 610,${y} 624,${y}`} fill="none" className="stroke-ink-muted" strokeWidth={1.2} strokeDasharray="4 3" />
               <circle cx={650} cy={y} r={26} className="fill-surface stroke-ink-default" strokeWidth={1.75} />
               <line x1={624} x2={676} y1={y} y2={y} className="stroke-ink-default" strokeWidth={1.2} />

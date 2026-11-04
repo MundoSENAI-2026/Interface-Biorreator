@@ -28,6 +28,12 @@ export interface PlcSnapshot {
   pumpOn: boolean;
   manwayOpen: boolean;
   batch: BatchInfo;
+  /**
+   * Hora (ms) da última atualização de cada valor, por tag (TIT_100_01, XV_100_05,
+   * M_100_01…). Só nas fontes que atualizam por partes (MQTT); tag ausente = ainda
+   * sem dado, e sensor ainda sem dado vale NaN.
+   */
+  updatedAt?: Partial<Record<string, number>>;
 }
 
 export type Command =
@@ -51,11 +57,25 @@ export interface CommandResult {
  */
 export interface DataSource {
   readonly kind: 'simulador' | 'opcua' | 'mqtt' | 'api';
-  start(onSnapshot: (snapshot: PlcSnapshot) => void): void;
+  /**
+   * true = a própria fonte informa o estado da conexão (hooks.onConnection) e pode
+   * passar muito tempo sem enviar leituras sem que isso seja falha (MQTT com valores
+   * publicados à mão). false/ausente = o store considera falha após COMM_TIMEOUT_MS sem leitura.
+   */
+  readonly reportsConnection?: boolean;
+  start(onSnapshot: (snapshot: PlcSnapshot) => void, hooks?: SourceHooks): void;
   stop(): void;
   send(command: Command): Promise<CommandResult>;
   /** Histórico já registrado no CLP/historiador antes da conexão (opcional). */
   loadHistory?(): HistoryRecord[];
+}
+
+/** Avisos opcionais da fonte para o store. */
+export interface SourceHooks {
+  /** Estado da conexão (fontes com reportsConnection). */
+  onConnection?(status: CommStatus): void;
+  /** Registra um evento de comunicação no histórico (ex.: mensagem inválida). */
+  onEvent?(source: string, message: string): void;
 }
 
 /** Severidade (define a cor): crítico = vermelho, alerta = âmbar. */
@@ -120,7 +140,8 @@ export interface TrendPoint {
 /** Ponto da curva da etapa atual (minutos de processo + valores das tags). */
 export type PhaseTracePoint = { tMin: number } & Record<TagId, number>;
 
-export type CommStatus = 'connecting' | 'online' | 'offline';
+/** 'reconnecting' = conexão caiu e há nova tentativa agendada (fontes com reportsConnection). */
+export type CommStatus = 'connecting' | 'online' | 'reconnecting' | 'offline';
 
 export type OverallStatus = 'normal' | 'warning' | 'critical';
 

@@ -1,8 +1,8 @@
-import { MonitorPlay, User, Wifi, WifiOff } from 'lucide-react';
-import { PHASES, PLANT } from '../../config/plant';
+import { MonitorPlay, Radio, User, Wifi, WifiOff } from 'lucide-react';
+import { MQTT, PHASES, PLANT } from '../../config/plant';
 import { PROJECT } from '../../config/project';
 import { overallStatus, type PlantState } from '../../data/store';
-import { simulation } from '../../data/source';
+import { mqttSource, simulation } from '../../data/source';
 import type { BatchStatus } from '../../data/types';
 import { formatDate, formatDuration, formatTime, pluralize } from '../../lib/format';
 import { EmergencyButton } from '../dashboard/EmergencyButton';
@@ -59,15 +59,17 @@ export function Header({ plant }: { plant: PlantState }) {
           <p className="truncate text-sm text-ink-muted">Equipamento <span className="font-mono font-medium text-ink-default">{PLANT.equipmentId}</span> · {PROJECT.event}</p>
         </div>
         <div className="ml-auto flex items-center gap-6">
-          {simulation && (
-            <span className="group relative inline-flex items-center gap-1.5 rounded border border-dashed border-line-strong px-2 py-1 text-sm text-ink-muted">
-              <MonitorPlay className="size-4" aria-hidden />
-              Modo demonstração
+          {(simulation || mqttSource) && (
+            <span className={cn('group relative inline-flex items-center gap-1.5 rounded border border-line-strong px-2 py-1 text-sm text-ink-muted', simulation && 'border-dashed')}>
+              {simulation ? <MonitorPlay className="size-4" aria-hidden /> : <Radio className="size-4" aria-hidden />}
+              {simulation ? 'Simulação' : 'Ao vivo · MQTT'}
               <span
                 role="tooltip"
                 className="pointer-events-none absolute right-0 top-full z-50 mt-1 whitespace-nowrap rounded border border-line bg-surface px-2 py-1 text-[13px] text-ink-default opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100 num"
               >
-                Dados simulados · velocidade ×{simulation.acceleration}
+                {simulation
+                  ? `Dados simulados · velocidade ×${simulation.acceleration}`
+                  : `${MQTT.host}:${MQTT.port} · ${mqttSource?.dataTopic}`}
               </span>
             </span>
           )}
@@ -102,16 +104,18 @@ export function Header({ plant }: { plant: PlantState }) {
         <Field label="Comunicação CLP">
           <div className="flex items-center gap-2">
             {plant.comm === 'online' ? (
-              <StatusBadge status="normal" icon={Wifi} label="Online" />
+              <StatusBadge status="normal" icon={Wifi} label={mqttSource ? 'Online · MQTT' : 'Online'} />
             ) : plant.comm === 'offline' ? (
               <StatusBadge status="critical" icon={WifiOff} label="Offline" />
+            ) : plant.comm === 'reconnecting' ? (
+              <StatusBadge status="transition" label="Reconectando…" />
             ) : (
               <StatusBadge status="transition" label="Conectando" />
             )}
             <span className={cn('text-sm num', plant.comm === 'offline' ? 'font-semibold text-st-critical-text' : 'text-ink-muted')}>
-              {ageS === null ? 'sem leitura' : (
+              {ageS === null ? (mqttSource ? 'sem mensagem' : 'sem leitura') : (
                 <>
-                  <span className="hidden 2xl:inline">última leitura </span>há {ageS} s
+                  <span className="hidden 2xl:inline">{mqttSource ? 'última mensagem' : 'última leitura'} </span>há {formatDuration(ageS)}
                 </>
               )}
             </span>

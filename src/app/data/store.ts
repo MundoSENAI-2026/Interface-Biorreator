@@ -6,12 +6,13 @@ import {
   TAGS,
   TAG_ORDER,
   HISTORY_WINDOW_S,
+  MQTT,
   VALVES,
   VALVE_BY_ID,
   getLimits,
   type TagId,
 } from '../config/plant';
-import { formatWithUnit } from '../lib/format';
+import { formatDuration, formatWithUnit } from '../lib/format';
 import { goldenValue } from './goldenBatch';
 import { blockReason, manualBlockReason, type Block } from './interlocks';
 import type {
@@ -127,7 +128,13 @@ export class PlantStore {
       const events = [...past].sort((a, b) => a.time - b.time).map((e) => ({ ...e, seq: ++this.seq }));
       this.state = { ...this.state, events: events.reverse().slice(0, MAX_EVENTS) };
     }
-    this.source.start((s) => this.onSnapshot(s));
+    this.source.start((s) => this.onSnapshot(s), {
+      onConnection: (c) => this.onConnection(c),
+      onEvent: (source, message) => {
+        this.log('process', 'Comunicação', source, message);
+        this.emit();
+      },
+    });
     this.watchdog = setInterval(() => this.checkComm(), 1000);
   }
 
@@ -210,7 +217,8 @@ export class PlantStore {
     const cutoff = now - HISTORY_WINDOW_S * 1000;
     for (const tag of TAG_ORDER) {
       const points = prev.history[tag].filter((p) => p.t >= cutoff);
-      points.push({ t: now, v: s.tags[tag] });
+      // NaN = sensor ainda sem dado (MQTT): não entra no histórico
+      if (Number.isFinite(s.tags[tag])) points.push({ t: now, v: s.tags[tag] });
       history[tag] = points;
     }
 
@@ -252,8 +260,21 @@ export class PlantStore {
     this.emit();
   }
 
+  /** Estado da conexão informado pela fonte (MQTT); a falha só vira alarme em "offline". */
+  private onConnection(comm: CommStatus) {
+    this.state = { ...this.state, now: Date.now(), comm };
+    this.setAlarm('CLP:COMM', 'CLP', 'COMM', 'critical', 'Falha de comunicação com o CLP', comm === 'offline');
+    this.emit();
+  }
+
   private checkComm() {
     const now = Date.now();
+    if (this.source.reportsConnection) {
+      // Ficar sem mensagens não é falha (valores publicados à mão): só atualiza o relógio
+      this.state = { ...this.state, now };
+      this.emit();
+      return;
+    }
     const ref = this.state.lastReadAt ?? this.startedAt;
     const lost = now - ref > COMM_TIMEOUT_MS;
     const comm: CommStatus = lost ? 'offline' : this.state.lastReadAt ? 'online' : 'connecting';
@@ -388,10 +409,33 @@ export function overallStatus(state: PlantState): OverallStatus {
   return 'normal';
 }
 
+export interface Freshness {
+  /** Hora da última atualização; null = ainda sem dado. */
+  updatedAt: number | null;
+  /** Sem dado, ou sem atualização há mais de MQTT.staleAfterMin. */
+  stale: boolean;
+  /** Texto do tooltip: "atualizado há 3 min", "Dado antigo · atualizado há 12 min"… */
+  title: string;
+}
+
+/**
+ * Idade de um valor (sensor, válvula, motor…), para fontes que informam a hora de
+ * cada tag (MQTT). undefined = a fonte não informa (simulador): nada muda na tela.
+ */
+export function freshness(state: PlantState, key: string): Freshness | undefined {
+  const updated = state.snapshot?.updatedAt;
+  if (!updated) return undefined;
+  const at = updated[key];
+  if (at === undefined) return { updatedAt: null, stale: true, title: 'Sem dado · aguardando a primeira mensagem MQTT' };
+  const ageS = Math.max(0, (state.now - at) / 1000);
+  const stale = ageS > MQTT.staleAfterMin * 60;
+  return { updatedAt: at, stale, title: `${stale ? 'Dado antigo · ' : ''}atualizado há ${formatDuration(ageS)}` };
+}
+
 export type TagStatus = 'normal' | 'warning' | 'critical' | 'bad';
 
 export function tagStatus(state: PlantState, tag: TagId): TagStatus {
-  if (state.comm !== 'online') return 'bad';
+  if (state.comm !== 'online' || freshness(state, tag)?.stale) return 'bad';
   const active = state.alarms.filter((a) => a.source === tag && a.state !== 'normalized');
   if (active.some((a) => a.priority === 'critical')) return 'critical';
   if (active.length) return 'warning';

@@ -82,6 +82,8 @@ export function blockReason(cmd: Command, s: PlcSnapshot | null, commOnline: boo
     case 'motor': {
       if (cmd.on === s.motorOn) return state(cmd.on ? 'O agitador já está ligado' : 'O agitador já está desligado');
       if (cmd.on && s.manwayOpen) return interlock(`${EQUIPMENT.manway.name} aberta: feche antes de ligar o agitador`);
+      // Sem leitura de nível (NaN, fonte MQTT): bloqueia por segurança
+      if (cmd.on && !Number.isFinite(s.tags.LIT_100_01)) return interlock('Nível sem leitura: o agitador não pode operar a seco');
       if (cmd.on && s.tags.LIT_100_01 < INTERLOCKS.motorMinLevel) {
         return interlock(`Nível abaixo de ${fmtTag('LIT_100_01', INTERLOCKS.motorMinLevel)}: o agitador não pode operar a seco`);
       }
@@ -90,6 +92,9 @@ export function blockReason(cmd: Command, s: PlcSnapshot | null, commOnline: boo
     case 'manway': {
       if (cmd.open === s.manwayOpen) return state(cmd.open ? 'A porta já está aberta' : 'A porta já está fechada');
       if (cmd.open) {
+        if (!Number.isFinite(pressure) || !Number.isFinite(temperature)) {
+          return interlock('Pressão ou temperatura sem leitura: não é seguro abrir a porta');
+        }
         if (pressure > INTERLOCKS.manwayMaxPressure) {
           return interlock(`Pressão de ${fmtTag('PIT_100_01', pressure)} no tanque: alivie a pressão pela exaustão (XV-08) antes de abrir`);
         }

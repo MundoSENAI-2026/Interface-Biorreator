@@ -15,5 +15,5 @@
     "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src/main.tsx", "src/app/App.tsx", "src/app/pages", "src/app/components/hmi", "src/app/components/layout", "src/app/components/dashboard", "src/app/config", "src/app/data", "src/app/lib"]
+  "include": ["src/main.tsx", "src/app/App.tsx", "src/app/pages", "src/app/components/hmi", "src/app/components/layout", "src/app/components/dashboard", "src/app/config", "src/app/data", "src/app/lib", "src/types"]
 }

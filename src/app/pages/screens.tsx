@@ -1,6 +1,6 @@
 import { PHASES, TAGS, TAG_ORDER, TREND_WINDOW_S, getLimits } from '../config/plant';
 import { plantStore, simulation } from '../data/source';
-import { tagStatus, type PlantState } from '../data/store';
+import { freshness, tagStatus, type PlantState } from '../data/store';
 import { AboutProject } from '../components/dashboard/AboutProject';
 import { AlarmBanner } from '../components/dashboard/AlarmBanner';
 import { BatchSummary, PhaseTrendGrid, RecentEvents } from '../components/dashboard/OverviewPanels';
@@ -52,9 +52,10 @@ function SensorRow({ plant }: { plant: PlantState }) {
         <SensorCard
           key={tag}
           config={TAGS[tag]}
-          value={s ? s.tags[tag] : null}
+          value={s && Number.isFinite(s.tags[tag]) ? s.tags[tag] : null}
           limits={getLimits(tag, phaseIndex)}
           status={tagStatus(plant, tag)}
+          freshness={freshness(plant, tag)}
           history={plant.history[tag]}
           windowS={TREND_WINDOW_S}
           processRate={simulation?.acceleration ?? 1}

@@ -321,3 +321,38 @@ export const SIMULATION = {
    */
   panelShortcutKey: 'F9',
 };
+
+// ─── Fonte de dados e MQTT ─────────────────────────────────────────────────
+
+export type SourceKind = 'simulacao' | 'mqtt';
+
+export const DATA_SOURCE = {
+  /**
+   * Fonte usada ao abrir a IHM. A troca feita no painel de simulação fica salva
+   * neste navegador e tem prioridade sobre este valor.
+   */
+  active: 'simulacao' as SourceKind,
+};
+
+/** Conexão MQTT via WebSocket seguro (mesmo broker e biblioteca do exemplo do LED). */
+export const MQTT = {
+  host: 'broker.hivemq.com',
+  port: 8884,
+  useSSL: true,
+  /** Prefixo de todos os tópicos (termina com "/"). Leituras em <prefixo>dados. */
+  topicPrefix: 'senai661/br100-equipeDEV/',
+  /** Início do clientId; o restante é um número aleatório. */
+  clientIdPrefix: 'BR100-',
+  /** Tempo máximo para conectar (s). */
+  timeoutS: 5,
+  /** Intervalo do "ping" que detecta queda da conexão (s). */
+  keepAliveS: 30,
+  /** Espera entre tentativas de reconexão: começa aqui e dobra a cada falha (s)... */
+  reconnectMinS: 2,
+  /** ...até este máximo; ao chegar nele, a comunicação passa a "Offline" (s). */
+  reconnectMaxS: 30,
+  /** Sem atualização há mais que isso, o valor é marcado como "dado antigo" (min). */
+  staleAfterMin: 10,
+  /** Escala aceita para a rotação do agitador (rpm). */
+  rpmMax: 300,
+};

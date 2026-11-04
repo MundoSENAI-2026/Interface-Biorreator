@@ -5,7 +5,7 @@ import { alarmStats } from '../../data/alarmStats';
 import { BATCH_NOMINAL_S, batchTiming, phaseConformity, phaseTrendRows } from '../../data/batchStats';
 import { goldenValue } from '../../data/goldenBatch';
 import { simulation } from '../../data/source';
-import { tagStatus, type PlantState } from '../../data/store';
+import { freshness, tagStatus, type PlantState } from '../../data/store';
 import { uiStore } from '../../data/ui';
 import { formatDateTime, formatDuration, formatNumber, formatTime } from '../../lib/format';
 import { Panel } from '../hmi/Panel';
@@ -48,7 +48,7 @@ export function PhaseTrendGrid({ plant }: { plant: PlantState }) {
         return <div key={tag} className="flex min-h-0 flex-col">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-sm font-semibold text-ink">{config.name}</span>
-            <span className={cn('text-sm font-bold num', status === 'critical' ? 'text-st-critical-text' : status === 'warning' ? 'text-st-warning-text' : status === 'bad' ? 'text-ink-muted' : 'text-ink')}>
+            <span title={freshness(plant, tag)?.title} className={cn('text-sm font-bold num', status === 'critical' ? 'text-st-critical-text' : status === 'warning' ? 'text-st-warning-text' : status === 'bad' ? 'text-ink-muted' : 'text-ink')}>
               {value === undefined ? '—' : formatNumber(value, config.decimals)} {config.unit}
             </span>
           </div>
@@ -82,8 +82,9 @@ export function BatchSummary({ plant }: { plant: PlantState }) {
   const phaseIndex = snapshot.batch.phaseIndex;
   const conformity = phaseConformity(plant.phaseTrace, phaseIndex);
   const remainingS = Math.max(0, BATCH_NOMINAL_S - timing.elapsedS);
-  const meanTempDeviation = plant.phaseTrace.length
-    ? plant.phaseTrace.reduce((sum, point) => sum + Math.abs(point.TIT_100_01 - goldenValue('TIT_100_01', phaseIndex, point.tMin)), 0) / plant.phaseTrace.length
+  const tempTrace = plant.phaseTrace.filter((point) => Number.isFinite(point.TIT_100_01));
+  const meanTempDeviation = tempTrace.length
+    ? tempTrace.reduce((sum, point) => sum + Math.abs(point.TIT_100_01 - goldenValue('TIT_100_01', phaseIndex, point.tMin)), 0) / tempTrace.length
     : null;
   const lotAlarms = alarmStats(plant.events, snapshot.batch.startedAt, plant.now).totalLot;
   const completedRatio = snapshot.batch.status === 'completed' ? 1 : Math.max(0, Math.min(1, snapshot.batch.phaseElapsedS / (PHASES[phaseIndex].durationMin * 60)));
