@@ -89,7 +89,7 @@ export function BatchSummary({ plant }: { plant: PlantState }) {
   const lotAlarms = alarmStats(plant.events, snapshot.batch.startedAt, plant.now).totalLot;
   const completedRatio = snapshot.batch.status === 'completed' ? 1 : Math.max(0, Math.min(1, snapshot.batch.phaseElapsedS / (PHASES[phaseIndex].durationMin * 60)));
 
-  return <Panel title="Resumo do lote" subtitle={snapshot.batch.lot} className="min-h-0" bodyClassName="flex min-h-0 flex-col gap-1 p-4">
+  return <Panel title="Resumo do lote" subtitle={snapshot.batch.lot || 'lote não informado'} className="min-h-0" bodyClassName="flex min-h-0 flex-col gap-1 p-4">
     <div className="flex flex-col gap-0.5">
       <div className="flex items-baseline justify-between text-xs"><span className="text-ink-muted">Lote concluído</span><span className="font-semibold text-ink num">{formatNumber(timing.progress * 100, 0)} %</span></div>
       <div className="flex h-2.5 overflow-hidden rounded-sm bg-sunken" role="progressbar" aria-valuenow={Math.round(timing.progress * 100)} aria-valuemin={0} aria-valuemax={100}>

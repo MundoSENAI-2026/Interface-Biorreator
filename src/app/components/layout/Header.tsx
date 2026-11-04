@@ -41,10 +41,6 @@ export function Header({ plant }: { plant: PlantState }) {
   const status = overallStatus(plant);
   const activeAlarms = plant.alarms.filter((a) => a.state !== 'normalized');
   const unacknowledged = plant.alarms.filter((a) => a.state !== 'acknowledged').length;
-  const counts = {
-    critical: activeAlarms.filter((a) => a.priority === 'critical').length,
-    warning: activeAlarms.filter((a) => a.priority === 'warning').length,
-  };
   // Biorreator real: idade das mensagens de etapas (as analógicas têm watchdog próprio, nos cards)
   const lastAt = realSource ? realSource.lastPhaseMessageAt : plant.lastReadAt;
   const ageS = lastAt ? Math.max(0, Math.round((plant.now - lastAt) / 1000)) : null;
@@ -53,12 +49,25 @@ export function Header({ plant }: { plant: PlantState }) {
     ? s.batch.phaseDurationsS.reduce<number>((acc, d) => acc + (d ?? 0), 0) + (s.batch.status === 'completed' ? 0 : s.batch.phaseElapsedS)
     : 0;
 
-  const pendingLabel = unacknowledged ? ` · ${unacknowledged} não reconhecido${unacknowledged === 1 ? '' : 's'}` : '';
-  const statusLabel = status === 'critical'
-    ? `Crítico · ${pluralize(counts.critical || 1, 'alarme', 'alarmes')}${pendingLabel}`
-    : status === 'warning'
-      ? `Alerta · ${pluralize(counts.warning, 'alarme', 'alarmes')}${pendingLabel}`
-      : unacknowledged ? `Normal${pendingLabel}` : 'Normal · sem alarmes';
+  // Uma linha só: "Crítico · 3 pendentes" (pendente = ainda não reconhecido)
+  const level = status === 'critical' ? 'Crítico' : status === 'warning' ? 'Alerta' : 'Normal';
+  const statusLabel = unacknowledged
+    ? `${level} · ${pluralize(unacknowledged, 'pendente', 'pendentes')}`
+    : activeAlarms.length
+      ? `${level} · ${pluralize(activeAlarms.length, 'alarme', 'alarmes')}`
+      : status === 'critical' ? 'Crítico · sem comunicação' : 'Normal · sem alarmes';
+
+  // Comunicação: um selo, uma frase ("Online · há 1 s", "Sem dados há 25 s")
+  const age = ageS === null ? null : formatDuration(ageS);
+  const lastTitle = lastAt ? `${simulation ? 'Última leitura' : 'Última mensagem'} às ${formatTime(lastAt)}` : undefined;
+  const comm = plant.comm === 'online'
+    ? <StatusBadge status="normal" icon={Wifi} label={age ? `Online · há ${age}` : 'Online'} title={lastTitle} className="num" />
+    : plant.comm === 'silent'
+      ? <StatusBadge status="critical" icon={WifiOff} label={age ? `Sem dados há ${age}` : 'Sem dados do equipamento'} title={lastTitle} className="num" />
+      : plant.comm === 'offline'
+        ? <StatusBadge status="critical" icon={WifiOff} label={age ? `Sem conexão há ${age}` : 'Sem conexão'} title={lastTitle} className="num" />
+        : <StatusBadge status="transition" label={plant.comm === 'reconnecting' ? 'Reconectando…' : 'Conectando…'} />;
+  const waiting = <span className="text-ink-muted">Aguardando…</span>;
 
   return (
     <header className="sticky top-0 z-40 border-b border-line-strong bg-surface">
@@ -96,41 +105,22 @@ export function Header({ plant }: { plant: PlantState }) {
       {/* Faixa de estado do processo */}
       <div className="flex items-center gap-x-4 bg-sunken px-6 py-1.5 2xl:gap-x-6">
         <Field label="Lote">
-          <span className="font-mono">{s?.batch.lot ?? '—'}</span>
+          {!s ? waiting : s.batch.lot ? <span className="font-mono">{s.batch.lot}</span> : <span className="text-ink-muted">Não informado</span>}
         </Field>
         <Field label="Etapa atual" className="min-w-36">
-          {s ? `${s.batch.phaseIndex + 1}/${PHASES.length} · ${PHASES[s.batch.phaseIndex].name}` : '—'}
+          {s ? `${s.batch.phaseIndex + 1}/${PHASES.length} · ${PHASES[s.batch.phaseIndex].name}` : waiting}
         </Field>
         <Field label="Tempo do lote" className="hidden 2xl:flex">
-          <span className="num">{s ? formatDuration(batchElapsedS) : '—'}</span>
+          {s ? <span className="num">{formatDuration(batchElapsedS)}</span> : waiting}
         </Field>
         <Field label="Processo">
-          {batchStatus ? <StatusBadge status={batchStatus.badge} label={batchStatus.label} /> : '—'}
+          {batchStatus ? <StatusBadge status={batchStatus.badge} label={batchStatus.label} /> : waiting}
         </Field>
         <Field label="Status geral">
           <StatusBadge status={status} label={statusLabel} size="md" />
         </Field>
         <Field label="Comunicação CLP">
-          <div className="flex items-center gap-2">
-            {plant.comm === 'online' ? (
-              <StatusBadge status="normal" icon={Wifi} label={mqttSource ? 'Online · MQTT' : realSource ? 'Online · equipamento real' : 'Online'} />
-            ) : plant.comm === 'offline' ? (
-              <StatusBadge status="critical" icon={WifiOff} label="Offline" />
-            ) : plant.comm === 'silent' ? (
-              <StatusBadge status="critical" icon={WifiOff} label="Sem dados do equipamento" />
-            ) : plant.comm === 'reconnecting' ? (
-              <StatusBadge status="transition" label="Reconectando…" />
-            ) : (
-              <StatusBadge status="transition" label="Conectando" />
-            )}
-            <span className={cn('text-sm num', plant.comm === 'offline' || plant.comm === 'silent' ? 'font-semibold text-st-critical-text' : 'text-ink-muted')}>
-              {ageS === null ? (simulation ? 'sem leitura' : 'sem mensagem') : (
-                <>
-                  <span className="hidden 2xl:inline">{simulation ? 'última leitura' : 'última mensagem'} </span>há {formatDuration(ageS)}
-                </>
-              )}
-            </span>
-          </div>
+          {comm}
         </Field>
         <div className="ml-auto flex shrink-0 items-center border-l border-line-strong pl-4 2xl:pl-6">
           <EmergencyButton status={s?.batch.status ?? null} />

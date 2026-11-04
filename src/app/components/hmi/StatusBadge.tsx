@@ -23,10 +23,12 @@ interface StatusBadgeProps {
   icon?: LucideIcon;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  /** Complemento em tooltip (o texto do selo já precisa bastar). */
+  title?: string;
 }
 
 /** Compatibilidade de API: todos os status usam o Chip padronizado. */
-export function StatusBadge({ status, label, icon, className }: StatusBadgeProps) {
+export function StatusBadge({ status, label, icon, className, title }: StatusBadgeProps) {
   const variant = VARIANTS[status];
-  return <Chip label={label ?? variant.label} tone={variant.tone} icon={icon ?? variant.icon ?? undefined} className={className} />;
+  return <Chip label={label ?? variant.label} tone={variant.tone} icon={icon ?? variant.icon ?? undefined} className={className} title={title} />;
 }

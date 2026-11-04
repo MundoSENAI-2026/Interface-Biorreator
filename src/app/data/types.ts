@@ -6,6 +6,7 @@ export type ValveState = 'open' | 'closed' | 'transition' | 'fault';
 export type BatchStatus = 'idle' | 'running' | 'stopped' | 'emergency' | 'completed';
 
 export interface BatchInfo {
+  /** Código do lote; '' = a fonte não informa (equipamento real). */
   lot: string;
   status: BatchStatus;
   phaseIndex: number;

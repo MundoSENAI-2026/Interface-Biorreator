@@ -349,7 +349,7 @@ export class RealBioreactorSource implements DataSource {
     const phaseStart = previous?.observed ? previous.at : (this.firstMessageAt ?? now);
 
     return {
-      lot: '—',
+      lot: '', // o equipamento não informa o lote (cabeçalho: "Não informado")
       status,
       phaseIndex: index,
       phaseElapsedS: completed ? 0 : Math.max(0, (now - phaseStart) / 1000),
