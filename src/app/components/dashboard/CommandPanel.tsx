@@ -1,0 +1,229 @@
+import { ArrowRight, DoorClosed, DoorOpen, Info, Lock, Play, Power, PowerOff, Square } from 'lucide-react';
+import { EQUIPMENT, PHASES, VALVES } from '../../config/plant';
+import { plantStore } from '../../data/source';
+import { formatNumber } from '../../lib/format';
+import { freshness, type PlantState } from '../../data/store';
+import { CommandButton } from '../hmi/CommandButton';
+import { StatusBadge } from '../hmi/StatusBadge';
+import { VALVE_STATE_LABEL, ValveControl, ValveGlyph } from '../hmi/ValveControl';
+import { uiStore } from '../../data/ui';
+import { cn } from '../ui/utils';
+
+function SectionTitle({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <h3 className={cn('mb-1.5 text-sm font-semibold uppercase tracking-wide text-ink-muted', className)}>{children}</h3>;
+}
+
+function EquipmentRow({ name, tag, badge, reason, children, dense }: { name: string; tag: string; badge: React.ReactNode; reason?: string; children: React.ReactNode; dense?: boolean }) {
+  if (dense) {
+    return (
+      <div className="grid min-h-14 grid-cols-[minmax(0,1fr)_5.5rem_auto_6.5rem] grid-rows-[1fr_auto] items-center gap-x-2 rounded border border-line px-2 py-1">
+        <span className="text-sm font-medium leading-4 text-ink">{name}</span>
+        <span className="font-mono text-xs text-ink-muted">{tag}</span>
+        <div className="min-w-0">{badge}</div>
+        {children}
+        <span className={cn('col-span-4 row-start-2 flex min-w-0 items-start gap-1 text-[13px] leading-4 text-st-warning-text', !reason && 'invisible')}>
+          <Lock className="mt-0.5 size-3 shrink-0" aria-hidden />
+          <span>{reason ? `Bloqueado: ${reason}` : ' '}</span>
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className={cn('grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 rounded border border-line px-3', dense ? 'py-1' : 'py-1.5')}>
+      <div className={cn('flex min-w-0 items-center gap-x-3 gap-y-1', !dense && 'flex-wrap')}>
+        <span className="text-[15px] font-medium text-ink">{name}</span>
+        <span className="font-mono text-[13px] text-ink-muted">{tag}</span>
+        {badge}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * valves='controls': comando de cada válvula (tela Sinótico);
+ * valves='summary': só o estado das válvulas em grade compacta (Visão Geral).
+ */
+export function CommandPanel({ plant, valves = 'controls' }: { plant: PlantState; valves?: 'controls' | 'summary' }) {
+  const s = plant.snapshot;
+  const shared = plantStore.manualBlockReason();
+  const status = s?.batch.status;
+  const phaseName = s ? PHASES[s.batch.phaseIndex].name : '';
+  const dense = valves === 'summary';
+  const btn = dense ? 'sm' : 'md';
+  /** Equipamento que a fonte nunca informou (biorreator real): mostra "Sem dado" em vez de um estado inventado. */
+  const noData = (id: string) => freshness(plant, id)?.updatedAt === null;
+  const noDataBadge = <StatusBadge status="bad" label="Sem dado" />;
+  const equipmentBlock = (command: Parameters<typeof plantStore.blockReason>[0]) => {
+    const block = plantStore.blockReason(command);
+    return dense && block?.kind === 'interlock' ? block.message : undefined;
+  };
+
+  return (
+    <div className={cn('flex flex-col', dense ? 'h-full min-h-0 justify-between gap-2' : 'gap-3')}>
+      <section>
+        {!dense && <SectionTitle>Processo</SectionTitle>}
+        <div className={cn('grid grid-cols-2', dense ? 'gap-2' : 'gap-3')}>
+          <CommandButton
+            size={btn}
+            command={{ type: 'start' }}
+            label={status === 'stopped' ? 'START · retomar' : 'START · novo lote'}
+            icon={Play}
+            variant="primary"
+            className="w-full"
+            confirm={{
+              title: status === 'stopped' ? 'Retomar a sequência automática?' : 'Iniciar um novo lote?',
+              description:
+                status === 'stopped'
+                  ? `A sequência retoma na etapa "${phaseName}" e reposiciona válvulas, motor e bomba conforme a receita.`
+                  : 'Um novo lote será iniciado na etapa Abastecimento. Confira se o tanque está pronto.',
+              confirmLabel: 'START',
+            }}
+          />
+          <CommandButton
+            size={btn}
+            command={{ type: 'stop' }}
+            label="STOP"
+            icon={Square}
+            variant="secondary"
+            className="w-full"
+            confirm={{
+              title: 'Parar a sequência automática?',
+              description:
+                'A sequência fica pausada na etapa atual e os equipamentos permanecem no estado em que estão. Os comandos manuais serão liberados.',
+              confirmLabel: 'STOP',
+            }}
+          />
+        </div>
+      </section>
+
+      {/* Único aviso de bloqueio comum (o cadeado aparece só aqui) */}
+      {shared && (
+        <div className={cn('flex items-start gap-2 rounded border border-line bg-sunken text-ink-default', dense ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm')} role="status">
+          {status === 'running' ? <Info className="mt-0.5 size-4 shrink-0 text-st-info" aria-hidden /> : <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />}
+          <span className="min-w-0">
+            <strong className="font-semibold">{dense ? 'Manual bloqueado:' : 'Comandos manuais bloqueados.'}</strong> {shared}.
+          </span>
+        </div>
+      )}
+
+      <section>
+        {!dense && <SectionTitle>Equipamentos</SectionTitle>}
+        <div className={cn('flex flex-col', dense ? 'gap-1.5' : 'gap-2')}>
+          <EquipmentRow
+            dense={dense}
+            name={dense ? 'Motor' : EQUIPMENT.motor.name}
+            tag={EQUIPMENT.motor.id}
+            reason={equipmentBlock({ type: 'motor', on: !s?.motorOn })}
+            badge={noData(EQUIPMENT.motor.id) ? noDataBadge : <StatusBadge status={s?.motorOn ? 'running' : 'stopped'} label={dense ? (s?.motorOn ? 'Ligado' : 'Desligado') : `${s?.motorOn ? 'Ligado' : 'Desligado'} · ${formatNumber(s?.motorRpm ?? 0, 0)} rpm`} />}
+          >
+            <CommandButton
+              className={dense ? 'w-full' : 'contents'}
+              reasonClassName="col-span-full"
+              showInterlockReason={!dense}
+              tooltipPrefix={dense}
+              size={btn}
+              command={{ type: 'motor', on: !s?.motorOn }}
+              label={s?.motorOn ? 'Desligar' : 'Ligar'}
+              icon={s?.motorOn ? PowerOff : Power}
+            />
+          </EquipmentRow>
+          <EquipmentRow
+            dense={dense}
+            name={dense ? 'Bomba' : EQUIPMENT.pump.name}
+            tag={EQUIPMENT.pump.id}
+            reason={equipmentBlock({ type: 'pump', on: !s?.pumpOn })}
+            badge={noData(EQUIPMENT.pump.id) ? noDataBadge : <StatusBadge status={s?.pumpOn ? 'running' : 'stopped'} label={s?.pumpOn ? 'Ligada' : 'Desligada'} />}
+          >
+            <CommandButton
+              className={dense ? 'w-full' : 'contents'}
+              reasonClassName="col-span-full"
+              showInterlockReason={!dense}
+              tooltipPrefix={dense}
+              size={btn}
+              command={{ type: 'pump', on: !s?.pumpOn }}
+              label={s?.pumpOn ? 'Desligar' : 'Ligar'}
+              icon={s?.pumpOn ? PowerOff : Power}
+              confirm={
+                s?.pumpOn
+                  ? undefined
+                  : {
+                      title: 'Ligar a bomba de transferência?',
+                      description: 'O produto será transferido pela XV-10. Confirme que o destino está pronto para receber.',
+                      confirmLabel: 'Ligar bomba',
+                    }
+              }
+            />
+          </EquipmentRow>
+          <EquipmentRow
+            dense={dense}
+            name={EQUIPMENT.manway.name}
+            tag={EQUIPMENT.manway.id}
+            reason={equipmentBlock({ type: 'manway', open: !s?.manwayOpen })}
+            badge={
+              noData(EQUIPMENT.manway.id) ? noDataBadge : s?.manwayOpen
+                ? <StatusBadge status="warning" icon={DoorOpen} label="Aberta" />
+                : <StatusBadge status="stopped" icon={DoorClosed} label="Fechada" />
+            }
+          >
+            <CommandButton
+              className={dense ? 'w-full' : 'contents'}
+              reasonClassName="col-span-full"
+              showInterlockReason={!dense}
+              tooltipPrefix={dense}
+              size={btn}
+              command={{ type: 'manway', open: !s?.manwayOpen }}
+              label={s?.manwayOpen ? 'Fechar' : 'Abrir'}
+              confirm={
+                s?.manwayOpen
+                  ? undefined
+                  : {
+                      title: 'Abrir a porta de visita?',
+                      description: 'Confirme que o tanque está despressurizado, resfriado e que a área está liberada para acesso.',
+                      confirmLabel: 'Abrir porta',
+                    }
+              }
+            />
+          </EquipmentRow>
+        </div>
+      </section>
+
+      {valves === 'summary' && (
+        <section>
+          <div className="mb-1 flex items-center justify-between">
+            <SectionTitle className="mb-0">Válvulas</SectionTitle>
+            <button onClick={() => uiStore.navigate('synoptic')} className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline">
+              comandar na F2 <ArrowRight className="size-4" aria-hidden />
+            </button>
+          </div>
+          <ul className="grid grid-cols-5 gap-x-2 gap-y-1">
+            {VALVES.map((v) => {
+              const st = s?.valves[v.id] ?? 'closed';
+              const unknown = noData(v.id);
+              return (
+                <li key={v.id} className="grid min-w-0 grid-cols-[1rem_minmax(0,1fr)] items-center gap-x-1 rounded bg-sunken px-1.5 py-0.5" title={`${v.id} — ${v.function}: ${v.description}${unknown ? ' · aguardando dados do equipamento' : ''}`}>
+                  <ValveGlyph state={st} className="h-3 w-4 shrink-0" />
+                  <span className="font-mono text-[13px] font-medium leading-4 text-ink">{v.short}</span>
+                  <span className={cn('col-span-2 text-[13px] leading-4', unknown ? 'text-ink-muted' : st === 'open' ? 'font-medium text-st-info' : st === 'fault' ? 'font-semibold text-st-warning-text' : 'text-ink-muted')}>
+                    {unknown ? 'Sem dado' : VALVE_STATE_LABEL[st]}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {valves === 'controls' && (
+        <section>
+          <SectionTitle>Válvulas</SectionTitle>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {VALVES.map((v) => (
+              <ValveControl key={v.id} valve={v} state={s?.valves[v.id] ?? 'closed'} noData={noData(v.id)} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

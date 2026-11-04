@@ -1,0 +1,6 @@
+senai-sp.png — logotipo SENAI São Paulo (fonte: Wikimedia Commons,
+https://upload.wikimedia.org/wikipedia/commons/8/8c/SENAI_S%C3%A3o_Paulo_logo.png).
+
+O arquivo fica local para o sistema funcionar offline. O caminho é definido em
+src/app/config/project.ts (PROJECT.logoSrc). Para trocar pela versão do manual
+de marca, substitua o arquivo mantendo o nome ou ajuste o caminho.
